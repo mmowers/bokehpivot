@@ -64,6 +64,7 @@ def initialize():
     and widget configuration object (wdg_config). Initialize controls and plots areas of layout, and
     send data to opened browser.
     '''
+    print('***Initializing...')
     wdg_config = {}
     args = bio.curdoc().session_context.request.arguments
     wdg_arr = args.get('widgets')
@@ -86,6 +87,7 @@ def initialize():
 
     bio.curdoc().add_root(layout)
     bio.curdoc().title = "Exploding Pivot Chart Maker"
+    print('***Done Initializing')
 
 def build_data_source_wdg(data_source):
     '''
@@ -114,7 +116,7 @@ def get_df_csv(data_source):
         df_source (pandas dataframe): A dataframe of the csv source, with filled NA values.
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     '''
-
+    print('***Fetching csv...')
     df_source = pd.read_csv(data_source)
     cols = {}
     cols['all'] = df_source.columns.values.tolist()
@@ -124,6 +126,7 @@ def get_df_csv(data_source):
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 60]
     df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
     df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
+    print('***Done fetching csv...')
     return (df_source, cols)
 
 def get_wdg_gdx(data_source):
@@ -151,6 +154,7 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}):
     Returns:
         topwdg (ordered dict): Dictionary of bokeh.model.widgets.
     '''
+    print('***Fetching ReEDS scenarios...')
     topwdg = collections.OrderedDict()
 
     #Meta widgets
@@ -209,6 +213,7 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}):
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(results_meta.keys()), css_classes=['wdgkey-result'])
         if init_load and 'result' in wdg_config: topwdg['result'].value = str(wdg_config['result'])
         topwdg['result'].on_change('value', update_reeds_result)
+    print('***Done fetching ReEDS scenarios.')
     return topwdg
 
 def get_reeds_data(topwdg):
@@ -224,6 +229,7 @@ def get_reeds_data(topwdg):
         Nothing. Global result_dfs is modified
     '''
     result = topwdg['result'].value
+    print('***Fetching ' + str(result) + ' for selected scenarios...')
     #A result has been selected, so either we retrieve it from result_dfs,
     #which is a dict with one dataframe for each result, or we make a new key in the result_dfs
     if result not in result_dfs:
@@ -258,6 +264,8 @@ def get_reeds_data(topwdg):
                 result_dfs[result] = df_scen_result
             else:
                 result_dfs[result] = pd.concat([result_dfs[result], df_scen_result]).reset_index(drop=True)
+        print('***Done fetching ' + str(result) + ' for ' + str(scenario_name) + '.')
+    print('***Done fetching ' + str(result) + '.')
 
 def process_reeds_data(topwdg):
     '''
@@ -271,8 +279,8 @@ def process_reeds_data(topwdg):
         df (pandas dataframe): A dataframe of the ReEDS result, with filled NA values.
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     '''
+    print('***Apply joins, maps, ordering to ReEDS data...')
     df = result_dfs[topwdg['result'].value].copy()
-
     #apply joins
     for col in df.columns.values.tolist():
         if 'meta_join_'+col in topwdg and topwdg['meta_join_'+col].value != '':
@@ -320,6 +328,7 @@ def process_reeds_data(topwdg):
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['seriesable']]
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
     df[cols['continuous']] = df[cols['continuous']].fillna(0)
+    print('***Done with joins, maps, ordering.')
     return (df, cols)
 
 def build_widgets(df_source, cols, init_load=False, init_config={}, preset_options=None):
@@ -338,6 +347,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         wdg (ordered dict): Dictionary of bokeh.model.widgets.
     '''
     #Add widgets
+    print('***Build main widgets...')
     wdg = collections.OrderedDict()
     if preset_options != None:
         wdg['presets'] = bmw.Select(title='Presets', value='None', options=['None'] + preset_options, css_classes=['wdgkey-presets'])
@@ -414,7 +424,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         wdg[name].on_change('value', update_wdg_col)
     for name in WDG_NON_COL:
         wdg[name].on_change('value', update_wdg)
-
+    print('***Done with main widgets.')
     return wdg
 
 def set_df_plots(df_source, cols, wdg, custom_sorts={}):
@@ -430,6 +440,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     Returns:
         df_plots (pandas dataframe): df_source after having been filtered, scaled, aggregated, and sorted.
     '''
+    print('***Filtering, Scaling, Aggregating, Adv Operations, Sorting...')
     df_plots = df_source.copy()
 
     #Apply filters
@@ -526,13 +537,10 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         if col in sortby_cols:
             df_plots = df_plots.drop(col + '__sort_col', 1)
 
-
-
-
     #Rearrange column order for csv download
     unsorted_columns = [col for col in df_plots.columns if col not in sortby_cols + [wdg['y'].value]]
     df_plots = df_plots[sortby_cols + unsorted_columns + [wdg['y'].value]]
-
+    print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
     return df_plots
 
 def create_figures(df_plots, wdg, cols):
@@ -548,6 +556,7 @@ def create_figures(df_plots, wdg, cols):
     Returns:
         plot_list (list): List of bokeh.model.figures.
     '''
+    print('***Building Figures...')
     plot_list = []
     df_plots_cp = df_plots.copy()
     if wdg['explode'].value == 'None':
@@ -563,6 +572,7 @@ def create_figures(df_plots, wdg, cols):
                 for explode_val in df_exploded_group[wdg['explode'].value].unique().tolist():
                     df_exploded = df_exploded_group[df_exploded_group[wdg['explode'].value].isin([explode_val])]
                     plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, explode_val, explode_group))
+    print('***Done Building Figures.')
     return plot_list
 
 def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_group=None):
@@ -673,6 +683,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
                 add_glyph(wdg, p, xs_full, ys_stacked_neg, c, y_bases=y_bases_neg, series=ser)
                 y_bases_pos = ys_stacked_pos
                 y_bases_neg = ys_stacked_neg
+    print('***Done building Figure, explode_val='+str(explode_val))
     return p
 
 def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
