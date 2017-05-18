@@ -2,6 +2,9 @@ $(document).ready(function(){
     $('body').on('click', '.meta-dropdown', function(){
         $('.meta-drop').toggle();
     });
+    $('body').on('click', '.data-dropdown', function(){
+        $('.data-drop').toggle();
+    });
     $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label', function(){
         $(this).next().toggle();
     });
@@ -83,6 +86,7 @@ $(document).ready(function(){
 //pressing Alt key will collapse menus.
 document.onkeydown = function(e) {
   if(e.which == 18) {
+    $('.data-drop').hide();
     $('.meta-drop').hide();
     $('.wdgkey-runs input').hide();
     $('.wdgkey-result select').hide();

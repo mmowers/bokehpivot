@@ -27,6 +27,12 @@ body {
 .bk-plot-layout{
     display: inline-block;
 }
+.wdgkey-data{
+    margin-top: 5px !important;
+}
+.wdgkey-data label{
+    display: none !important;
+}
 .meta-drop,
 .x-drop,
 .y-drop,
@@ -48,6 +54,7 @@ body {
     color: purple;
     display: none;
 }
+.data-dropdown,
 .meta-dropdown,
 .x-dropdown,
 .y-dropdown,

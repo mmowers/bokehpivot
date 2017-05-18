@@ -98,7 +98,8 @@ def build_data_source_wdg(data_source):
         wdg (ordered dict): ordered dictionary of bokeh.models.widgets (in this case only one) for data source.
     '''
     wdg = collections.OrderedDict()
-    wdg['data'] = bmw.TextInput(title='Data Source (required)', value=data_source, css_classes=['wdgkey-data'])
+    wdg['data_dropdown'] = bmw.Div(text='Data Source (required)', css_classes=['data-dropdown'])
+    wdg['data'] = bmw.TextInput(value=data_source, css_classes=['wdgkey-data', 'data-drop'])
     wdg['data'].on_change('value', update_data)
     return wdg
 
