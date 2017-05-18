@@ -358,7 +358,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['y_dropdown'] = bmw.Div(text='Y-Axis (required)', css_classes=['y-dropdown'])
     wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'])
     wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='Sum', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'])
-    wdg['y_weight'] = bmw.Select(title='Weighting Factor', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-y_weight', 'y-drop'])
+    wdg['y_weight'] = bmw.Select(title='Weighting Factor', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_weight', 'y-drop'])
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'])
