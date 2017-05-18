@@ -127,7 +127,7 @@ def get_df_csv(data_source):
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 60]
     df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
     df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
-    print('***Done fetching csv...')
+    print('***Done fetching csv.')
     return (df_source, cols)
 
 def get_wdg_gdx(data_source):
