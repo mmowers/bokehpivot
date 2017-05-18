@@ -96,5 +96,6 @@ document.onkeydown = function(e) {
     $('.select-all-none').hide();
     $('.filter').hide();
     $('.adjust-drop').hide();
+    $('.download-drop').hide();
   }
 };
