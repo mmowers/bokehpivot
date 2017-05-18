@@ -899,16 +899,20 @@ def download():
     Download a csv file of the currently viewed data to the downloads/ directory,
     with the current timestamp.
     '''
-    GL['df_plots'].to_csv(os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+
-        datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv', index=False)
+    print('***Downloading View...')
+    path = os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    GL['df_plots'].to_csv(path, index=False)
+    print('***Done downloading View to ' + path)
 
 def download_all():
     '''
     Download a csv file of the full data source to the downloads/ directory,
     with the current timestamp.
     '''
-    GL['df_source'].to_csv(os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+
-        datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv', index=False)
+    print('***Downloading full source...')
+    path = os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    GL['df_source'].to_csv(path, index=False)
+    print('***Done downloading full source to ' + path)
 
 #This sets the whole thing in motion when a page is loaded
 initialize()
