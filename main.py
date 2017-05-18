@@ -39,9 +39,7 @@ AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
 ADV_BASES = ['Consecutive', 'Total']
 
 #List of widgets that use columns as their selectors
-WDG_COL_ALL = ['x', 'y'] #all columns available for these widgets
-WDG_COL_SER = ['x_group', 'series', 'explode', 'explode_group'] #seriesable columns available for these widgets
-WDG_COL = WDG_COL_ALL + WDG_COL_SER
+WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
 WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
@@ -123,6 +121,7 @@ def get_df_csv(data_source):
     cols['all'] = df_source.columns.values.tolist()
     cols['discrete'] = [x for x in cols['all'] if df_source[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
+    cols['y-axis'] = cols['continuous']
     cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 100]
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 60]
     df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
@@ -325,6 +324,7 @@ def process_reeds_data(topwdg):
 
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
+    cols['y-axis'] = [x for x in cols['continuous'] if x not in columns_meta or columns_meta[x]['y-allow']]
     cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['filterable']]
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['seriesable']]
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
@@ -356,7 +356,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
     wdg['y_dropdown'] = bmw.Div(text='Y-Axis (required)', css_classes=['y-dropdown'])
-    wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-y', 'y-drop'])
+    wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'])
     wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='Sum', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'])
     wdg['y_weight'] = bmw.Select(title='Weighting Factor', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-y_weight', 'y-drop'])
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
@@ -870,12 +870,15 @@ def set_wdg_col_options():
     wdg = GL['widgets']
     #get list of selected values and use to reduce selection options.
     sels = [str(wdg[w].value) for w in WDG_COL if str(wdg[w].value) !='None']
-    all_reduced = [x for x in cols['all'] if x not in sels]
-    ser_reduced = [x for x in cols['seriesable'] if x not in sels]
     for w in WDG_COL:
         val = str(wdg[w].value)
         none_append = [] if val == 'None' else ['None']
-        opt_reduced = all_reduced if w in WDG_COL_ALL else ser_reduced
+        if w == 'x':
+            opt_reduced = [x for x in cols['all'] if x not in sels]
+        elif w == 'y':
+            opt_reduced = [x for x in cols['y-axis'] if x not in sels]
+        else:
+            opt_reduced = [x for x in cols['seriesable'] if x not in sels]
         wdg[w].options = [val] + opt_reduced + none_append
 
 def update_plots():

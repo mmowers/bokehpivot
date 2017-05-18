@@ -437,6 +437,7 @@ columns_meta = {
         'type': 'number',
         'filterable': True,
         'seriesable': True,
+        'y-allow': False,
     },
     'm':{
         'type': 'string',
