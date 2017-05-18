@@ -121,6 +121,7 @@ def get_df_csv(data_source):
     cols['all'] = df_source.columns.values.tolist()
     cols['discrete'] = [x for x in cols['all'] if df_source[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
+    cols['x-axis'] = cols['all']
     cols['y-axis'] = cols['continuous']
     cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 100]
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 60]
@@ -325,6 +326,7 @@ def process_reeds_data(topwdg):
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
     cols['y-axis'] = [x for x in cols['continuous'] if x not in columns_meta or columns_meta[x]['y-allow']]
+    cols['x-axis'] = [x for x in cols['all'] if x not in cols['y-axis']]
     cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['filterable']]
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['seriesable']]
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
@@ -353,7 +355,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     if preset_options != None:
         wdg['presets'] = bmw.Select(title='Presets', value='None', options=['None'] + preset_options, css_classes=['wdgkey-presets'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
-    wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-x', 'x-drop'])
+    wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
     wdg['y_dropdown'] = bmw.Div(text='Y-Axis (required)', css_classes=['y-dropdown'])
     wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'])
@@ -875,7 +877,7 @@ def set_wdg_col_options():
         val = str(wdg[w].value)
         none_append = [] if val == 'None' else ['None']
         if w == 'x':
-            opt_reduced = [x for x in cols['all'] if x not in sels]
+            opt_reduced = [x for x in cols['x-axis'] if x not in sels]
         elif w == 'y':
             opt_reduced = [x for x in cols['y-axis'] if x not in sels]
         else:
