@@ -371,11 +371,11 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['adv_col'] = bmw.Select(title='Operate Across', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-adv_col', 'adv-drop'])
     wdg['adv_col_base'] = bmw.Select(title='Base', value='None', options=['None'], css_classes=['wdgkey-adv_col_base', 'adv-drop'])
     wdg['filters'] = bmw.Div(text='Filters', css_classes=['filters-dropdown'])
+    wdg['filters_update'] = bmw.Button(label='Update Filters', button_type='success', css_classes=['filters-update'])
     for j, col in enumerate(cols['filterable']):
         val_list = [str(i) for i in sorted(df_source[col].unique().tolist())]
         wdg['heading_filter_'+str(j)] = bmw.Div(text=col, css_classes=['filter-head'])
         wdg['filter_'+str(j)] = bmw.CheckboxGroup(labels=val_list, active=list(range(len(val_list))), css_classes=['wdgkey-filter_'+str(j), 'filter'])
-    wdg['update'] = bmw.Button(label='Update Filters', button_type='success', css_classes=['filters-update'])
     wdg['adjustments'] = bmw.Div(text='Plot Adjustments', css_classes=['adjust-dropdown'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'adjust-drop'])
     wdg['plot_width'] = bmw.TextInput(title='Plot Width (px)', value=str(PLOT_WIDTH), css_classes=['wdgkey-plot_width', 'adjust-drop'])
@@ -417,7 +417,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     #Add update functions for widgets
     if preset_options != None:
         wdg['presets'].on_change('value', update_reeds_presets)
-    wdg['update'].on_click(update_plots)
+    wdg['filters_update'].on_click(update_plots)
     wdg['download'].on_click(download)
     wdg['download_all'].on_click(download_all)
     wdg['adv_col'].on_change('value', update_adv_col)
