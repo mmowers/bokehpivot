@@ -15,7 +15,7 @@ $(document).ready(function(){
         $('.y-drop').toggle();
     });
     $('body').on('click', '.series-dropdown', function(){
-        $('.legend-body').hide();
+        $('.legend-body').show();
         $('.series-drop').toggle();
     });
     $('body').on('click', '.explode-dropdown', function(){
