@@ -37,6 +37,7 @@ body {
 .filters-update,
 .adjust-drop,
 .wdgkey-filter_scenarios,
+.update-drop,
 .download-drop,
 .bk-bs-btn.export-config.download-drop{
     display: none;
@@ -56,6 +57,7 @@ body {
 .filters-dropdown,
 .adjust-dropdown,
 .filter-scenarios-dropdown,
+.update-dropdown,
 .download-dropdown{
     font-weight: bold;
     color: blue;

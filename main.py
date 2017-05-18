@@ -400,6 +400,9 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
+    wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
+    wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
+    wdg['update'] = bmw.Button(label='Update Plots Manually', button_type='success', css_classes=['update-drop'])
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
@@ -418,6 +421,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     if preset_options != None:
         wdg['presets'].on_change('value', update_reeds_presets)
     wdg['filters_update'].on_click(update_plots)
+    wdg['update'].on_click(update_plots)
     wdg['download'].on_click(download)
     wdg['download_all'].on_click(download_all)
     wdg['adv_col'].on_change('value', update_adv_col)
@@ -835,7 +839,8 @@ def update_wdg(attr, old, new):
     '''
     When general widgets are updated (not in WDG_COL), update plots only.
     '''
-    update_plots()
+    if GL['widgets']['auto_update'].value == 'Enable':
+        update_plots()
 
 def update_wdg_col(attr, old, new):
     '''
@@ -843,7 +848,8 @@ def update_wdg_col(attr, old, new):
     and update plots.
     '''
     set_wdg_col_options()
-    update_plots()
+    if GL['widgets']['auto_update'].value == 'Enable':
+        update_plots()
 
 def update_adv_col(attr, old, new):
     '''

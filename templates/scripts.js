@@ -24,6 +24,9 @@ $(document).ready(function(){
     $('body').on('click', '.adv-dropdown', function(){
         $('.adv-drop').toggle();
     });
+    $('body').on('click', '.update-dropdown', function(){
+        $('.update-drop').toggle();
+    });
     $('body').on('click', '.download-dropdown', function(){
         $('.download-drop').toggle();
     });
@@ -96,6 +99,7 @@ document.onkeydown = function(e) {
     $('.select-all-none').hide();
     $('.filter').hide();
     $('.adjust-drop').hide();
+    $('.update-drop').hide();
     $('.download-drop').hide();
   }
 };
