@@ -400,9 +400,10 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
-    wdg['download'] = bmw.Button(label='Download csv of View', button_type='success')
-    wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success')
-    wdg['export_config'] = bmw.Div(text='Export Config to URL', css_classes=['export-config', 'bk-bs-btn', 'bk-bs-btn-success'])
+    wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
+    wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
+    wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
+    wdg['export_config'] = bmw.Div(text='Export Config to URL', css_classes=['export-config', 'bk-bs-btn', 'bk-bs-btn-success', 'download-drop'])
 
     #use init_config (from 'widgets' parameter in URL query string) to configure widgets.
     if init_load:

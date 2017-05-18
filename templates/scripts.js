@@ -24,6 +24,9 @@ $(document).ready(function(){
     $('body').on('click', '.adv-dropdown', function(){
         $('.adv-drop').toggle();
     });
+    $('body').on('click', '.download-dropdown', function(){
+        $('.download-drop').toggle();
+    });
     $('body').on('click', '.filters-dropdown', function(){
         $('.filter-head').toggle();
         $('.filters-update').toggle();
