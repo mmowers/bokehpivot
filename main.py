@@ -403,7 +403,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
     wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
-    wdg['update'] = bmw.Button(label='Update Plots Manually', button_type='success', css_classes=['update-drop'])
+    wdg['update'] = bmw.Button(label='Manual Update', button_type='success', css_classes=['update-drop'])
+    wdg['render_plots'] = bmw.Select(title='Render Plots', value='Yes', options=['Yes', 'No'], css_classes=['update-drop'])
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
@@ -889,8 +890,9 @@ def update_plots():
         GL['plots'].children = []
         return
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
-    GL['widgets']['series_legend'].text = build_series_legend(GL['df_plots'], GL['widgets']['series'].value)
-    GL['plots'].children = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
+    if GL['widgets']['render_plots'].value == 'Yes':
+        GL['widgets']['series_legend'].text = build_series_legend(GL['df_plots'], GL['widgets']['series'].value)
+        GL['plots'].children = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
 
 def download():
     '''
