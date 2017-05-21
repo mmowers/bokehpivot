@@ -692,7 +692,6 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
                 add_glyph(wdg, p, xs_full, ys_stacked_neg, c, y_bases=y_bases_neg, series=ser)
                 y_bases_pos = ys_stacked_pos
                 y_bases_neg = ys_stacked_neg
-    print('***Done building Figure: Group=' + str(explode_group) + ', Explode=' + str(explode_val))
     return p
 
 def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
