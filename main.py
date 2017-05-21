@@ -16,7 +16,7 @@ import bokeh.models.tools as bmt
 import bokeh.plotting as bp
 import datetime
 import six.moves.urllib.parse as urlp
-import gdxl
+import gdx2py
 from reeds import *
 
 #Defaults to configure:
@@ -250,12 +250,14 @@ def get_reeds_data(topwdg):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
-                    df_src = gdxl.get_df(scenarios[i]['path'] + '\\gdxfiles\\' + src['file'], src['param'])
+                    data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + src['file'], src['param'])
+                    df_src = pd.DataFrame(data)
                     df_src.columns = src['columns']
                     df_scen_result[src['name']] = df_src
             else:
                 #else we have only one parameter as a data source
-                df_scen_result = gdxl.get_df(scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file'], result_meta['param'])
+                data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file'], result_meta['param'])
+                df_scen_result = pd.DataFrame(data)
                 df_scen_result.columns = result_meta['columns']
             if 'preprocess' in result_meta:
                 for preprocess in result_meta['preprocess']:
