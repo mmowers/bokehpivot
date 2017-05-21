@@ -413,6 +413,10 @@ columns_meta = {
         'map': this_dir_path + '/csv/tech_map.csv',
         'style': this_dir_path + '/csv/tech_style.csv',
     },
+    'i':{
+        'type': 'string',
+        'join': this_dir_path + '/csv/hierarchy.csv',
+    },
     'n':{
         'type': 'string',
         'join': this_dir_path + '/csv/hierarchy.csv',
