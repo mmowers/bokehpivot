@@ -741,8 +741,8 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
         if y_bases is None: y_bases = [0]*len(ys)
         xs_around = xs + xs[::-1]
         ys_around = y_bases + ys[::-1]
-        source = bms.ColumnDataSource({'x': xs_around, 'y': ys_around})
-        p.patch('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
+        source = bms.ColumnDataSource({'x': [xs_around], 'y': [ys_around], 'ser_legend': [series]})
+        p.patches('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
 
 
 def build_series_legend(df_plots, series_val):
