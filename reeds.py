@@ -15,7 +15,6 @@ import bokeh.models.tools as bmt
 import bokeh.plotting as bp
 import datetime
 import six.moves.urllib.parse as urlp
-import gdxl
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 inflation_mult = 1.2547221 #2004$ to 2015$
