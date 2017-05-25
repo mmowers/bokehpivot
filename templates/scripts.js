@@ -65,9 +65,12 @@ $(document).ready(function(){
     $('body').on('click', '.export-config', function(){
         var wdg_obj = {}
         $('select, input[type=text]').each(function(){
-            var wdg_name = $(this).parent().attr('class').match(/wdgkey-([^ ]*)/)[1];
-            var selected_val = $(this).val();
-            wdg_obj[wdg_name] = selected_val;
+            wdgkey_match = $(this).parent().attr('class').match(/wdgkey-([^ ]*)/)
+            if(wdgkey_match){
+                var wdg_name = wdgkey_match[1];
+                var selected_val = $(this).val();
+                wdg_obj[wdg_name] = selected_val;
+            }
         });
         $('.filter, .wdgkey-filter_scenarios').each(function(){
             var wdg_name = $(this).attr('class').match(/wdgkey-([^ ]*)/)[1];
