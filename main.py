@@ -56,6 +56,9 @@ custom_sorts = {} #keys are column names. Values are lists of values in the desi
 scenarios = [] #each element is a dict with name of scenario and path to scenario
 result_dfs = {} #keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 
+#os globals
+this_dir_path = os.path.dirname(os.path.realpath(__file__))
+
 def initialize():
     '''
     On initial load, read 'widgets' parameter from URL query string and use to set data source (data_source)
@@ -903,7 +906,7 @@ def download():
     with the current timestamp.
     '''
     print('***Downloading View...')
-    path = os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
 
@@ -913,7 +916,7 @@ def download_all():
     with the current timestamp.
     '''
     print('***Downloading full source...')
-    path = os.path.dirname(os.path.realpath(__file__)) + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_source'].to_csv(path, index=False)
     print('***Done downloading full source to ' + path)
 
