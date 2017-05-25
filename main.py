@@ -33,7 +33,7 @@ BAR_WIDTH = 0.5
 LINE_WIDTH = 2
 COLORS = ['#5e4fa2', '#3288bd', '#66c2a5', '#abdda4', '#e6f598', '#fee08b', '#fdae61', '#f46d43', '#d53e4f', '#9e0142']*1000
 C_NORM = "#31AADE"
-CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area']
+CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
 ADV_BASES = ['Consecutive', 'Total']
@@ -747,6 +747,85 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
         source = bms.ColumnDataSource({'x': [xs_around], 'y': [ys_around], 'ser_legend': [series]})
         p.patches('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
 
+def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
+    '''
+    Create maps
+    '''
+    maps = []
+    regions = ['i','n','r','rnew','rto','st']
+    x_axis = df.iloc[:,-2]
+    y_axis = df.iloc[:,-1]
+    if x_axis.name not in regions or y_axis.dtype == object:
+        return []
+    bin_width = (y_axis.max() - y_axis.min())/range_num_div
+    if range_min == None:
+        range_min = y_axis.min() + bin_width #the top of the lowest bin
+    if range_max == None:
+        range_max = y_axis.max() - bin_width #the bottom of the highest bin
+    df_maps = df.copy()
+    #assign all y-values to bins
+    df_maps['bin_index'] = y_axis.map(lambda x: math.floor(x/bin_width))
+    #find all unique groups of the explode columns.
+    df_unique = df_maps.copy()
+    #remove x, y, and bin_index
+    df_unique = df_unique[df_unique.columns[0:-3]]
+    df_unique.drop_duplicates(inplace=True)
+    #Loop through rows of df_unique, filter df_maps based on values in each row,
+    #and send filtered dataframe to mapping function
+    for i, row in df_unique.iterrows():
+        df_map = df_maps
+        title = ''
+        for col in df_unique:
+            df_map = df_map[df_map[col] == row[col]]
+            title = title + col + '=' + row[col] + ', '
+        #preserve just x axis, y axis, and bin index
+        df_map = df_map[df_map.columns[-3:]]
+        #remove final comma of title
+        title = title[:-2]
+        maps.append(create_map(df_map, wdg, title))
+    return maps
+
+def create_map(df, wdg, title=''):
+    '''
+    Create map
+    '''
+
+    regions = df.iloc[:,0].tolist()
+    values = df.iloc[:,1].tolist()
+    bins = df.iloc[:,2].tolist()
+
+    #Read in appropriate region boundaries:
+    filepath = this_dir_path + '/csv/gis_' + df.columns[0] + '.csv'
+    region_boundaries = pd.read_csv(filepath, sep=',')
+    region_boundaries['x'] = region_boundaries['long']*53
+    region_boundaries['y'] = region_boundaries['lat']*69
+    xs = [] #list of lists of x values of boundaries of regions
+    ys = [] #list of lists of y values of boundaries of regions
+    for reg in regions:
+        region_boundary = region_boundaries[region_boundaries['id'] == reg]
+        xs.append(region_boundary['x'].values.tolist())
+        ys.append(region_boundary['y'].values.tolist())
+    colors = [COLORS[int(i)] for i in bins]
+    source = bms.ColumnDataSource(data=dict(
+        x=xs,
+        y=ys,
+        region=regions,
+        value=values,
+        color=colors,
+    ))
+    #Add figure tools
+    hover = bmt.HoverTool(
+            tooltips=[
+                ("reg", "@region"),
+                ("val", "@value"),
+            ],
+            point_policy = "follow_mouse",
+    )
+    TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
+    fig_map = bp.figure(title=title, plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), x_axis_location=None, y_axis_location=None, tools=TOOLS)
+    fig_map.grid.grid_line_color = None
+    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=0.7, line_color="white", line_width=0.5)
+    return fig_map
 
 def build_series_legend(df_plots, series_val):
     '''
@@ -898,7 +977,11 @@ def update_plots():
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
     if GL['widgets']['render_plots'].value == 'Yes':
         GL['widgets']['series_legend'].text = build_series_legend(GL['df_plots'], GL['widgets']['series'].value)
-        GL['plots'].children = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
+        if GL['widgets']['chart_type'].value == 'Map':
+            figs = create_maps(GL['df_plots'], GL['widgets'])
+        else:
+            figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
+        GL['plots'].children = figs
 
 def download():
     '''
