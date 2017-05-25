@@ -553,7 +553,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
 
     #Rearrange column order for csv download
     unsorted_columns = [col for col in df_plots.columns if col not in sortby_cols + [wdg['y'].value]]
-    df_plots = df_plots[sortby_cols + unsorted_columns + [wdg['y'].value]]
+    df_plots = df_plots[unsorted_columns + sortby_cols + [wdg['y'].value]]
     print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
     return df_plots
 
