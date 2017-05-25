@@ -648,7 +648,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
                 ("y", "@y_legend"),
             ]
     )
-    TOOLS = [bmt.BoxZoomTool(), bmt.PanTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
+    TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
 
     #Create figure with the ranges, titles, and tools, and adjust formatting and labels
     p = bp.figure(plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), tools=TOOLS, **kw)
