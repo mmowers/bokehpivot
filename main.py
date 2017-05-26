@@ -37,6 +37,7 @@ CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
 ADV_BASES = ['Consecutive', 'Total']
+MAP_NUM_BINS = 5
 
 #List of widgets that use columns as their selectors
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
@@ -46,7 +47,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'plot_width', 'plot_height', 'opacity', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width']
+    'circle_size', 'bar_width', 'line_width', 'map_num', 'map_min', 'map_max']
 
 #initialize globals dict for variables that are modified within update functions.
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None, 'widgets':None, 'controls': None, 'plots':None}
@@ -407,6 +408,9 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
+    wdg['map_num'] = bmw.TextInput(title='Maps: Number of bins', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'adjust-drop'])
+    wdg['map_min'] = bmw.TextInput(title='Maps: Minimum Breakpoint', value='', css_classes=['wdgkey-map_min', 'adjust-drop'])
+    wdg['map_max'] = bmw.TextInput(title='Maps: Maximum Breakpoint', value='', css_classes=['wdgkey-map_max', 'adjust-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
     wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
     wdg['update'] = bmw.Button(label='Manual Update', button_type='success', css_classes=['update-drop'])
@@ -748,7 +752,7 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
         source = bms.ColumnDataSource({'x': [xs_around], 'y': [ys_around], 'ser_legend': [series]})
         p.patches('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
 
-def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
+def create_maps(df, wdg):
     '''
     Create maps
     '''
@@ -773,20 +777,27 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         'y_min': region_boundaries['y'].min(),
     }
     #determine bins of values
-    bin_width = (y_axis.max() - y_axis.min())/range_num_div
-    if range_min == None:
-        range_min = y_axis.min() + bin_width #the top of the lowest bin
-    if range_max == None:
-        range_max = y_axis.max() - bin_width #the bottom of the highest bin
+    map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
+    if wdg['map_min'].value != '' and wdg['map_max'].value != '':
+        map_min = float(wdg['map_min'].value)
+        map_max = float(wdg['map_max'].value)
+        bin_width = (map_max - map_min)/(map_num_bins - 2)
+        breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
+        breakpoint_strings = [str(bp) for bp in breakpoints]
+    else:
+        bin_width = float(y_axis.max() - y_axis.min())/map_num_bins
+        map_min = y_axis.min() + bin_width
+        map_max = y_axis.max() - bin_width
+        breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
+        breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
     #gather legend_labels array
-    breakpoints = ['%.2E' % (range_min + bin_width*i) for i in range(range_num_div - 1)]
-    legend_labels = ['< ' + breakpoints[0]]
-    legend_labels += [breakpoints[i] + ' - ' + breakpoints[i+1] for i in range(range_num_div - 2)]
-    legend_labels += ['> ' + breakpoints[-1]]
-    
+    legend_labels = ['< ' + breakpoint_strings[0]]
+    legend_labels += [breakpoint_strings[i] + ' - ' + breakpoint_strings[i+1] for i in range(map_num_bins - 2)]
+    legend_labels += ['> ' + breakpoint_strings[-1]]
+
     df_maps = df.copy()
     #assign all y-values to bins
-    df_maps['bin_index'] = y_axis.map(lambda x: math.floor(x/bin_width))
+    df_maps['bin_index'] = y_axis.apply(get_map_bin_index, args=(breakpoints,))
     #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
     if len(df_maps.columns) == 3:
         maps.append(create_map(df_maps, ranges, region_boundaries, wdg))
@@ -811,6 +822,12 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         title = title[:-2]
         maps.append(create_map(df_map, ranges, region_boundaries, wdg, title))
     return (maps, legend_labels) #multiple maps
+
+def get_map_bin_index(val, breakpoints):
+    for i, bp in enumerate(breakpoints):
+        if val < bp:
+            return i
+    return len(breakpoints)
 
 def create_map(df, ranges, region_boundaries, wdg, title=''):
     '''
