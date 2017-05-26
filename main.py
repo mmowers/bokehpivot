@@ -822,7 +822,17 @@ def create_map(df, wdg, title=''):
             point_policy = "follow_mouse",
     )
     TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
-    fig_map = bp.figure(title=title, plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), x_axis_location=None, y_axis_location=None, tools=TOOLS)
+    #find max and min of xs and ys to set aspect ration of map
+    xs_flat = [x for xl in xs for x in xl]
+    ys_flat = [y for yl in ys for y in yl]
+    x_min =  min(xs_flat)
+    x_max = max(xs_flat)
+    y_min = min(ys_flat)
+    y_max = max(ys_flat)
+    aspect_ratio = (y_max - y_min)/(x_max - x_min)
+    width = wdg['plot_width'].value
+    height = aspect_ratio * float(width)
+    fig_map = bp.figure(title=title, plot_height=int(height), plot_width=int(width), x_axis_location=None, y_axis_location=None, tools=TOOLS)
     fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=0.7, line_color="white", line_width=0.5)
