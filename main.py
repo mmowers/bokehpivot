@@ -756,7 +756,7 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     x_axis = df.iloc[:,-2]
     y_axis = df.iloc[:,-1]
     if x_axis.name not in regions or y_axis.dtype == object:
-        return []
+        return maps #empty list
     bin_width = (y_axis.max() - y_axis.min())/range_num_div
     if range_min == None:
         range_min = y_axis.min() + bin_width #the top of the lowest bin
@@ -765,6 +765,11 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     df_maps = df.copy()
     #assign all y-values to bins
     df_maps['bin_index'] = y_axis.map(lambda x: math.floor(x/bin_width))
+    #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
+    if len(df_maps.columns) == 3:
+        maps.append(create_map(df_maps, wdg))
+        return maps #single map
+    #Otherwise we are exploding.
     #find all unique groups of the explode columns.
     df_unique = df_maps.copy()
     #remove x, y, and bin_index
@@ -783,7 +788,7 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         #remove final comma of title
         title = title[:-2]
         maps.append(create_map(df_map, wdg, title))
-    return maps
+    return maps #multiple maps
 
 def create_map(df, wdg, title=''):
     '''
