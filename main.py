@@ -835,7 +835,7 @@ def create_map(df, wdg, title=''):
     fig_map = bp.figure(title=title, plot_height=int(height), plot_width=int(width), x_axis_location=None, y_axis_location=None, tools=TOOLS)
     fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
-    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=0.7, line_color="white", line_width=0.5)
+    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="white", line_width=0.5)
     return fig_map
 
 def build_series_legend(df_plots, series_val):
