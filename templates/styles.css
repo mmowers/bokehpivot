@@ -65,7 +65,8 @@ body {
 .adjust-dropdown,
 .filter-scenarios-dropdown,
 .update-dropdown,
-.download-dropdown{
+.download-dropdown,
+.legend-dropdown{
     font-weight: bold;
     color: blue;
     cursor: pointer;
@@ -85,12 +86,7 @@ body {
     margin-left: 5px;
     margin-right: 5px;
 }
-.legend-header,
-.export-config{
-    color: blue;
-    cursor: pointer;
-}
-.legend-body{
+.legend-drop{
     border: 1px solid lightgrey;
     padding: 10px;
 }

@@ -369,7 +369,6 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'])
-    wdg['series_legend'] = bmw.Div(text='', css_classes=['series-drop'])
     wdg['explode_dropdown'] = bmw.Div(text='Explode', css_classes=['explode-dropdown'])
     wdg['explode'] = bmw.Select(title='Explode By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-explode', 'explode-drop'])
     wdg['explode_group'] = bmw.Select(title='Group Exploded Charts By', value='None', options=['None'] + cols['seriesable'],
@@ -416,6 +415,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
     wdg['export_config'] = bmw.Div(text='Export Config to URL', css_classes=['export-config', 'bk-bs-btn', 'bk-bs-btn-success', 'download-drop'])
+    wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
+    wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
 
     #use init_config (from 'widgets' parameter in URL query string) to configure widgets.
     if init_load:
@@ -856,7 +857,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="white", line_width=0.5)
     return fig_map
 
-def build_series_legend(df_plots, series_val):
+def build_legend(df_plots, series_val):
     '''
     Return html for series legend, based on values of column that was chosen for series, and global COLORS.
 
@@ -865,16 +866,15 @@ def build_series_legend(df_plots, series_val):
         series_val (string): Header for column chosen as series.
 
     Returns:
-        series_legend_string (string): html to be used as legend.
+        legend_string (string): html to be used as legend.
     '''
-    series_legend_string = '<div class="legend-header">Series Legend</div><div class="legend-body">'
+    legend_string = ''
     if series_val != 'None':
         active_list = df_plots[series_val].unique().tolist()
         for i, txt in reversed(list(enumerate(active_list))):
-            series_legend_string += '<div class="legend-entry"><span class="legend-color" style="background-color:' + str(COLORS[i]) + ';"></span>'
-            series_legend_string += '<span class="legend-text">' + str(txt) +'</span></div>'
-    series_legend_string += '</div>'
-    return series_legend_string
+            legend_string += '<div class="legend-entry"><span class="legend-color" style="background-color:' + str(COLORS[i]) + ';"></span>'
+            legend_string += '<span class="legend-text">' + str(txt) +'</span></div>'
+    return legend_string
 
 
 def wavg(group, avg_name, weight_name):
@@ -1005,7 +1005,7 @@ def update_plots():
         return
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
     if GL['widgets']['render_plots'].value == 'Yes':
-        GL['widgets']['series_legend'].text = build_series_legend(GL['df_plots'], GL['widgets']['series'].value)
+        GL['widgets']['legend'].text = build_legend(GL['df_plots'], GL['widgets']['series'].value)
         if GL['widgets']['chart_type'].value == 'Map':
             figs = create_maps(GL['df_plots'], GL['widgets'])
         else:
