@@ -823,6 +823,7 @@ def create_map(df, wdg, title=''):
     )
     TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
     fig_map = bp.figure(title=title, plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), x_axis_location=None, y_axis_location=None, tools=TOOLS)
+    fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=0.7, line_color="white", line_width=0.5)
     return fig_map
