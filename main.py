@@ -777,6 +777,12 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         range_min = y_axis.min() + bin_width #the top of the lowest bin
     if range_max == None:
         range_max = y_axis.max() - bin_width #the bottom of the highest bin
+    #gather legend_labels array
+    breakpoints = ['%.2E' % (range_min + bin_width*i) for i in range(range_num_div - 1)]
+    legend_labels = ['< ' + breakpoints[0]]
+    legend_labels += [breakpoints[i] + ' - ' + breakpoints[i+1] for i in range(range_num_div - 2)]
+    legend_labels += ['> ' + breakpoints[-1]]
+    
     df_maps = df.copy()
     #assign all y-values to bins
     df_maps['bin_index'] = y_axis.map(lambda x: math.floor(x/bin_width))
@@ -803,7 +809,7 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         #remove final comma of title
         title = title[:-2]
         maps.append(create_map(df_map, ranges, region_boundaries, wdg, title))
-    return maps #multiple maps
+    return (maps, legend_labels) #multiple maps
 
 def create_map(df, ranges, region_boundaries, wdg, title=''):
     '''
@@ -857,7 +863,20 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="white", line_width=0.5)
     return fig_map
 
-def build_legend(df_plots, series_val):
+def build_map_legend(labels):
+    '''
+    Return html for series legend, based on values of column that was chosen for series, and global COLORS.
+
+    Args:
+
+    Returns:
+        legend_string (string): html to be used as legend.
+    '''
+    colors = [COLORS[i] for i, t in enumerate(labels)]
+    legend_string = build_legend(labels, colors)
+    return legend_string
+
+def build_plot_legend(df_plots, series_val):
     '''
     Return html for series legend, based on values of column that was chosen for series, and global COLORS.
 
@@ -868,14 +887,29 @@ def build_legend(df_plots, series_val):
     Returns:
         legend_string (string): html to be used as legend.
     '''
-    legend_string = ''
-    if series_val != 'None':
-        active_list = df_plots[series_val].unique().tolist()
-        for i, txt in reversed(list(enumerate(active_list))):
-            legend_string += '<div class="legend-entry"><span class="legend-color" style="background-color:' + str(COLORS[i]) + ';"></span>'
-            legend_string += '<span class="legend-text">' + str(txt) +'</span></div>'
+    if series_val == 'None':
+        return ''
+    labels = df_plots[series_val].unique().tolist()
+    colors = [COLORS[i] for i, t in enumerate(labels)]
+    labels.reverse()
+    colors.reverse()
+    legend_string = build_legend(labels, colors)
     return legend_string
 
+def build_legend(labels, colors):
+    '''
+    Return html for legend
+
+    Args:
+
+    Returns:
+        legend_string (string): html to be used as legend.
+    '''
+    legend_string = ''
+    for i, txt in enumerate(labels):
+        legend_string += '<div class="legend-entry"><span class="legend-color" style="background-color:' + str(colors[i]) + ';"></span>'
+        legend_string += '<span class="legend-text">' + str(txt) +'</span></div>'
+    return legend_string
 
 def wavg(group, avg_name, weight_name):
     """ http://pbpython.com/weighted-average.html
@@ -1005,11 +1039,13 @@ def update_plots():
         return
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
     if GL['widgets']['render_plots'].value == 'Yes':
-        GL['widgets']['legend'].text = build_legend(GL['df_plots'], GL['widgets']['series'].value)
         if GL['widgets']['chart_type'].value == 'Map':
-            figs = create_maps(GL['df_plots'], GL['widgets'])
+            figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'])
+            legend_text = build_map_legend(legend_labels)
         else:
             figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
+            legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value)
+        GL['widgets']['legend'].text = legend_text
         GL['plots'].children = figs
 
 def download():
