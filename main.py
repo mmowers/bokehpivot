@@ -753,11 +753,12 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     Create maps
     '''
     maps = []
+    legend_labels = []
     regions = ['i','n','r','rnew','rto','st']
     x_axis = df.iloc[:,-2]
     y_axis = df.iloc[:,-1]
     if x_axis.name not in regions or y_axis.dtype == object:
-        return maps #empty list
+        return (maps, legend_labels) #empty list
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
     filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
@@ -789,7 +790,7 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
     if len(df_maps.columns) == 3:
         maps.append(create_map(df_maps, ranges, region_boundaries, wdg))
-        return maps #single map
+        return (maps, legend_labels) #single map
     #Otherwise we are exploding.
     #find all unique groups of the explode columns.
     df_unique = df_maps.copy()
