@@ -757,6 +757,20 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     y_axis = df.iloc[:,-1]
     if x_axis.name not in regions or y_axis.dtype == object:
         return maps #empty list
+    #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
+    #are in the data
+    filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
+    region_boundaries = pd.read_csv(filepath, sep=',')
+    region_boundaries = region_boundaries[region_boundaries['id'].isin(x_axis.unique().tolist())]
+    region_boundaries['x'] = region_boundaries['long']*53
+    region_boundaries['y'] = region_boundaries['lat']*69
+    ranges = {
+        'x_max': region_boundaries['x'].max(),
+        'x_min': region_boundaries['x'].min(),
+        'y_max': region_boundaries['y'].max(),
+        'y_min': region_boundaries['y'].min(),
+    }
+    #determine bins of values
     bin_width = (y_axis.max() - y_axis.min())/range_num_div
     if range_min == None:
         range_min = y_axis.min() + bin_width #the top of the lowest bin
@@ -767,7 +781,7 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
     df_maps['bin_index'] = y_axis.map(lambda x: math.floor(x/bin_width))
     #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
     if len(df_maps.columns) == 3:
-        maps.append(create_map(df_maps, wdg))
+        maps.append(create_map(df_maps, ranges, region_boundaries, wdg))
         return maps #single map
     #Otherwise we are exploding.
     #find all unique groups of the explode columns.
@@ -787,10 +801,10 @@ def create_maps(df, wdg, range_num_div=5, range_min=None, range_max=None):
         df_map = df_map[df_map.columns[-3:]]
         #remove final comma of title
         title = title[:-2]
-        maps.append(create_map(df_map, wdg, title))
+        maps.append(create_map(df_map, ranges, region_boundaries, wdg, title))
     return maps #multiple maps
 
-def create_map(df, wdg, title=''):
+def create_map(df, ranges, region_boundaries, wdg, title=''):
     '''
     Create map
     '''
@@ -799,11 +813,6 @@ def create_map(df, wdg, title=''):
     values = df.iloc[:,1].tolist()
     bins = df.iloc[:,2].tolist()
 
-    #Read in appropriate region boundaries:
-    filepath = this_dir_path + '/csv/gis_' + df.columns[0] + '.csv'
-    region_boundaries = pd.read_csv(filepath, sep=',')
-    region_boundaries['x'] = region_boundaries['long']*53
-    region_boundaries['y'] = region_boundaries['lat']*69
     xs = [] #list of lists of x values of boundaries of regions
     ys = [] #list of lists of y values of boundaries of regions
     for reg in regions:
@@ -828,16 +837,20 @@ def create_map(df, wdg, title=''):
     )
     TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
     #find max and min of xs and ys to set aspect ration of map
-    xs_flat = [x for xl in xs for x in xl]
-    ys_flat = [y for yl in ys for y in yl]
-    x_min =  min(xs_flat)
-    x_max = max(xs_flat)
-    y_min = min(ys_flat)
-    y_max = max(ys_flat)
-    aspect_ratio = (y_max - y_min)/(x_max - x_min)
+    
+    aspect_ratio = (ranges['y_max'] - ranges['y_min'])/(ranges['x_max'] - ranges['x_min'])
     width = wdg['plot_width'].value
     height = aspect_ratio * float(width)
-    fig_map = bp.figure(title=title, plot_height=int(height), plot_width=int(width), x_axis_location=None, y_axis_location=None, tools=TOOLS)
+    fig_map = bp.figure(
+        title=title,
+        plot_height=int(height),
+        plot_width=int(width),
+        x_range=(ranges['x_min'], ranges['x_max']),
+        y_range=(ranges['y_min'], ranges['y_max']),
+        x_axis_location=None,
+        y_axis_location=None,
+        tools=TOOLS
+    )
     fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="white", line_width=0.5)
