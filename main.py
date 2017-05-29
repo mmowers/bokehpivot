@@ -752,7 +752,7 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
         source = bms.ColumnDataSource({'x': [xs_around], 'y': [ys_around], 'ser_legend': [series]})
         p.patches('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
 
-def create_maps(df, wdg):
+def create_maps(df, wdg, cols):
     '''
     Create maps
     '''
@@ -767,7 +767,23 @@ def create_maps(df, wdg):
     #are in the data
     filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
     region_boundaries = pd.read_csv(filepath, sep=',')
-    region_boundaries = region_boundaries[region_boundaries['id'].isin(x_axis.unique().tolist())]
+    #load hierarchy.csv and join on region_boundaries
+    df_join = pd.read_csv(this_dir_path + '/csv/hierarchy.csv', sep=',')
+    #remove columns to left of x_axis.name in df_join
+    for c in df_join.columns.values.tolist():
+        if c == x_axis.name:
+            break
+        df_join.drop(c, axis=1, inplace=True)
+    #remove duplicate rows
+    df_join.drop_duplicates(subset=x_axis.name, inplace=True)
+    #merge df_join into df
+    region_boundaries = pd.merge(left=region_boundaries, right=df_join, left_on='id', right_on=x_axis.name, sort=False)
+    #filter region_boundaries by filter widgets
+    for j, col in enumerate(cols['filterable']):
+        if col in region_boundaries:
+            active = [wdg['filter_'+str(j)].labels[i] for i in wdg['filter_'+str(j)].active]
+            region_boundaries = region_boundaries[region_boundaries[col].isin(active)]
+    #Add x and y columns to region_boundaries and find x and y ranges
     region_boundaries['x'] = region_boundaries['long']*53
     region_boundaries['y'] = region_boundaries['lat']*69
     ranges = {
@@ -834,17 +850,30 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     Create map
     '''
 
-    regions = df.iloc[:,0].tolist()
-    values = df.iloc[:,1].tolist()
-    bins = df.iloc[:,2].tolist()
+    df_regions = df.iloc[:,0].tolist()
+    df_values = df.iloc[:,1].tolist()
+    df_bins = df.iloc[:,2].tolist()
 
     xs = [] #list of lists of x values of boundaries of regions
     ys = [] #list of lists of y values of boundaries of regions
-    for reg in regions:
+    regions = []
+    values = []
+    colors = []
+    for reg in region_boundaries['id'].unique().tolist():
         region_boundary = region_boundaries[region_boundaries['id'] == reg]
         xs.append(region_boundary['x'].values.tolist())
         ys.append(region_boundary['y'].values.tolist())
-    colors = [COLORS[int(i)] for i in bins]
+        regions.append(reg)
+        if reg in df_regions:
+            index = df_regions.index(reg)
+            value = df_values[index]
+            values.append(value)
+            bin_num = df_bins[index]
+            colors.append(COLORS[int(bin_num)])
+        else:
+            values.append('NA')
+            colors.append('#ffffff')
+
     source = bms.ColumnDataSource(data=dict(
         x=xs,
         y=ys,
@@ -878,7 +907,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     )
     fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
-    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="white", line_width=0.5)
+    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="black", line_width=0.5)
     return fig_map
 
 def build_map_legend(labels):
@@ -1058,7 +1087,7 @@ def update_plots():
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
     if GL['widgets']['render_plots'].value == 'Yes':
         if GL['widgets']['chart_type'].value == 'Map':
-            figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'])
+            figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
             legend_text = build_map_legend(legend_labels)
         else:
             figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
