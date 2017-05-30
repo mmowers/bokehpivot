@@ -767,6 +767,8 @@ def create_maps(df, wdg, cols):
     #are in the data
     filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
     region_boundaries = pd.read_csv(filepath, sep=',')
+    #Remove holes
+    region_boundaries = region_boundaries[region_boundaries['hole'] == False]
     #load hierarchy.csv and join on region_boundaries
     df_join = pd.read_csv(this_dir_path + '/csv/hierarchy.csv', sep=',')
     #remove columns to left of x_axis.name in df_join
