@@ -17,7 +17,7 @@ import bokeh.plotting as bp
 import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
-from reeds import *
+from reeds import results_meta, columns_meta
 
 #Defaults to configure:
 PLOT_WIDTH = 300
@@ -840,8 +840,8 @@ def create_maps(df, wdg, cols):
     return (maps, legend_labels) #multiple maps
 
 def get_map_bin_index(val, breakpoints):
-    for i, bp in enumerate(breakpoints):
-        if val < bp:
+    for i, breakpoint in enumerate(breakpoints):
+        if val < breakpoint:
             return i
     return len(breakpoints)
 
@@ -979,9 +979,6 @@ def update_data_source(init_load=False, init_config={}):
     GL['widgets'] = GL['data_source_wdg'].copy()
     path = GL['data_source_wdg']['data'].value
     path = path.replace('"', '')
-    #reset ReEDS scenarios and result_dfs
-    scenarios = []
-    result_dfs = {}
     if path == '':
         pass
     elif path.lower().endswith('.csv'):

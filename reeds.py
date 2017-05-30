@@ -3,18 +3,8 @@ ReEDS-specific functions and variables.
 '''
 from __future__ import division
 import os
-import math
-import json
 import pandas as pd
 import collections
-import bokeh.io as bio
-import bokeh.layouts as bl
-import bokeh.models.widgets as bmw
-import bokeh.models.sources as bms
-import bokeh.models.tools as bmt
-import bokeh.plotting as bp
-import datetime
-import six.moves.urllib.parse as urlp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 inflation_mult = 1.2547221 #2004$ to 2015$
