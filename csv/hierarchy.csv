@@ -91,9 +91,9 @@ i,n,st,rto,r,rnew,censusregions,in,country,custreg
 91,p31,NM,rto3,nr12,nr7new,MTN,WSCC,USA,Mountain
 92,p31,NM,rto3,nr12,nr7new,MTN,WSCC,USA,Mountain
 93,p31,NM,rto3,nr12,nr7new,MTN,WSCC,USA,Mountain
-94,p59,TX,rto3,nr12,nr7new,MTN,WSCC,USA,Mountain
-95,p32,SD,rto5,nr11,nr3new,MTN,WSCC,USA,Mountain
-96,p35,MT,rto11,nr5,nr9new,WNC,eastern,USA,West North Central
+94,p59,TX,rto3,nr12,nr7new,MTN,WSCC,USA,West South Central
+95,p32,SD,rto5,nr11,nr3new,MTN,WSCC,USA,West North Central
+96,p35,MT,rto11,nr5,nr9new,WNC,eastern,USA,Mountain
 97,p36,ND,rto11,nr5,nr9new,WNC,eastern,USA,West North Central
 98,p36,ND,rto11,nr5,nr9new,WNC,eastern,USA,West North Central
 99,p37,ND,rto11,nr5,nr9new,WNC,eastern,USA,West North Central
@@ -146,7 +146,7 @@ i,n,st,rto,r,rnew,censusregions,in,country,custreg
 145,p54,MO,rto8,nr10,nr11new,WNC,eastern,USA,West North Central
 146,p55,MO,rto8,nr10,nr10new,WNC,eastern,USA,West North Central
 147,p55,MO,rto8,nr10,nr10new,WNC,eastern,USA,West North Central
-148,p47,NM,rto8,nr10,nr10new,WSC,eastern,USA,West South Central
+148,p47,NM,rto8,nr10,nr10new,WSC,eastern,USA,Mountain
 149,p48,TX,rto8,nr10,nr10new,WSC,eastern,USA,West South Central
 150,p48,TX,rto8,nr10,nr10new,WSC,eastern,USA,West South Central
 151,p57,TX,rto8,nr10,nr10new,WSC,eastern,USA,West South Central
