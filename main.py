@@ -833,16 +833,27 @@ def create_maps(df, wdg, cols):
     #Loop through rows of df_unique, filter df_maps based on values in each row,
     #and send filtered dataframe to mapping function
     for i, row in df_unique.iterrows():
+        reg_bound = region_boundaries
         df_map = df_maps
         title = ''
         for col in df_unique:
             df_map = df_map[df_map[col] == row[col]]
             title = title + col + '=' + row[col] + ', '
+            #if we are exploding on some region type, then filter region_boundaries to that region
+            if col in df_join.columns.values.tolist():
+                reg_bound = reg_bound[reg_bound[col] == row[col]]
+        #Use filtered regions to set map ranges
+        ranges = {
+            'x_max': reg_bound['x'].max(),
+            'x_min': reg_bound['x'].min(),
+            'y_max': reg_bound['y'].max(),
+            'y_min': reg_bound['y'].min(),
+        }
         #preserve just x axis, y axis, and bin index
         df_map = df_map[df_map.columns[-3:]]
         #remove final comma of title
         title = title[:-2]
-        maps.append(create_map(df_map, ranges, region_boundaries, wdg, title))
+        maps.append(create_map(df_map, ranges, reg_bound, wdg, title))
     print('***Done building maps.')
     return (maps, legend_labels) #multiple maps
 
