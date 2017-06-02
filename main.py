@@ -866,10 +866,11 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     regions = []
     values = []
     colors = []
-    for reg in region_boundaries['id'].unique().tolist():
-        region_boundary = region_boundaries[region_boundaries['id'] == reg]
+    for grp in region_boundaries['group'].unique().tolist():
+        region_boundary = region_boundaries[region_boundaries['group'] == grp]
         xs.append(region_boundary['x'].values.tolist())
         ys.append(region_boundary['y'].values.tolist())
+        reg = region_boundary['id'].iloc[0]
         regions.append(reg)
         if reg in df_regions:
             index = df_regions.index(reg)
