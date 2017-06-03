@@ -499,6 +499,8 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     y_val = wdg['y'].value
     y_agg = wdg['y_agg'].value
     if op != 'None' and col != 'None' and col in df_plots and col_base != 'None' and y_agg != 'None' and y_val in cols['continuous']:
+        if col in cols['continuous'] and col_base not in ADV_BASES:
+            col_base = float(col_base)
         #groupby all columns that are not the operating column and y axis column so we can do operations on y-axis across the operating column
         groupcols = [i for i in df_plots.columns.values.tolist() if i not in [col, y_val]]
         if groupcols != []:
@@ -514,14 +516,14 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             elif col_base == 'Total':
                 df_plots[y_val] = df_plots[y_val] - df_grouped[y_val].transform('sum')
             else:
-                df_plots = df_grouped.apply(diff_with_base, col, col_base, y_val).reset_index(drop=True)
+                df_plots = df_grouped.apply(op_with_base, 'diff', col, col_base, y_val).reset_index(drop=True)
         elif op == 'Ratio':
             if col_base == 'Consecutive':
                 df_plots[y_val] = df_grouped[y_val].transform(ratio_consecutive)
             elif col_base == 'Total':
                 df_plots[y_val] = df_plots[y_val] / df_grouped[y_val].transform('sum')
             else:
-                df_plots = df_grouped.apply(ratio_with_base, col, col_base, y_val).reset_index(drop=True)
+                df_plots = df_grouped.apply(op_with_base, 'ratio', col, col_base, y_val).reset_index(drop=True)
         #Finally, clean up df_plots, dropping unnecessary columns, rows with the base value, and any rows with NAs for y_vals
         if 'tempgroup' in df_plots:
             df_plots.drop(['tempgroup'], axis='columns', inplace=True)
@@ -977,27 +979,24 @@ def wavg(group, avg_name, weight_name):
     except ZeroDivisionError:
         return 0
 
-def diff_with_base(group, col, col_base, y_val):
+def op_with_base(group, op_type, col, col_base, y_val):
     df_base = group[group[col]==col_base]
     if df_base.empty:
         y_base = 0
     else:
         y_base = df_base[y_val].iloc[0]
     group_out = group.copy()
-    group_out[y_val] = group[y_val] - y_base
-    return group_out
-
-def ratio_with_base(group, col, col_base, y_val):
-    y_base = group[group[col]==col_base][y_val].iloc[0]
-    group_out = group.copy()
-    group_out[y_val] = group[y_val] / y_base
+    if op_type == 'diff':
+        group_out[y_val] = group[y_val] - y_base
+    elif op_type == 'ratio':
+        group_out[y_val] = group[y_val] / y_base if y_base else 0
     return group_out
 
 def ratio_consecutive(group):
     group_list = group.tolist()
     out_list = [0]
     out_list += [group_list[i+1]/group_list[i] if group_list[i] else 0 for i in range(len(group_list) - 1)]
-    out_series = pd.Series(out_list)
+    out_series = pd.Series(out_list, index=group.index)
     return out_series
 
 def update_data(attr, old, new):
