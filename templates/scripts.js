@@ -54,6 +54,9 @@ $(document).ready(function(){
     $('body').on('click', '.adjust-dropdown', function(){
         $('.adjust-drop').toggle();
     });
+    $('body').on('click', '.map-dropdown', function(){
+        $('.map-drop').toggle();
+    });
     $('body').on('click', '.select-opt', function(){
         var checked_bool = $(this).hasClass('select-all') ? true: false;
         $(this).parent().next('.bk-widget').find('.bk-bs-checkbox input').prop( "checked", checked_bool);
@@ -105,6 +108,7 @@ document.onkeydown = function(e) {
     $('.select-all-none').hide();
     $('.filter').hide();
     $('.adjust-drop').hide();
+    $('.map-drop').hide();
     $('.update-drop').hide();
     $('.download-drop').hide();
   }
