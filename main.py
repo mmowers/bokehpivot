@@ -410,7 +410,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
-    wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Width', options=['Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
+    wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
@@ -792,11 +792,27 @@ def create_maps(df, wdg, cols):
         'y_max': region_boundaries['y'].max(),
         'y_min': region_boundaries['y'].min(),
     }
-    #determine bins of values
-    map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
-    
-    #set breakpoints and breakpoint_strings depending on the binning selection
-    if wdg['map_bin'].value == 'Auto Equal Width':
+    #set breakpoints and breakpoint_strings depending on the binning strategy
+    if wdg['map_bin'].value == 'Auto Equal Num': #an equal number of data ponts in each bin
+        map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
+        #get full list of values
+        val_list = sorted(y_axis.tolist())
+        breakpoints = []
+        num_bins = map_num_bins
+        i = 0
+        while i < len(val_list) and len(breakpoints) < map_num_bins - 1:
+            i = int(round(len(val_list)/num_bins)) - 1 #the index where the breakpoint is
+            breakpoints.append(val_list[i])
+            #make sure repeat values are grouped into the same bin, and higher bins disregard them:
+            i = i + 1
+            while i < len(val_list) and val_list[i] == val_list[i-1]:
+                i = i + 1
+            val_list = val_list[i:]
+            num_bins = num_bins - 1
+            i = 0
+        breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
+    elif wdg['map_bin'].value == 'Auto Equal Width': #bins of equal width
+        map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
         if wdg['map_min'].value != '' and wdg['map_max'].value != '':
             map_min = float(wdg['map_min'].value)
             map_max = float(wdg['map_max'].value)
@@ -814,9 +830,9 @@ def create_maps(df, wdg, cols):
         breakpoints = [float(bp) for bp in breakpoint_strings]
         
     #gather legend_labels array
-    legend_labels = ['< ' + breakpoint_strings[0]]
+    legend_labels = ['<= ' + breakpoint_strings[0]]
     legend_labels += [breakpoint_strings[i] + ' - ' + breakpoint_strings[i+1] for i in range(len(breakpoint_strings) - 1)]
-    legend_labels += ['>= ' + breakpoint_strings[-1]]
+    legend_labels += ['> ' + breakpoint_strings[-1]]
 
     df_maps = df.copy()
     #assign all y-values to bins
@@ -861,7 +877,7 @@ def create_maps(df, wdg, cols):
 
 def get_map_bin_index(val, breakpoints):
     for i, breakpoint in enumerate(breakpoints):
-        if val < breakpoint:
+        if val <= breakpoint:
             return i
     return len(breakpoints)
 
