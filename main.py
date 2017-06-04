@@ -795,21 +795,12 @@ def create_maps(df, wdg, cols):
     #set breakpoints and breakpoint_strings depending on the binning strategy
     if wdg['map_bin'].value == 'Auto Equal Num': #an equal number of data ponts in each bin
         map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
-        #get full list of values
-        val_list = sorted(y_axis.tolist())
-        breakpoints = []
-        num_bins = map_num_bins
-        i = 0
-        while i < len(val_list) and len(breakpoints) < map_num_bins - 1:
-            i = int(round(len(val_list)/num_bins)) - 1 #the index where the breakpoint is
-            breakpoints.append(val_list[i])
-            #make sure repeat values are grouped into the same bin, and higher bins disregard them:
-            i = i + 1
-            while i < len(val_list) and val_list[i] == val_list[i-1]:
-                i = i + 1
-            val_list = val_list[i:]
-            num_bins = num_bins - 1
-            i = 0
+        #with full list of values, find uniques with set, and return a sorted list of the uniques
+        val_list = sorted(set(y_axis.tolist()))
+        #bin indices, find index breakpoints, and convert into value breakpoints.
+        index_step = (len(val_list) - 1)/map_num_bins
+        indices = [int((i+1)*index_step) for i in range(map_num_bins - 1)]
+        breakpoints = [val_list[i] for i in indices]
         breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
     elif wdg['map_bin'].value == 'Auto Equal Width': #bins of equal width
         map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
