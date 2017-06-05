@@ -297,7 +297,7 @@ def process_reeds_data(topwdg):
     #apply joins
     for col in df.columns.values.tolist():
         if 'meta_join_'+col in topwdg and topwdg['meta_join_'+col].value != '':
-            df_join = pd.read_csv(topwdg['meta_join_'+col].value.replace('"',''))
+            df_join = pd.read_csv(topwdg['meta_join_'+col].value.replace('"',''), dtype=object)
             #remove columns to left of col in df_join
             for c in df_join.columns.values.tolist():
                 if c == col:
@@ -311,7 +311,7 @@ def process_reeds_data(topwdg):
     #apply mappings
     for col in df.columns.values.tolist():
         if 'meta_map_'+col in topwdg and topwdg['meta_map_'+col].value != '':
-            df_map = pd.read_csv(topwdg['meta_map_'+col].value.replace('"',''))
+            df_map = pd.read_csv(topwdg['meta_map_'+col].value.replace('"',''), dtype=object)
             #filter out values that aren't in raw column
             df = df[df[col].isin(df_map['raw'].values.tolist())]
             #now map from raw to display
@@ -321,7 +321,7 @@ def process_reeds_data(topwdg):
     #apply custom styling
     for col in df.columns.values.tolist():
         if 'meta_style_'+col in topwdg and topwdg['meta_style_'+col].value != '':
-            df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''))
+            df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''), dtype=object)
             #filter out values that aren't in order column
             df = df[df[col].isin(df_style['order'].values.tolist())]
             #add to custom_sorts with new order
@@ -773,11 +773,11 @@ def create_maps(df, wdg, cols):
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
     filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
-    region_boundaries = pd.read_csv(filepath, sep=',')
+    region_boundaries = pd.read_csv(filepath, sep=',', dtype={'id': object, 'group': object})
     #Remove holes
     region_boundaries = region_boundaries[region_boundaries['hole'] == False]
     #load hierarchy.csv and join on region_boundaries
-    df_join = pd.read_csv(this_dir_path + '/csv/hierarchy.csv', sep=',')
+    df_join = pd.read_csv(this_dir_path + '/csv/hierarchy.csv', sep=',', dtype=object)
     #remove columns to left of x_axis.name in df_join
     for c in df_join.columns.values.tolist():
         if c == x_axis.name:
