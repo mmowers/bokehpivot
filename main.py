@@ -856,7 +856,7 @@ def create_maps(df, wdg, cols):
         title = ''
         for col in df_unique:
             df_map = df_map[df_map[col] == row[col]]
-            title = title + col + '=' + row[col] + ', '
+            title = title + col + '=' + str(row[col]) + ', '
             #if we are exploding on some region type, then filter region_boundaries to that region
             if col in df_join.columns.values.tolist():
                 reg_bound = reg_bound[reg_bound[col] == row[col]]
