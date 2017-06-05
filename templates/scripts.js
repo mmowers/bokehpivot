@@ -5,7 +5,7 @@ $(document).ready(function(){
     $('body').on('click', '.data-dropdown', function(){
         $('.data-drop').toggle();
     });
-    $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label', function(){
+    $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label, .wdgkey-chart_type label', function(){
         $(this).next().toggle();
     });
     $('body').on('click', '.filter-scenarios-dropdown', function(){
@@ -96,6 +96,7 @@ document.onkeydown = function(e) {
     $('.wdgkey-runs input').hide();
     $('.wdgkey-result select').hide();
     $('.wdgkey-presets select').hide();
+    $('.wdgkey-chart_type select').hide();
     $('.wdgkey-filter_scenarios').hide();
     $('.x-drop').hide();
     $('.y-drop').hide();

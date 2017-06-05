@@ -34,6 +34,7 @@ body {
     display: none !important;
 }
 .meta-drop,
+.bk-widget.wdgkey-chart_type select,
 .x-drop,
 .y-drop,
 .series-drop,
@@ -75,6 +76,7 @@ body {
     margin-top: 20px;
     text-decoration: underline;
 }
+.wdgkey-chart_type label,
 .wdgkey-result label,
 .wdgkey-presets label{
     font-weight: bold;
