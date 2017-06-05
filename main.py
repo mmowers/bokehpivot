@@ -1089,16 +1089,16 @@ def update_reeds_presets(attr, old, new):
                 #find index of associated filter:
                 for j, col in enumerate(GL['columns']['filterable']):
                     if col == fil:
+                        #get filter widget associated with found index
+                        wdg_fil = wdg['filter_'+str(j)]
+                        #build the new_active list, starting with zeros
+                        new_active = []
+                        #for each label given in the preset, set corresponding active to 1
+                        for lab in preset['filter'][fil]:
+                            index = wdg_fil.labels.index(str(lab))
+                            new_active.append(index)
+                        wdg_fil.active = new_active
                         break
-                #get filter widget associated with found index
-                wdg_fil = wdg['filter_'+str(j)]
-                #build the new_active list, starting with zeros
-                new_active = []
-                #for each label given in the preset, set corresponding active to 1
-                for lab in preset['filter'][fil]:
-                    index = wdg_fil.labels.index(str(lab))
-                    new_active.append(index)
-                wdg_fil.active = new_active
         #finally, set x, which will trigger the data and chart updates.
         wdg['x'].value = preset['x']
 
