@@ -1080,9 +1080,24 @@ def update_reeds_presets(attr, old, new):
         #set x to "None" so that the chart will not render until all presets have been set.
         wdg['x'].value = 'None'
         preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
-        preset_keys_minus_x = [key for key in preset if key != 'x']
-        for key in preset_keys_minus_x:
+        common_presets = [key for key in preset if key not in ['x', 'filter']]
+        for key in common_presets:
             wdg[key].value = preset[key]
+        #filters are handled separately. We must deal with the active arrays of each filter
+        for fil in preset['filter']:
+            #find index of associated filter:
+            for j, col in enumerate(GL['columns']['filterable']):
+                if col == fil:
+                    break
+            #get filter widget associated with found index
+            wdg_fil = wdg['filter_'+str(j)]
+            #build the new_active list, starting with zeros
+            new_active = []
+            #for each label given in the preset, set corresponding active to 1
+            for lab in preset['filter'][fil]:
+                index = wdg_fil.labels.index(str(lab))
+                new_active.append(index)
+            wdg_fil.active = new_active
         wdg['x'].value = preset['x']
 
 def update_wdg(attr, old, new):
