@@ -38,7 +38,11 @@ CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
 ADV_BASES = ['Consecutive', 'Total']
-MAP_NUM_BINS = 5
+MAP_FONT_SIZE = 10
+MAP_NUM_BINS = 10
+MAP_WIDTH = 500
+MAP_OPACITY = 1
+MAP_LINE_WIDTH = 0.1
 
 #List of widgets that use columns as their selectors
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
@@ -48,7 +52,8 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'plot_width', 'plot_height', 'opacity', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual']
+    'circle_size', 'bar_width', 'line_width', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'map_width', 'map_font_size', 'map_line_width', 'map_opacity']
 
 #initialize globals dict for variables that are modified within update functions.
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None, 'widgets':None, 'controls': None, 'plots':None}
@@ -415,6 +420,10 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
+    wdg['map_width'] = bmw.TextInput(title='Map Width (px)', value=str(MAP_WIDTH), css_classes=['wdgkey-map_width', 'map-drop'])
+    wdg['map_font_size'] = bmw.TextInput(title='Title Font Size', value=str(MAP_FONT_SIZE), css_classes=['wdgkey-map_font_size', 'map-drop'])
+    wdg['map_line_width'] = bmw.TextInput(title='Line Width', value=str(MAP_LINE_WIDTH), css_classes=['wdgkey-map_line_width', 'map-drop'])
+    wdg['map_opacity'] = bmw.TextInput(title='Opacity (0-1)', value=str(MAP_OPACITY), css_classes=['wdgkey-map_opacity', 'map-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
     wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
     wdg['update'] = bmw.Button(label='Manual Update', button_type='success', css_classes=['update-drop'])
@@ -794,7 +803,7 @@ def create_maps(df, wdg, cols):
     }
     #set breakpoints and breakpoint_strings depending on the binning strategy
     if wdg['map_bin'].value == 'Auto Equal Num': #an equal number of data ponts in each bin
-        map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
+        map_num_bins = int(wdg['map_num'].value)
         #with full list of values, find uniques with set, and return a sorted list of the uniques
         val_list = sorted(set(y_axis.tolist()))
         #bin indices, find index breakpoints, and convert into value breakpoints.
@@ -803,7 +812,7 @@ def create_maps(df, wdg, cols):
         breakpoints = [val_list[i] for i in indices]
         breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
     elif wdg['map_bin'].value == 'Auto Equal Width': #bins of equal width
-        map_num_bins = int(wdg['map_num'].value) if wdg['map_num'].value != '' else 5
+        map_num_bins = int(wdg['map_num'].value)
         if wdg['map_min'].value != '' and wdg['map_max'].value != '':
             map_min = float(wdg['map_min'].value)
             map_max = float(wdg['map_max'].value)
@@ -921,7 +930,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     #find max and min of xs and ys to set aspect ration of map
     
     aspect_ratio = (ranges['y_max'] - ranges['y_min'])/(ranges['x_max'] - ranges['x_min'])
-    width = wdg['plot_width'].value
+    width = wdg['map_width'].value
     height = aspect_ratio * float(width)
     fig_map = bp.figure(
         title=title,
@@ -933,9 +942,9 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
         y_axis_location=None,
         tools=TOOLS
     )
-    fig_map.title.text_font_size = wdg['plot_title_size'].value + 'pt'
+    fig_map.title.text_font_size = wdg['map_font_size'].value + 'pt'
     fig_map.grid.grid_line_color = None
-    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['opacity'].value), line_color="black", line_width=0.5)
+    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
     return fig_map
 
 def build_map_legend(labels):
