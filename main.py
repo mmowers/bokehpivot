@@ -1077,9 +1077,17 @@ def update_reeds_wdg(type):
 def update_reeds_presets(attr, old, new):
     wdg = GL['widgets']
     if wdg['presets'].value != 'None':
-        #set x to "None" so that the chart will not render until all presets have been set.
-        wdg['x'].value = 'None'
+        #set most all selectors to 'None', y_agg to 'Sum', and clear all filters.
+        selectors = ['x', 'x_group', 'y', 'y_weight', 'series', 'explode', 'explode_group', 'adv_op', 'adv_col', 'adv_col_base']
+        for s in selectors:
+            wdg[s].value = 'None'
+        wdg['y_agg'].value = 'Sum'
+        for j, col in enumerate(GL['columns']['filterable']):
+            wdg_fil = wdg['filter_'+str(j)]
+            wdg_fil.active = list(range(len(wdg_fil.labels)))
+        
         preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
+        #set all presets except x and filter. x will be set at end, triggering render of chart.
         common_presets = [key for key in preset if key not in ['x', 'filter']]
         for key in common_presets:
             wdg[key].value = preset[key]
