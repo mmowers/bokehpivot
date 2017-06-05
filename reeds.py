@@ -77,7 +77,7 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Stacked Capacity',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
-            ('Tech Compare',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
             ('Map: 2050 Wind By State',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
         )),
         }
@@ -92,7 +92,7 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Stacked Capacity',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
-            ('Tech Compare',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
     ),
@@ -105,7 +105,7 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Stacked Gen',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
-            ('Tech Compare',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Explode By Tech',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
     ),
