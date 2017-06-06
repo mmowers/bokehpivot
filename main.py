@@ -759,7 +759,17 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
 
 def create_maps(df, wdg, cols):
     '''
-    Create maps
+    Create maps based on an input dataframe.The second-to-last column of this
+    dataframe is assumed to be the x-axis, or the column of regions that are to be mapped.
+    The last column of this dataframe will be the y axis, or the values that correspond
+    to the regions. Values are binned into ranges and then mapped to a color for each region.
+
+    Args:
+        df (pandas dataframe): input dataframe described above
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
+    Returns:
+        maps (list of bokeh.plotting.figure): These maps are created by the create_map function.
     '''
     print('***Building Maps...')
     maps = []
@@ -876,6 +886,17 @@ def create_maps(df, wdg, cols):
     return (maps, legend_labels) #multiple maps
 
 def get_map_bin_index(val, breakpoints):
+    '''
+    Helper function for determining the bin number for a given value and set of breakpoints.
+    This assumes that bin ranges are less than or equal to the upper value and
+    strictly greater than the lower value.
+
+    Args:
+        val (float): The value that is to be binned
+        breakpoints (list of float): List of breakpoint values
+    Returns:
+        bin index (int): the bin number that will determine the color of the region.
+    '''
     for i, breakpoint in enumerate(breakpoints):
         if val <= breakpoint:
             return i
@@ -883,7 +904,19 @@ def get_map_bin_index(val, breakpoints):
 
 def create_map(df, ranges, region_boundaries, wdg, title=''):
     '''
-    Create map
+    Create map based on an input dataframe.The third-to-last column of this
+    dataframe is assumed to be the column of regions that are to be mapped.
+    The second-to-last column is assumed to be the values that are to be mapped.
+    The last column is the bin number that determines the color that is applied
+    to each region.
+
+    Args:
+        df (pandas dataframe): input dataframe described above
+        region_boundaries (pandas dataframe): This dataframe has columns for region id, group (if the region has non-contiguous pieces), and x and y values of all boundary points.
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        title (string): The displayed title for this map
+    Returns:
+        fig_map (bokeh.plotting.figure): the bokeh figure for the map.
     '''
 
     df_regions = df.iloc[:,0].tolist()
@@ -949,12 +982,12 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
 
 def build_map_legend(labels):
     '''
-    Return html for series legend, based on values of column that was chosen for series, and global COLORS.
+    Return html for map legend, based on supplied labels and global COLORS
 
     Args:
-
+        labels(list of strings): Displayed labels for each legend entry
     Returns:
-        legend_string (string): html to be used as legend.
+        legend_string (string): full html to be used as legend.
     '''
     colors = [COLORS[i] for i, t in enumerate(labels)]
     legend_string = build_legend(labels, colors)
@@ -982,10 +1015,11 @@ def build_plot_legend(df_plots, series_val):
 
 def build_legend(labels, colors):
     '''
-    Return html for legend
+    Return html for legend, based on list of labels and list of colors
 
     Args:
-
+        labels(list of strings): Displayed labels for each legend entry
+        colors (list of strings): List of color strings using hexidecimal format
     Returns:
         legend_string (string): html to be used as legend.
     '''
@@ -996,7 +1030,16 @@ def build_legend(labels, colors):
     return legend_string
 
 def wavg(group, avg_name, weight_name):
-    """ http://pbpython.com/weighted-average.html
+    """
+    Helper function for pandas dataframe groupby object with apply function. This returns the
+    weighted average for two specified columns.
+
+    Args:
+        group (pandas dataframe): This has columns required for weighted average
+        avg_name (string): Name of the column for which a weighted average is calculated
+        weight_name (string): Name of column that will be used as weighting factors.
+    Returns:
+        weighted average (float): The weighted average using the two specified columns
     """
     d = group[avg_name]
     w = group[weight_name]
@@ -1006,6 +1049,19 @@ def wavg(group, avg_name, weight_name):
         return 0
 
 def op_with_base(group, op_type, col, col_base, y_val):
+    """
+    Helper function for pandas dataframe groupby object with apply function. This returns a pandas
+    dataframe with an operation applied to one of the columns.
+
+    Args:
+        group (pandas dataframe): This has columns required for performing the operation
+        op_type (string): The type of operation: 'diff', 'ratio'
+        col (string): The column across which the operation is happening
+        col_base (string): The value of col to be used as the base for the operation
+        y_val (string): Name of column that will be modified according to the operation.
+    Returns:
+        group_out (pandas dataframe): A like-indexed dataframe with the specified operations.
+    """
     df_base = group[group[col]==col_base]
     if df_base.empty:
         y_base = 0
@@ -1019,19 +1075,39 @@ def op_with_base(group, op_type, col, col_base, y_val):
     return group_out
 
 def ratio_consecutive(group):
+    """
+    Helper function for pandas series groupby object with transform function.
+    This returns a series of ratios between consecutive elements of the input series.
+
+    Args:
+        group (pandas series): The input series
+    Returns:
+        out_series (pandas series): A like-indexed series of ratios between consecutive elements of the input series.
+    """
     group_list = group.tolist()
     out_list = [0]
+    #prevent divide by zero error and set the ratio to 0:
     out_list += [group_list[i+1]/group_list[i] if group_list[i] else 0 for i in range(len(group_list) - 1)]
     out_series = pd.Series(out_list, index=group.index)
     return out_series
 
 def update_data(attr, old, new):
     '''
-    When data source is updated
+    When data source is updated, call update_data_source()
     '''
     update_data_source()
 
 def update_data_source(init_load=False, init_config={}):
+    '''
+    When data source is updated (or on initial load), update the widgets
+    section of the layout based on if the input path is a csv, gdx, or ReEDS result.
+
+    Args:
+        init_load (boolean): True if this is the initial load of the page
+        init_config (dict): Initial configuration supplied by the URL.
+    Returns:
+        Nothing: All plots are cleared, and widgets are set to accept further configuration.
+    '''
     GL['widgets'] = GL['data_source_wdg'].copy()
     path = GL['data_source_wdg']['data'].value
     path = path.replace('"', '')
@@ -1057,12 +1133,24 @@ def update_data_source(init_load=False, init_config={}):
     GL['plots'].children = []
 
 def update_reeds_meta(attr, old, new):
+    '''
+    When ReEDS meta fields are updated, call update_reeds_wdg with the 'meta' flag
+    '''
     update_reeds_wdg(type='meta')
 
 def update_reeds_result(attr, old, new):
+    '''
+    When ReEDS Result field is updated, call update_reeds_wdg with the 'result' flag
+    '''
     update_reeds_wdg(type='result')
 
 def update_reeds_wdg(type):
+    '''
+    When ReEDS result field or meta field are updated, build core widgets accordingly
+    
+    Args:
+        type (string): 'meta' or 'result'. Indicates the type of widget that was changed.
+    '''
     if 'result' in GL['variant_wdg'] and GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
         if type == 'result':
@@ -1075,6 +1163,10 @@ def update_reeds_wdg(type):
     update_plots()
 
 def update_reeds_presets(attr, old, new):
+    '''
+    When ReEDS preset is selected, clear all filter and main selectors, and set them
+    to the state specified in the preset in reeds.py
+    '''
     wdg = GL['widgets']
     if wdg['presets'].value != 'None':
         #set most all selectors to 'None', y_agg to 'Sum', and clear all filters.
