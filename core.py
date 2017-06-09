@@ -126,9 +126,8 @@ def reeds_static(data_source):
         template_string=template_file.read()
     template = ji.Template(template_string)
     html = be.file_html(layout, resources=br.CDN, template=template)
-    f = open('static.html', 'w')
-    f.write(html)
-    f.close()
+    with open('static.html', 'w') as f:
+        f.write(html)
     #bio.save(layout, filename='summary.html')
 
 def build_data_source_wdg(data_source):
