@@ -117,6 +117,8 @@ def reeds_static(data_source):
             GL['widgets']['result'].value = result
             for preset in results_meta[result]['static']:
                 GL['widgets']['presets'].value = preset
+                title = bmw.Div(text='<h2>' + result + ': ' + preset + '</h2>')
+                static_plots.append(bl.row(title))
                 legend = bmw.Div(text=GL['widgets']['legend'].text)
                 static_plots.append(bl.row(GL['plots'].children + [legend]))
     layout = bl.column(static_plots, id='layout')
