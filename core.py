@@ -206,16 +206,10 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}):
     for col in columns_meta:
         if 'map' in columns_meta[col]:
             topwdg['meta_map_'+col] = bmw.TextInput(title='"'+col+ '" Map', value=columns_meta[col]['map'], css_classes=['wdgkey-meta_map_'+col, 'meta-drop'])
-            if init_load and 'meta_map_'+col in wdg_config: topwdg['meta_map_'+col].value = str(wdg_config['meta_map_'+col])
-            topwdg['meta_map_'+col].on_change('value', update_reeds_meta)
         if 'join' in columns_meta[col]:
             topwdg['meta_join_'+col] = bmw.TextInput(title='"'+col+ '" Join', value=columns_meta[col]['join'], css_classes=['wdgkey-meta_join_'+col, 'meta-drop'])
-            if init_load and 'meta_join_'+col in wdg_config: topwdg['meta_join_'+col].value = str(wdg_config['meta_join_'+col])
-            topwdg['meta_join_'+col].on_change('value', update_reeds_meta)
         if 'style' in columns_meta[col]:
             topwdg['meta_style_'+col] = bmw.TextInput(title='"'+col+ '" Style', value=columns_meta[col]['style'], css_classes=['wdgkey-meta_style_'+col, 'meta-drop'])
-            if init_load and 'meta_style_'+col in wdg_config: topwdg['meta_style_'+col].value = str(wdg_config['meta_style_'+col])
-            topwdg['meta_style_'+col].on_change('value', update_reeds_meta)
 
     #Filter Scenarios widgets and Result widget
     scenarios[:] = []
@@ -253,10 +247,16 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}):
         labels = [a['name'] for a in scenarios]
         topwdg['filter_scenarios_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['filter-scenarios-dropdown'])
         topwdg['filter_scenarios'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-filter_scenarios'])
-        if init_load and 'filter_scenarios' in wdg_config: topwdg['filter_scenarios'].active = wdg_config['filter_scenarios']
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(results_meta.keys()), css_classes=['wdgkey-result'])
-        if init_load and 'result' in wdg_config: topwdg['result'].value = str(wdg_config['result'])
-        topwdg['result'].on_change('value', update_reeds_result)
+    #set initial config
+    if init_load:
+        initialize_wdg(topwdg, wdg_config)
+    #Add update functions
+    for key in topwdg:
+        if key.startswith('meta_'):
+            topwdg[key].on_change('value', update_reeds_meta)
+    topwdg['result'].on_change('value', update_reeds_result)
+    
     print('***Done fetching ReEDS scenarios.')
     return topwdg
 
@@ -470,12 +470,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
 
     #use init_config (from 'widgets' parameter in URL query string) to configure widgets.
     if init_load:
-        for key in init_config:
-            if key in wdg:
-                if hasattr(wdg[key], 'value'):
-                    wdg[key].value = str(init_config[key])
-                elif hasattr(wdg[key], 'active'):
-                    wdg[key].active = init_config[key]
+        initialize_wdg(wdg, init_config)
 
     #Add update functions for widgets
     if preset_options != None:
@@ -491,6 +486,14 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         wdg[name].on_change('value', update_wdg)
     print('***Done with main widgets.')
     return wdg
+
+def initialize_wdg(wdg, init_config):
+    for key in init_config:
+        if key in wdg:
+            if hasattr(wdg[key], 'value'):
+                wdg[key].value = str(init_config[key])
+            elif hasattr(wdg[key], 'active'):
+                wdg[key].active = init_config[key]
 
 def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     '''
