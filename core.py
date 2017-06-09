@@ -14,11 +14,14 @@ import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
 import bokeh.plotting as bp
+import bokeh.resources as br
+import bokeh.embed as be
 import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
 from reeds import results_meta, columns_meta
 from subprocess import Popen
+import jinja2 as ji
 
 #Defaults to configure:
 PLOT_WIDTH = 300
@@ -96,6 +99,35 @@ def initialize():
     bio.curdoc().add_root(layout)
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
+
+def reeds_static(data_source):
+    #build initial widgets and plots globals
+    GL['data_source_wdg'] = build_data_source_wdg('')
+    GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
+    GL['plots'] = bl.column([])
+    #Update data source widget with input value
+    GL['data_source_wdg']['data'].value = data_source
+    static_plots = []
+    #Now, look through reeds results to find those with presets, and load those presets
+    for result in results_meta.keys():
+        if 'static' in results_meta[result]:
+            #Clear result_dfs in the hope that garbage collection can free up some memory
+            result_dfs.clear()
+            #Load the result
+            GL['widgets']['result'].value = result
+            for preset in results_meta[result]['static']:
+                GL['widgets']['presets'].value = preset
+                legend = bmw.Div(text=GL['widgets']['legend'].text)
+                static_plots.append(bl.row(GL['plots'].children + [legend]))
+    layout = bl.column(static_plots, id='layout')
+    with open(this_dir_path+'/static/index.html', 'r') as template_file:
+        template_string=template_file.read()
+    template = ji.Template(template_string)
+    html = be.file_html(layout, resources=br.CDN, template=template)
+    f = open('static.html', 'w')
+    f.write(html)
+    f.close()
+    #bio.save(layout, filename='summary.html')
 
 def build_data_source_wdg(data_source):
     '''

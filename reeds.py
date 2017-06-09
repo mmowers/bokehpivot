@@ -88,6 +88,7 @@ results_meta = collections.OrderedDict((
             ('PCA Map: 2050 Wind',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
             ('PCA Map: 2050 PV',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)'], 'year': [2050]}}),
         )),
+        'static': ['Stacked Capacity', 'State Map: 2050 Wind'],
         }
     ),
     ('New Capacity (GW)',
@@ -102,6 +103,7 @@ results_meta = collections.OrderedDict((
             ('Stacked Capacity',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
             ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
+        'static': ['Stacked Capacity'],
         }
     ),
     ('Generation (TWh)',
@@ -124,6 +126,7 @@ results_meta = collections.OrderedDict((
             ('PCA Map: 2050 Wind',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
             ('PCA Map: 2050 PV',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)'], 'year': [2050]}}),
         )),
+        'static': ['Stacked Gen', 'State Map: 2050 Wind'],
         }
     ),
     ('Emissions, Fuel, Prices',
