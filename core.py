@@ -1078,6 +1078,26 @@ def build_legend(labels, colors):
         legend_string += '<span class="legend-text">' + str(txt) +'</span></div>'
     return legend_string
 
+def display_config(wdg, wdg_defaults):
+    '''
+    '''
+    output = '<div class="config-display-title">Config Summary</div>'
+    for key in wdg_defaults:
+        if key not in ['data', 'chart_type', 'presets']:
+            label = key
+            item_string = ''
+            if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+                if key.startswith('filter_'):
+                    label = 'filter-' + wdg['heading_'+key].text
+                active_indices = wdg[key].active
+                for i in active_indices:
+                    item_string += wdg[key].labels[i] + ', '
+            elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
+                item_string = wdg[key].value
+            if item_string != '':
+                output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
+    return output
+
 def wavg(group, avg_name, weight_name):
     """
     Helper function for pandas dataframe groupby object with apply function. This returns the
@@ -1300,6 +1320,9 @@ def update_plots():
     '''
     Make sure x axis and y axis are set. If so, set the dataframe for the plots and build them.
     '''
+    #show widget config
+    GL['widgets']['display_config'].text = display_config(GL['widgets'], GL['wdg_defaults'])
+    
     if GL['widgets']['x'].value == 'None' or GL['widgets']['y'].value == 'None':
         GL['plots'].children = []
         return

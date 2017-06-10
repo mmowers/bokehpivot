@@ -108,3 +108,10 @@ body {
     padding: 6px 0;
     border: 0;
 }
+.config-display-title{
+    font-weight: bold;
+    text-decoration: underline;
+}
+.config-display-key{
+    font-weight: bold;
+}
