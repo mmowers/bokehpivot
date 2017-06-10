@@ -59,7 +59,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity']
 
 #initialize globals dict for variables that are modified within update functions.
-GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None, 'widgets':None, 'controls': None, 'plots':None}
+GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None, 'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None}
 
 #ReEDS globals
 custom_sorts = {} #keys are column names. Values are lists of values in the desired sort order
@@ -80,6 +80,7 @@ def initialize():
     args = bio.curdoc().session_context.request.arguments
     wdg_arr = args.get('widgets')
     data_source = ''
+    GL['wdg_defaults']['data'] = ''
     if wdg_arr is not None:
         wdg_config = json.loads(urlp.unquote(wdg_arr[0].decode('utf-8')))
         if 'data' in wdg_config:
@@ -185,7 +186,7 @@ def get_wdg_gdx(data_source):
     '''
     return #need to implement!
 
-def get_wdg_reeds(path, init_load=False, wdg_config={}):
+def get_wdg_reeds(path, init_load=False, wdg_config={}, wdg_defaults={}):
     '''
     From data source path, fetch paths to scenarios and return dict of widgets for
     meta files, scenarios, and results
@@ -248,6 +249,8 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}):
         topwdg['filter_scenarios_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['filter-scenarios-dropdown'])
         topwdg['filter_scenarios'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-filter_scenarios'])
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(results_meta.keys()), css_classes=['wdgkey-result'])
+    #save defaults
+    save_wdg_defaults(topwdg, wdg_defaults)
     #set initial config
     if init_load:
         initialize_wdg(topwdg, wdg_config)
@@ -379,7 +382,7 @@ def process_reeds_data(topwdg):
     print('***Done with joins, maps, ordering.')
     return (df, cols)
 
-def build_widgets(df_source, cols, init_load=False, init_config={}, preset_options=None):
+def build_widgets(df_source, cols, init_load=False, init_config={}, preset_options=None, wdg_defaults={}):
     '''
     Use a dataframe and its columns to set widget options. Widget values may
     be set by URL parameters via init_config.
@@ -467,7 +470,10 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['export_config'] = bmw.Div(text='Export Config to URL', css_classes=['export-config', 'bk-bs-btn', 'bk-bs-btn-success', 'download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
+    wdg['display_config'] = bmw.Div(text='', css_classes=['display-config'])
 
+    #save defaults
+    save_wdg_defaults(wdg, wdg_defaults)
     #use init_config (from 'widgets' parameter in URL query string) to configure widgets.
     if init_load:
         initialize_wdg(wdg, init_config)
@@ -494,6 +500,13 @@ def initialize_wdg(wdg, init_config):
                 wdg[key].value = str(init_config[key])
             elif hasattr(wdg[key], 'active'):
                 wdg[key].active = init_config[key]
+
+def save_wdg_defaults(wdg, wdg_defaults):
+    for key in wdg:
+        if isinstance(wdg[key], bmw.groups.Group):
+            wdg_defaults[key] = wdg[key].active
+        elif isinstance(wdg[key], bmw.inputs.InputWidget):
+            wdg_defaults[key] = wdg[key].value
 
 def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     '''
@@ -1151,11 +1164,11 @@ def update_data_source(init_load=False, init_config={}):
         pass
     elif path.lower().endswith('.csv'):
         GL['df_source'], GL['columns'] = get_df_csv(path)
-        GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config))
+        GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
     elif path.lower().endswith('.gdx'):
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
     else: #reeds
-        GL['variant_wdg'] = get_wdg_reeds(path, init_load, init_config)
+        GL['variant_wdg'] = get_wdg_reeds(path, init_load, init_config, GL['wdg_defaults'])
         GL['widgets'].update(GL['variant_wdg'])
         #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
         if init_load and GL['variant_wdg']['result'].value is not 'None':
@@ -1164,7 +1177,7 @@ def update_data_source(init_load=False, init_config={}):
             preset_options = []
             if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
                 preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
-            GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, preset_options))
+            GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, preset_options, wdg_defaults=GL['wdg_defaults']))
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
 
@@ -1194,7 +1207,7 @@ def update_reeds_wdg(type):
             if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
                 preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
         GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'])
-        GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], preset_options=preset_options))
+        GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], preset_options=preset_options, wdg_defaults=GL['wdg_defaults']))
     GL['controls'].children = list(GL['widgets'].values())
     update_plots()
 
