@@ -127,7 +127,7 @@ def reeds_static(data_source):
         template_string=template_file.read()
     template = ji.Template(template_string)
     html = be.file_html(layout, resources=br.CDN, template=template)
-    path = this_dir_path + '/downloads/static_report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
+    path = this_dir_path + '/out/static_report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
     with open(path, 'w') as f:
         f.write(html)
     sp.Popen(path, shell=True)
@@ -1354,7 +1354,7 @@ def export_config_url():
     json_string = json.dumps(non_defaults)
     #url_args = urlp.quote(json_string.encode("utf-8"))
     url_query = '?widgets=' + urlp.quote(json_string)
-    path = this_dir_path + '/downloads/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
+    path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
     with open(path, 'w') as f:
         f.write(url_query)
     sp.Popen(path, shell=True)
@@ -1365,7 +1365,7 @@ def download():
     with the current timestamp.
     '''
     print('***Downloading View...')
-    path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
     sp.Popen(path, shell=True)
@@ -1376,7 +1376,7 @@ def download_all():
     with the current timestamp.
     '''
     print('***Downloading full source...')
-    path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_source'].to_csv(path, index=False)
     print('***Done downloading full source to ' + path)
     sp.Popen(path, shell=True)
