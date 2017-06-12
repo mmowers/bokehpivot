@@ -123,12 +123,14 @@ def reeds_static(data_source):
                 legend = bmw.Div(text=GL['widgets']['legend'].text)
                 static_plots.append(bl.row(GL['plots'].children + [legend]))
     layout = bl.column(static_plots, id='layout')
-    with open(this_dir_path+'/static/index.html', 'r') as template_file:
+    with open(this_dir_path + '/static/index.html', 'r') as template_file:
         template_string=template_file.read()
     template = ji.Template(template_string)
     html = be.file_html(layout, resources=br.CDN, template=template)
-    with open('static.html', 'w') as f:
+    path = this_dir_path + '/static.html'
+    with open(path, 'w') as f:
         f.write(html)
+    sp.Popen(path, shell=True)
     #bio.save(layout, filename='summary.html')
 
 def build_data_source_wdg(data_source):
