@@ -21,7 +21,7 @@ def scale_column_filtered(df, **kw):
 
 def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
-    cost_cat_type = pd.read_csv(this_dir_path + '/csv/cost_cat_type.csv')
+    cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
@@ -58,7 +58,7 @@ def pre_elec_price_components(dfs, **kw):
     return df
 
 def add_huc_reg(df, **kw):
-    huc_map = pd.read_csv(this_dir_path + '/csv/huc_2_ratios.csv')
+    huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv')
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
     df['value'] = df['value'] * df['pca_huc_ratio']
     df = df.drop('pca_huc_ratio', 1)
@@ -420,32 +420,32 @@ results_meta = collections.OrderedDict((
 columns_meta = {
     'tech':{
         'type': 'string',
-        'map': this_dir_path + '/csv/tech_map.csv',
-        'style': this_dir_path + '/csv/tech_style.csv',
+        'map': this_dir_path + '/in/tech_map.csv',
+        'style': this_dir_path + '/in/tech_style.csv',
     },
     'i':{
         'type': 'string',
-        'join': this_dir_path + '/csv/hierarchy.csv',
+        'join': this_dir_path + '/in/hierarchy.csv',
     },
     'n':{
         'type': 'string',
-        'join': this_dir_path + '/csv/hierarchy.csv',
+        'join': this_dir_path + '/in/hierarchy.csv',
     },
     'huc_2':{
         'type': 'string',
-        'join': this_dir_path + '/csv/huc_join.csv',
+        'join': this_dir_path + '/in/huc_join.csv',
     },
     'huc_4':{
         'type': 'string',
-        'join': this_dir_path + '/csv/huc_join.csv',
+        'join': this_dir_path + '/in/huc_join.csv',
     },
     'huc_6':{
         'type': 'string',
-        'join': this_dir_path + '/csv/huc_join.csv',
+        'join': this_dir_path + '/in/huc_join.csv',
     },
     'huc_8':{
         'type': 'string',
-        'join': this_dir_path + '/csv/huc_join.csv',
+        'join': this_dir_path + '/in/huc_join.csv',
     },
     'year':{
         'type': 'number',
@@ -455,11 +455,11 @@ columns_meta = {
     },
     'm':{
         'type': 'string',
-        'style': this_dir_path + '/csv/m_style.csv',
+        'style': this_dir_path + '/in/m_style.csv',
     },
     'cost_cat':{
         'type': 'string',
-        'map': this_dir_path + '/csv/cost_cat_map.csv',
-        'style': this_dir_path + '/csv/cost_cat_style.csv',
+        'map': this_dir_path + '/in/cost_cat_map.csv',
+        'style': this_dir_path + '/in/cost_cat_style.csv',
     },
 }

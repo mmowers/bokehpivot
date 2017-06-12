@@ -834,12 +834,12 @@ def create_maps(df, wdg, cols):
         return (maps, legend_labels) #empty list
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
-    filepath = this_dir_path + '/csv/gis_' + x_axis.name + '.csv'
+    filepath = this_dir_path + '/in/gis_' + x_axis.name + '.csv'
     region_boundaries = pd.read_csv(filepath, sep=',', dtype={'id': object, 'group': object})
     #Remove holes
     region_boundaries = region_boundaries[region_boundaries['hole'] == False]
     #load hierarchy.csv and join on region_boundaries
-    df_join = pd.read_csv(this_dir_path + '/csv/hierarchy.csv', sep=',', dtype=object)
+    df_join = pd.read_csv(this_dir_path + '/in/hierarchy.csv', sep=',', dtype=object)
     #remove columns to left of x_axis.name in df_join
     for c in df_join.columns.values.tolist():
         if c == x_axis.name:
