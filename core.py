@@ -20,7 +20,7 @@ import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
 from reeds import results_meta, columns_meta
-from subprocess import Popen
+import subprocess as sp
 import jinja2 as ji
 
 #Defaults to configure:
@@ -1346,7 +1346,7 @@ def download():
     path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
-    Popen(path, shell=True)
+    sp.Popen(path, shell=True)
 
 def download_all():
     '''
@@ -1357,4 +1357,4 @@ def download_all():
     path = this_dir_path + '/downloads/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_source'].to_csv(path, index=False)
     print('***Done downloading full source to ' + path)
-    Popen(path, shell=True)
+    sp.Popen(path, shell=True)
