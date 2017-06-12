@@ -127,7 +127,7 @@ def reeds_static(data_source):
         template_string=template_file.read()
     template = ji.Template(template_string)
     html = be.file_html(layout, resources=br.CDN, template=template)
-    path = this_dir_path + '/static.html'
+    path = this_dir_path + '/downloads/static_report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
     with open(path, 'w') as f:
         f.write(html)
     sp.Popen(path, shell=True)
