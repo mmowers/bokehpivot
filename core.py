@@ -101,7 +101,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def reeds_static(data_source):
+def reeds_static(data_source, static_presets):
     #build initial widgets and plots globals
     GL['data_source_wdg'] = build_data_source_wdg('')
     GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
@@ -110,18 +110,17 @@ def reeds_static(data_source):
     GL['data_source_wdg']['data'].value = data_source
     static_plots = []
     #Now, look through reeds results to find those with presets, and load those presets
-    for result in results_meta.keys():
-        if 'static' in results_meta[result]:
-            #Clear result_dfs in the hope that garbage collection can free up some memory
-            result_dfs.clear()
-            #Load the result
-            GL['widgets']['result'].value = result
-            for preset in results_meta[result]['static']:
-                GL['widgets']['presets'].value = preset
-                title = bmw.Div(text='<h2>' + result + ': ' + preset + '</h2>')
-                static_plots.append(bl.row(title))
-                legend = bmw.Div(text=GL['widgets']['legend'].text)
-                static_plots.append(bl.row(GL['plots'].children + [legend]))
+    for static_preset in static_presets:
+        #Clear result_dfs in the hope that garbage collection can free up some memory
+        result_dfs.clear()
+        #Load the result
+        GL['widgets']['result'].value = static_preset['result']
+        for preset in static_preset['presets']:
+            GL['widgets']['presets'].value = preset
+            title = bmw.Div(text='<h2>' + static_preset['result'] + ': ' + preset + '</h2>')
+            static_plots.append(bl.row(title))
+            legend = bmw.Div(text=GL['widgets']['legend'].text)
+            static_plots.append(bl.row(GL['plots'].children + [legend]))
     layout = bl.column(static_plots, id='layout')
     with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
         template_string=template_file.read()
