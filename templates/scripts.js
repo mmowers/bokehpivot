@@ -63,30 +63,6 @@ $(document).ready(function(){
         $(this).parent().next('.bk-widget').find('.bk-bs-checkbox input').first().click();
         $(this).parent().next('.bk-widget').find('.bk-bs-checkbox input').first().click();
     });
-
-    $('body').on('click', '.export-config', function(){
-        var wdg_obj = {}
-        $('select, input[type=text]').each(function(){
-            wdgkey_match = $(this).parent().attr('class').match(/wdgkey-([^ ]*)/)
-            if(wdgkey_match){
-                var wdg_name = wdgkey_match[1];
-                var selected_val = $(this).val();
-                wdg_obj[wdg_name] = selected_val;
-            }
-        });
-        $('.filter, .wdgkey-filter_scenarios').each(function(){
-            var wdg_name = $(this).attr('class').match(/wdgkey-([^ ]*)/)[1];
-            wdg_obj[wdg_name] = []
-            $(this).find('input').each(function(){
-                if($(this).is(":checked")){
-                    wdg_obj[wdg_name].push(parseInt($(this).attr('value')));
-                }
-            });
-        });
-        var widgets_string = encodeURIComponent(JSON.stringify(wdg_obj));
-        var pathname = window.location.pathname.replace('/',''); //remove just the first slash
-        window.history.pushState({}, "", pathname+"?widgets=" + widgets_string);
-    });
 });
 //pressing Alt key will collapse menus.
 document.onkeydown = function(e) {

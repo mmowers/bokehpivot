@@ -469,7 +469,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
-    wdg['export_config'] = bmw.Div(text='Export Config to URL', css_classes=['export-config', 'bk-bs-btn', 'bk-bs-btn-success', 'download-drop'])
+    wdg['config_url'] = bmw.Button(label='Export Config to URL', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
     wdg['display_config'] = bmw.Div(text='', css_classes=['display-config'])
@@ -488,6 +488,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['download'].on_click(download)
     wdg['download_all'].on_click(download_all)
     wdg['adv_col'].on_change('value', update_adv_col)
+    wdg['config_url'].on_click(export_config_url)
     for name in WDG_COL:
         wdg[name].on_change('value', update_wdg_col)
     for name in WDG_NON_COL:
@@ -1339,6 +1340,25 @@ def update_plots():
         GL['widgets']['legend'].text = legend_text
         GL['plots'].children = figs
 
+def export_config_url():
+    '''
+    '''
+    wdg = GL['widgets']
+    wdg_defaults = GL['wdg_defaults']
+    non_defaults = {}
+    for key in wdg_defaults:
+        if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+            non_defaults[key] = wdg[key].active
+        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
+            non_defaults[key] = wdg[key].value
+    json_string = json.dumps(non_defaults)
+    #url_args = urlp.quote(json_string.encode("utf-8"))
+    url_query = '?widgets=' + urlp.quote(json_string)
+    path = this_dir_path + '/downloads/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
+    with open(path, 'w') as f:
+        f.write(url_query)
+    sp.Popen(path, shell=True)
+    
 def download():
     '''
     Download a csv file of the currently viewed data to the downloads/ directory,
