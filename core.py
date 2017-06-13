@@ -4,6 +4,7 @@ Pivot chart maker for CSVs, GDX files, and ReEDS run results.
 '''
 from __future__ import division
 import os
+import re
 import math
 import json
 import pandas as pd
@@ -108,7 +109,11 @@ def reeds_static(data_source, static_presets):
     GL['plots'] = bl.column([])
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
+    time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
     static_plots = []
+    excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
+    excel_report = pd.ExcelWriter(excel_report_path)
+    sheet_i = 1
     #Now, look through reeds results to find those with presets, and load those presets
     for static_preset in static_presets:
         #Clear result_dfs in the hope that garbage collection can free up some memory
@@ -121,15 +126,22 @@ def reeds_static(data_source, static_presets):
             static_plots.append(bl.row(title))
             legend = bmw.Div(text=GL['widgets']['legend'].text)
             static_plots.append(bl.row(GL['plots'].children + [legend]))
+            excel_sheet_name = str(sheet_i) + '_' + static_preset['result'] + ' ' + preset
+            excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
+            excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
+            sheet_i += 1
+            GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+    excel_report.save()
+    sp.Popen(excel_report_path, shell=True)
     layout = bl.column(static_plots, id='layout')
     with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
         template_string=template_file.read()
     template = ji.Template(template_string)
     html = be.file_html(layout, resources=br.CDN, template=template)
-    path = this_dir_path + '/out/static_report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
-    with open(path, 'w') as f:
+    html_path = this_dir_path + '/out/static_report_'+ time +'.html'
+    with open(html_path, 'w') as f:
         f.write(html)
-    sp.Popen(path, shell=True)
+    sp.Popen(html_path, shell=True)
     #bio.save(layout, filename='summary.html')
 
 def build_data_source_wdg(data_source):
