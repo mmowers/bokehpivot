@@ -1251,6 +1251,7 @@ def update_reeds_presets(attr, old, new):
     to the state specified in the preset in reeds.py
     '''
     wdg = GL['widgets']
+    df = GL['df_source']
     if wdg['presets'].value != 'None':
         #set most all selectors to 'None', y_agg to 'Sum', and clear all filters.
         selectors = ['x', 'x_group', 'y', 'y_weight', 'series', 'explode', 'explode_group', 'adv_op', 'adv_col', 'adv_col_base']
@@ -1263,9 +1264,15 @@ def update_reeds_presets(attr, old, new):
         
         preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
         #set all presets except x and filter. x will be set at end, triggering render of chart.
-        common_presets = [key for key in preset if key not in ['x', 'filter']]
+        common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
         for key in common_presets:
             wdg[key].value = preset[key]
+        #adv_base may have a placeholder, to be replaced by a value
+        if 'adv_col_base' in preset:
+            if preset['adv_col_base'] == 'first_placeholder':
+                wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
+            else:
+                wdg['adv_col_base'].value = preset[key]
         #filters are handled separately. We must deal with the active arrays of each filter
         if 'filter' in preset:
             for fil in preset['filter']:
