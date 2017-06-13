@@ -102,7 +102,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def reeds_static(data_source, static_presets):
+def reeds_static(data_source, static_presets, base=None):
     #build initial widgets and plots globals
     GL['data_source_wdg'] = build_data_source_wdg('')
     GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
@@ -119,14 +119,19 @@ def reeds_static(data_source, static_presets):
         #Clear result_dfs in the hope that garbage collection can free up some memory
         result_dfs.clear()
         #Load the result
-        GL['widgets']['result'].value = static_preset['result']
-        for preset in static_preset['presets']:
+        result = static_preset['result']
+        presets = static_preset['presets']
+        GL['widgets']['result'].value = result
+        for preset in presets:
             GL['widgets']['presets'].value = preset
-            title = bmw.Div(text='<h2>' + static_preset['result'] + ': ' + preset + '</h2>')
+            #for comparison presets, if base is given, use it as base
+            if base != None and 'adv_col_base' in results_meta[result]['presets'][preset] and results_meta[result]['presets'][preset]['adv_col_base'] == 'placeholder':
+                GL['widgets']['adv_col_base'].value = base
+            title = bmw.Div(text='<h2>' + result + ': ' + preset + '</h2>')
             static_plots.append(bl.row(title))
             legend = bmw.Div(text=GL['widgets']['legend'].text)
             static_plots.append(bl.row(GL['plots'].children + [legend]))
-            excel_sheet_name = str(sheet_i) + '_' + static_preset['result'] + ' ' + preset
+            excel_sheet_name = str(sheet_i) + '_' + result + ' ' + preset
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
             excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
             sheet_i += 1
@@ -1261,7 +1266,6 @@ def update_reeds_presets(attr, old, new):
         for j, col in enumerate(GL['columns']['filterable']):
             wdg_fil = wdg['filter_'+str(j)]
             wdg_fil.active = list(range(len(wdg_fil.labels)))
-        
         preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
         #set all presets except x and filter. x will be set at end, triggering render of chart.
         common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
@@ -1269,7 +1273,7 @@ def update_reeds_presets(attr, old, new):
             wdg[key].value = preset[key]
         #adv_base may have a placeholder, to be replaced by a value
         if 'adv_col_base' in preset:
-            if preset['adv_col_base'] == 'first_placeholder':
+            if preset['adv_col_base'] == 'placeholder':
                 wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
             else:
                 wdg['adv_col_base'].value = preset[key]

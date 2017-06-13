@@ -87,7 +87,7 @@ results_meta = collections.OrderedDict((
             ('PCA Map 2030 PV',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)'], 'year': [2030]}}),
             ('PCA Map 2050 Wind',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
             ('PCA Map 2050 PV',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)'], 'year': [2050]}}),
-            ('Stacked Difference',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario', 'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': 'first_placeholder', 'chart_type':'Bar'}),
+            ('Stacked Difference',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario', 'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': 'placeholder', 'chart_type':'Bar', 'bar_width': '1.75'}),
         )),
         }
     ),
