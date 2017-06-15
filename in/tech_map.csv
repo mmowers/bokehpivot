@@ -1,16 +1,16 @@
 raw,display
 nuclear,Nuclear
-CoalOldUns,Coal
-CoalOldScr,Coal
-CofireOld,Cofire
-CofireNew,Cofire
+coalolduns,Coal
+coaloldscr,Coal
+cofireold,Cofire
+cofirenew,Cofire
 coal-new,Coal
-coal-IGCC,Coal-IGCC
-coal-CCS,Coal-CCS
+coal-igcc,Coal-IGCC
+coal-ccs,Coal-CCS
 o-g-s,Oil-Gas-Steam
-gas-CC,Gas-CC
-gas-CC-CCS,Gas-CC-CCS
-gas-CT,Gas-CT
+gas-cc,Gas-CC
+gas-cc-ccs,Gas-CC-CCS
+gas-ct,Gas-CT
 hydro,Hydro
 ocean,Ocean
 geothermal,Geothermal
@@ -21,21 +21,21 @@ wind-ons,Wind
 wind-ofs,Wind
 wind-ofm,Wind
 wind-ofd,Wind
-CSP,CSP
-CSP-ns,CSP
-CSP-ws,CSP
-UPV,PV (AC)
-DUPV,PV (AC)
-distPV,Distributed PV (AC)
+csp,CSP
+csp-ns,CSP
+csp-ws,CSP
+upv,PV (AC)
+dupv,PV (AC)
+distpv,Distributed PV (AC)
 pumped-hydro,Storage
-Battery,Storage
-CAES,Storage
+battery,Storage
+caes,Storage
 ice-storage,Storage
-IL,Interruptible Load
+il,Interruptible Load
 demand-response,Interruptible Load
-PHEV,Interruptible Load
-Gas-CC-NSP,Gas-CC
-Gas-CT-NSP,Gas-CT
-Coal-CCS-NSP,Coal-CCS
-Nuclear-NSP,Nuclear
+phev,Interruptible Load
+gas-cc-nsp,Gas-CC
+gas-ct-nsp,Gas-CT
+coal-ccs-nsp,Coal-CCS
+nuclear-nsp,Nuclear
 canada,Canada

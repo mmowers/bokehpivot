@@ -323,9 +323,15 @@ def get_reeds_data(topwdg):
                 data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file'], result_meta['param'])
                 df_scen_result = pd.DataFrame(data)
                 df_scen_result.columns = result_meta['columns']
+            #preprocess and return one dataframe
             if 'preprocess' in result_meta:
                 for preprocess in result_meta['preprocess']:
                     df_scen_result = preprocess['func'](df_scen_result, **preprocess['args'])
+            #preprocess columns in this dataframe
+            for col in df_scen_result.columns.values.tolist():
+                if col in columns_meta and 'preprocess' in columns_meta[col]:
+                    for preprocess in columns_meta[col]['preprocess']:
+                        df_scen_result[col] = preprocess(df_scen_result[col])
             df_scen_result['scenario'] = scenario_name
             if result_dfs[result] is None:
                 result_dfs[result] = df_scen_result

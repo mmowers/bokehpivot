@@ -9,7 +9,7 @@ import collections
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 inflation_mult = 1.2547221 #2004$ to 2015$
 
-#Preprocess functions
+#Preprocess functions for results_meta
 def scale_column(df, **kw):
     df[kw['column']] = df[kw['column']] * kw['scale_factor']
     return df
@@ -64,6 +64,11 @@ def add_huc_reg(df, **kw):
     df = df.drop('pca_huc_ratio', 1)
     df = df.drop('huc_pca_ratio', 1)
     return df
+
+#preprocess functions for columns_meta
+def tolowercase(ser):
+    out = ser.str.lower()
+    return out
 
 #Results metadata
 results_meta = collections.OrderedDict((
@@ -420,6 +425,7 @@ columns_meta = {
         'type': 'string',
         'map': this_dir_path + '/in/tech_map.csv',
         'style': this_dir_path + '/in/tech_style.csv',
+        'preprocess': [tolowercase,]
     },
     'i':{
         'type': 'string',
