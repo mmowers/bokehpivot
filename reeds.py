@@ -58,7 +58,7 @@ def pre_elec_price_components(dfs, **kw):
     return df
 
 def add_huc_reg(df, **kw):
-    huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv')
+    huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
     df['value'] = df['value'] * df['pca_huc_ratio']
     df = df.drop('pca_huc_ratio', 1)
