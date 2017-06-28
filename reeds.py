@@ -81,7 +81,8 @@ results_meta = collections.OrderedDict((
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Capacity',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Area',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
             ('Stacked Col Sel years',{'x':'scenario','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
             ('State Map 2030 Wind',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
@@ -105,7 +106,7 @@ results_meta = collections.OrderedDict((
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Capacity',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
@@ -132,7 +133,8 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': 0.000001, 'column': 'Generation (TWh)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Gen',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Area',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
             ('Stacked Columns 2020, 2030, 2050',{'x':'scenario','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
             ('State Map 2030 Wind',{'x':'st','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
