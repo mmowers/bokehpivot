@@ -1261,19 +1261,22 @@ def update_reeds_presets(attr, old, new):
     When ReEDS preset is selected, clear all filter and main selectors, and set them
     to the state specified in the preset in reeds.py
     '''
-    wdg = GL['widgets']
     df = GL['df_source']
+    wdg = GL['widgets']
+    wdg_defaults = GL['wdg_defaults']
     if wdg['presets'].value != 'None':
-        #set most all selectors to 'None', y_agg to 'Sum', and clear all filters.
-        selectors = ['x', 'x_group', 'y', 'y_weight', 'series', 'explode', 'explode_group', 'adv_op', 'adv_col', 'adv_col_base']
-        for s in selectors:
-            wdg[s].value = 'None'
-        wdg['y_agg'].value = 'Sum'
-        for j, col in enumerate(GL['columns']['filterable']):
-            wdg_fil = wdg['filter_'+str(j)]
-            wdg_fil.active = list(range(len(wdg_fil.labels)))
-        preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
+        #First set x to none to prevent chart rerender
+        wdg['x'].value = 'None'
+        #gather widgets to reset
+        wdg_resets = [i for i in WDG_COL + WDG_NON_COL if i != 'x']
+        #reset widgets if they are not default
+        for key in wdg_resets:
+            if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+                wdg[key].active = wdg_defaults[key]
+            elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
+                wdg[key].value = wdg_defaults[key]
         #set all presets except x and filter. x will be set at end, triggering render of chart.
+        preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
         common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
         for key in common_presets:
             wdg[key].value = preset[key]
