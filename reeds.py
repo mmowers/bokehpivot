@@ -125,6 +125,18 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('Wind Capacity (GW)',
+        {'file': 'CONVqn.gdx',
+        'param': 'Windiallc',
+        'columns': ["windtype", "i", "year", "class", "Capacity (GW)"],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('2050 Map',{'x':'i','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'year': [2050]}}),
+        )),
+        }
+    ),
     ('Generation (TWh)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallyears',
@@ -268,12 +280,6 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'Cost (2015$)'}},
             {'func': discount_costs, 'args': {}},
         ],
-        }
-    ),
-    ('cap_wind',
-        {'file': 'CONVqn.gdx',
-        'param': 'Windiallc',
-        'columns': ["windtype", "i", "year", "class", "value"],
         }
     ),
     ('cap_wind_nrr',
