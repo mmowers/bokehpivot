@@ -142,7 +142,8 @@ def reeds_static(data_source, static_presets, base=None):
     with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
         template_string=template_file.read()
     template = ji.Template(template_string)
-    html = be.file_html(layout, resources=br.CDN, template=template)
+    resources = br.Resources()
+    html = be.file_html(layout, resources=resources, template=template)
     html_path = this_dir_path + '/out/static_report_'+ time +'.html'
     with open(html_path, 'w') as f:
         f.write(html)
