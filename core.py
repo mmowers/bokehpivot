@@ -711,9 +711,15 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
             #one break to the next so that each entry is unique
             kw['x_range'].append(' ' * (i + 1))
     elif wdg['x'].value in cols['discrete']:
-        kw['x_range'] = sorted(set(xs))
+        kw['x_range'] = []
+        for x in xs:
+            if x not in kw['x_range']:
+                kw['x_range'].append(x)
     if wdg['y'].value in cols['discrete']:
-        kw['y_range'] = sorted(set(ys))
+        kw['y_range'] = []
+        for y in ys:
+            if y not in kw['y_range']:
+                kw['y_range'].append(y)
 
     #Set figure title
     kw['title'] = wdg['plot_title'].value
