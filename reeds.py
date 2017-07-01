@@ -165,11 +165,11 @@ results_meta = collections.OrderedDict((
         'param': 'AnnualReport',
         'columns': ['n', 'year', 'type', 'value'],
         'presets': collections.OrderedDict((
-            ('Scenario Compare',{'x':'year','y':'value', 'y_agg':'Sum','series':'scenario', 'explode': 'type','chart_type':'Line'}),
+            ('CO2 Emissions',{'x':'year','y':'value', 'y_agg':'Sum','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}}),
         )),
         }
     ),
-    ('System Cost',
+    ('System Cost (2015$)',
         {'file': 'systemcost.gdx',
         'param': 'aSystemCost_ba',
         'columns': ['cost_cat', 'n', 'year', 'Cost (2015$)'],
@@ -178,20 +178,23 @@ results_meta = collections.OrderedDict((
             {'func': discount_costs, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked (filter years!)',{'x':'scenario','y':'Discounted Cost (2015$)', 'y_agg':'Sum','series':'cost_cat', 'explode': 'None','chart_type':'Bar'}),
+            ('2016-2050 Stacked Bars',{'x':'scenario','y':'Cost (2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': [2016, 2018, 2020, 2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040, 2042, 2044, 2046, 2048, 2050]}}),
         )),
         }
     ),
-    ('Gen by m',
+    ('Gen by m (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
-        'columns': ['tech', 'n', 'year', 'm', 'Gen'],
+        'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
+        ],
         'presets': collections.OrderedDict((
-            ('Stacked Gen by m',{'x':'m','y':'Gen', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar'}),
+            ('Stacked Bars 2050',{'x':'m','y':'Generation (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'filter': {'year': [2050]}}),
         )),
         }
     ),
-    ('Electricity Price',
+    ('Elec Price (2015$/MWh)',
         {'file': 'Reporting.gdx',
         'param': 'ElecPriceOut',
         'columns': ['n', 'year', 'elem', 'value'],
