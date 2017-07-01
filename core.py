@@ -127,7 +127,7 @@ def reeds_static(data_source, static_presets, base=None):
             #for comparison presets, if base is given, use it as base
             if base != None and 'adv_col_base' in results_meta[result]['presets'][preset] and results_meta[result]['presets'][preset]['adv_col_base'] == 'placeholder':
                 GL['widgets']['adv_col_base'].value = base
-            title = bmw.Div(text='<h2>' + result + ': ' + preset + '</h2>')
+            title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + '</h2>')
             static_plots.append(bl.row(title))
             legend = bmw.Div(text=GL['widgets']['legend'].text)
             static_plots.append(bl.row(GL['plots'].children + [legend]))
