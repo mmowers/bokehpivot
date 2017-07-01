@@ -81,19 +81,19 @@ results_meta = collections.OrderedDict((
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Area',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
-            ('Stacked Bars',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
-            ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
-            ('Stacked Col Sel years',{'x':'scenario','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
-            ('State Map 2030 Wind',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
-            ('State Map 2030 Solar',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
-            ('State Map 2050 Wind',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
-            ('State Map 2050 Solar',{'x':'st','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
-            ('PCA Map 2030 Wind',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
-            ('PCA Map 2030 Solar',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
-            ('PCA Map 2050 Wind',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
-            ('PCA Map 2050 Solar',{'x':'n','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
-            ('Stacked Difference',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario', 'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': 'placeholder', 'chart_type':'Bar', 'bar_width': '1.75'}),
+            ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Stacked Col Sel years',{'x':'scenario','y':'Capacity (GW)','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
+            ('State Map 2030 Wind',{'x':'st','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
+            ('State Map 2030 Solar',{'x':'st','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
+            ('State Map 2050 Wind',{'x':'st','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
+            ('State Map 2050 Solar',{'x':'st','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
+            ('PCA Map 2030 Wind',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
+            ('PCA Map 2030 Solar',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
+            ('PCA Map 2050 Wind',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
+            ('PCA Map 2050 Solar',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
+            ('Stacked Difference',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario', 'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': 'placeholder', 'chart_type':'Bar', 'bar_width': '1.75'}),
         )),
         }
     ),
@@ -106,8 +106,8 @@ results_meta = collections.OrderedDict((
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
-            ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
     ),
@@ -120,8 +120,8 @@ results_meta = collections.OrderedDict((
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
-            ('Explode By Tech',{'x':'year','y':'Capacity (GW)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
     ),
@@ -133,7 +133,7 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
         'presets': collections.OrderedDict((
-            ('2050 Map',{'x':'i','y':'Capacity (GW)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'year': [2050]}}),
+            ('2050 Map',{'x':'i','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'year': [2050]}}),
         )),
         }
     ),
@@ -145,18 +145,18 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': 0.000001, 'column': 'Generation (TWh)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Area',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
-            ('Stacked Bars',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
-            ('Explode By Tech',{'x':'year','y':'Generation (TWh)', 'y_agg':'Sum','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
-            ('Stacked Columns 2020, 2030, 2050',{'x':'scenario','y':'Generation (TWh)', 'y_agg':'Sum','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
-            ('State Map 2030 Wind',{'x':'st','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
-            ('State Map 2030 Solar',{'x':'st','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
-            ('State Map 2050 Wind',{'x':'st','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
-            ('State Map 2050 Solar',{'x':'st','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
-            ('PCA Map 2030 Wind',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
-            ('PCA Map 2030 Solar',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
-            ('PCA Map 2050 Wind',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
-            ('PCA Map 2050 Solar',{'x':'n','y':'Generation (TWh)', 'y_agg':'Sum', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
+            ('Stacked Area',{'x':'year','y':'Generation (TWh)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Generation (TWh)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Generation (TWh)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('Stacked Columns 2020, 2030, 2050',{'x':'scenario','y':'Generation (TWh)','series':'tech', 'explode': 'year', 'chart_type':'Bar', 'filter': {'year': [2020, 2030, 2050]}}),
+            ('State Map 2030 Wind',{'x':'st','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
+            ('State Map 2030 Solar',{'x':'st','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
+            ('State Map 2050 Wind',{'x':'st','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
+            ('State Map 2050 Solar',{'x':'st','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
+            ('PCA Map 2030 Wind',{'x':'n','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2030]}}),
+            ('PCA Map 2030 Solar',{'x':'n','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
+            ('PCA Map 2050 Wind',{'x':'n','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
+            ('PCA Map 2050 Solar',{'x':'n','y':'Generation (TWh)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
         )),
         }
     ),
@@ -165,7 +165,7 @@ results_meta = collections.OrderedDict((
         'param': 'AnnualReport',
         'columns': ['n', 'year', 'type', 'value'],
         'presets': collections.OrderedDict((
-            ('CO2 Emissions (MMton)',{'x':'year','y':'value', 'y_agg':'Sum','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}, 'y_scale':'1e-6'}),
+            ('CO2 Emissions (MMton)',{'x':'year','y':'value','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}, 'y_scale':'1e-6'}),
         )),
         }
     ),
@@ -190,7 +190,7 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars 2050',{'x':'m','y':'Generation (GW)', 'y_agg':'Sum','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'filter': {'year': [2050]}}),
+            ('Stacked Bars 2050',{'x':'m','y':'Generation (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'filter': {'year': [2050]}}),
         )),
         }
     ),
@@ -231,7 +231,7 @@ results_meta = collections.OrderedDict((
             {'func': add_huc_reg, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'value', 'y_agg':'Sum', 'series':'scenario', 'chart_type':'Line'}),
+            ('National',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -244,7 +244,7 @@ results_meta = collections.OrderedDict((
             {'func': add_huc_reg, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'value', 'y_agg':'Sum', 'series':'scenario', 'chart_type':'Line'}),
+            ('National',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -256,7 +256,7 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'Cost (2015$)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Scenario Compare',{'x':'year','y':'Cost (2015$)', 'y_agg':'Sum', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
+            ('Scenario Compare',{'x':'year','y':'Cost (2015$)', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -265,7 +265,7 @@ results_meta = collections.OrderedDict((
         'param': 'JediWindBuilds',
         'columns': ["category", "TRG", "windtype", "n", "year","Capacity (MW)"],
         'presets': collections.OrderedDict((
-            ('Scenario Compare',{'x':'year','y':'Capacity (MW)', 'y_agg':'Sum', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
+            ('Scenario Compare',{'x':'year','y':'Capacity (MW)', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
         )),
         }
     ),
