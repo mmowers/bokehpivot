@@ -165,7 +165,7 @@ results_meta = collections.OrderedDict((
         'param': 'AnnualReport',
         'columns': ['n', 'year', 'type', 'value'],
         'presets': collections.OrderedDict((
-            ('CO2 Emissions',{'x':'year','y':'value', 'y_agg':'Sum','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}}),
+            ('CO2 Emissions (MMton)',{'x':'year','y':'value', 'y_agg':'Sum','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}, 'y_scale':'1e-6'}),
         )),
         }
     ),

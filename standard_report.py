@@ -13,7 +13,7 @@ static_presets = [
     {'result': 'Capacity (GW)', 'presets': ['PCA Map 2050 Solar']},
     {'result': 'Generation (TWh)', 'presets': ['Stacked Bars']},
     {'result': 'Gen by m (GW)', 'presets': ['Stacked Bars 2050']},
-    {'result': 'Emissions, Fuel, Prices', 'presets': ['CO2 Emissions']},
+    {'result': 'Emissions, Fuel, Prices', 'presets': ['CO2 Emissions (MMton)']},
     {'result': 'Elec Price (2015$/MWh)', 'presets': ['National Scenario']},
     {'result': 'System Cost (2015$)', 'presets': ['2016-2050 Stacked Bars']},
 ]
