@@ -138,17 +138,16 @@ def reeds_static(data_source, static_presets, base=None):
             GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
     excel_report.save()
     sp.Popen(excel_report_path, shell=True)
-    layout = bl.column(static_plots, id='layout')
     with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
         template_string=template_file.read()
     template = ji.Template(template_string)
     resources = br.Resources()
-    html = be.file_html(layout, resources=resources, template=template)
+    html = be.file_html(static_plots, resources=resources, template=template)
     html_path = this_dir_path + '/out/static_report_'+ time +'.html'
     with open(html_path, 'w') as f:
         f.write(html)
     sp.Popen(html_path, shell=True)
-    #bio.save(layout, filename='summary.html')
+    #bio.save(static_plots, filename='summary.html')
 
 def build_data_source_wdg(data_source):
     '''
