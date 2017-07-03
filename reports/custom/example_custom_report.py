@@ -10,6 +10,5 @@ path = r'C:\Users\mmowers\Projects\Model Improvement\Bokeh\reeds_pivot_test\Mast
 static_presets = [
     {'result': 'Capacity (GW)', 'presets': ['Stacked Bars']},
     {'result': 'New Capacity (GW)', 'presets': ['Stacked Bars']},
-    {'result': 'Retirements (GW)', 'presets': ['Stacked Bars']},
 ]
 core.reeds_static(path, static_presets)
