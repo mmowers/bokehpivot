@@ -780,9 +780,6 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
     #Add glyphs to figure
     c = C_NORM
     if wdg['series'].value == 'None':
-        if wdg['y_agg'].value != 'None' and wdg['y'].value in cols['continuous']:
-            xs = df_exploded[x_col].values.tolist()
-            ys = df_exploded[wdg['y'].value].values.tolist()
         add_glyph(wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
