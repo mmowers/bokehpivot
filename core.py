@@ -89,9 +89,9 @@ def initialize():
 
     #build widgets and plots
     GL['data_source_wdg'] = build_data_source_wdg(data_source)
-    GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()), id='widgets_section')
-    GL['plots'] = bl.column([], id='plots_section')
-    layout = bl.row(GL['controls'], GL['plots'], id='layout')
+    GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()), css_classes=['widgets_section'])
+    GL['plots'] = bl.column([], css_classes=['plots_section'])
+    layout = bl.row(GL['controls'], GL['plots'], css_classes=['full_layout'])
 
     if data_source != '':
         update_data_source(init_load=True, init_config=wdg_config)

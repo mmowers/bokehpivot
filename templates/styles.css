@@ -5,22 +5,22 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-#modelid_layout{
+.full_layout{
     width: auto !important;
     height: auto !important;
 }
-#modelid_widgets_section{
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 10;
+.widgets_section{
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
     width: 225px !important;
     height: auto !important;
-    overflow-y: scroll;
+    overflow-y: scroll !important;
 }
-#modelid_plots_section{
-    margin-left: 250px;
+.plots_section{
+    margin-left: 250px !important;
     width: auto !important;
     height: auto !important;
 }
