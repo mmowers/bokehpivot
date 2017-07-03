@@ -25,7 +25,7 @@ def discount_costs(df, **kw):
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
-    df['Discounted Cost (2015$)'] = df['Cost (2015$)'] * df['pv_mult']
+    df['Discounted Cost (2015$)'] = df['Cost (Bil 2015$)'] * df['pv_mult']
     return df
 
 #Return present value multiplier
@@ -169,16 +169,16 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('System Cost (2015$)',
+    ('Sys Cost (Bil 2015$)',
         {'file': 'systemcost.gdx',
         'param': 'aSystemCost_ba',
-        'columns': ['cost_cat', 'n', 'year', 'Cost (2015$)'],
+        'columns': ['cost_cat', 'n', 'year', 'Cost (Bil 2015$)'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'Cost (2015$)'}},
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult/1e9, 'column': 'Cost (Bil 2015$)'}},
             {'func': discount_costs, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('2016-2050 Stacked Bars',{'x':'scenario','y':'Cost (2015$)','series':'cost_cat','chart_type':'Bar', 'y_min': '0', 'filter': {'year': [2016, 2018, 2020, 2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040, 2042, 2044, 2046, 2048, 2050]}}),
+            ('2017-2050 Stacked Bars',{'x':'scenario','y':'Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'y_min': '0', 'filter': {'year': list(range(2017,2051))}}),
         )),
         }
     ),

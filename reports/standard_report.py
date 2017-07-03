@@ -17,6 +17,6 @@ static_presets = [
     {'result': 'Gen by m (GW)', 'presets': ['Stacked Bars 2050']},
     {'result': 'Emissions, Fuel, Prices', 'presets': ['CO2 Emissions (MMton)']},
     {'result': 'Elec Price (2015$/MWh)', 'presets': ['National Scenario']},
-    {'result': 'System Cost (2015$)', 'presets': ['2016-2050 Stacked Bars']},
+    {'result': 'Sys Cost (Bil 2015$)', 'presets': ['2017-2050 Stacked Bars']},
 ]
 core.reeds_static(path, static_presets)

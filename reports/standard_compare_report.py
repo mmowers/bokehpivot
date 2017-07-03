@@ -23,7 +23,7 @@ static_presets = [
     {'result': 'Emissions, Fuel, Prices', 'presets': ['CO2 Emissions (MMton)'], 'modify': 'diff'},
     {'result': 'Elec Price (2015$/MWh)', 'presets': ['National']},
     {'result': 'Elec Price (2015$/MWh)', 'presets': ['National'], 'modify': 'diff'},
-    {'result': 'System Cost (2015$)', 'presets': ['2016-2050 Stacked Bars']},
-    {'result': 'System Cost (2015$)', 'presets': ['2016-2050 Stacked Bars'], 'modify': 'diff'},
+    {'result': 'Sys Cost (Bil 2015$)', 'presets': ['2017-2050 Stacked Bars']},
+    {'result': 'Sys Cost (Bil 2015$)', 'presets': ['2017-2050 Stacked Bars'], 'modify': 'diff'},
 ]
 core.reeds_static(path, static_presets, base)
