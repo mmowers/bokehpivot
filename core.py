@@ -124,6 +124,12 @@ def reeds_static(data_source, static_presets, base=None):
             #Flip preset to 'None' to trigger change when it is set to 'preset'
             GL['widgets']['presets'].value = 'None'
             GL['widgets']['presets'].value = preset
+            #if designated as base_only, filter to only include base scenario
+            if 'base_only' in static_preset and static_preset['base_only'] == True:
+                scenario_filter_i = GL['columns']['filterable'].index('scenario')
+                wdg_fil = GL['widgets']['filter_'+str(scenario_filter_i)]
+                wdg_fil.active = [wdg_fil.labels.index(base)]
+                update_plots()
             #for comparison presets, if base is given, use it as base
             results_meta_preset = results_meta[result]['presets'][preset]
             if 'adv_col_base' in results_meta_preset and results_meta_preset['adv_col_base'] == 'placeholder':
