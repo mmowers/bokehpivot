@@ -124,21 +124,33 @@ def reeds_static(data_source, static_presets, base=None):
             #Flip preset to 'None' to trigger change when it is set to 'preset'
             GL['widgets']['presets'].value = 'None'
             GL['widgets']['presets'].value = preset
-            #if designated as base_only, filter to only include base scenario
-            if 'base_only' in static_preset and static_preset['base_only'] == True:
-                scenario_filter_i = GL['columns']['filterable'].index('scenario')
-                wdg_fil = GL['widgets']['filter_'+str(scenario_filter_i)]
-                wdg_fil.active = [wdg_fil.labels.index(base)]
-                update_plots()
+            title_end = ''
+            if 'modify' in static_preset:
+                if static_preset['modify'] == 'base_only':
+                    #if designated as base_only, filter to only include base scenario
+                    scenario_filter_i = GL['columns']['filterable'].index('scenario')
+                    wdg_fil = GL['widgets']['filter_'+str(scenario_filter_i)]
+                    wdg_fil.active = [wdg_fil.labels.index(base)]
+                    update_plots() #needed because filters don't automatically update
+                elif static_preset['modify'] == 'diff':
+                    #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
+                    x_val = GL['widgets']['x'].value
+                    GL['widgets']['x'].value = 'None'
+                    GL['widgets']['adv_op'].value = 'Difference'
+                    GL['widgets']['adv_col'].value = 'scenario'
+                    GL['widgets']['adv_col_base'].value = base
+                    GL['widgets']['y_min'].value = ''
+                    GL['widgets']['x'].value = x_val
+                    title_end = ' - Difference'
             #for comparison presets, if base is given, use it as base
             results_meta_preset = results_meta[result]['presets'][preset]
             if 'adv_col_base' in results_meta_preset and results_meta_preset['adv_col_base'] == 'placeholder':
                 GL['widgets']['adv_col_base'].value = base
-            title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + '</h2>')
+            title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + title_end + '</h2>')
             static_plots.append(bl.row(title))
             legend = bmw.Div(text=GL['widgets']['legend'].text)
             static_plots.append(bl.row(GL['plots'].children + [legend]))
-            excel_sheet_name = str(sheet_i) + '_' + result + ' ' + preset
+            excel_sheet_name = str(sheet_i) + '_' + result + ' ' + preset + title_end
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
             excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
             sheet_i += 1
