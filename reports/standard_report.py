@@ -2,7 +2,9 @@
 Static HTML report maker
 
 '''
-from core import reeds_static
+import os, sys
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+import core
 
 path = r'C:\Users\mmowers\Projects\Model Improvement\Bokeh\reeds_pivot_test\Master'
 static_presets = [
@@ -17,4 +19,4 @@ static_presets = [
     {'result': 'Elec Price (2015$/MWh)', 'presets': ['National Scenario']},
     {'result': 'System Cost (2015$)', 'presets': ['2016-2050 Stacked Bars']},
 ]
-reeds_static(path, static_presets)
+core.reeds_static(path, static_presets)
