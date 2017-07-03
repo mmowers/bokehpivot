@@ -1275,7 +1275,7 @@ def update_reeds_presets(attr, old, new):
         #First set x to none to prevent chart rerender
         wdg['x'].value = 'None'
         #gather widgets to reset
-        wdg_resets = [i for i in WDG_COL + WDG_NON_COL if i != 'x']
+        wdg_resets = [i for i in wdg_defaults if i not in GL['variant_wdg'].keys()+['x', 'data', 'presets']]
         #reset widgets if they are not default
         for key in wdg_resets:
             if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
