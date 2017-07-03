@@ -116,8 +116,6 @@ def reeds_static(data_source, static_presets, base=None):
     sheet_i = 1
     #Now, look through reeds results to find those with presets, and load those presets
     for static_preset in static_presets:
-        #Clear result_dfs in the hope that garbage collection can free up some memory
-        result_dfs.clear()
         #Load the result
         result = static_preset['result']
         presets = static_preset['presets']
