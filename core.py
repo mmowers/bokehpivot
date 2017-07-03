@@ -121,6 +121,8 @@ def reeds_static(data_source, static_presets, base=None):
         presets = static_preset['presets']
         GL['widgets']['result'].value = result
         for preset in presets:
+            #Flip preset to 'None' to trigger change when it is set to 'preset'
+            GL['widgets']['presets'].value = 'None'
             GL['widgets']['presets'].value = preset
             #for comparison presets, if base is given, use it as base
             if base != None and 'adv_col_base' in results_meta[result]['presets'][preset] and results_meta[result]['presets'][preset]['adv_col_base'] == 'placeholder':
