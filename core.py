@@ -53,7 +53,7 @@ WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
 WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
-    'plot_width', 'plot_height', 'opacity', 'x_min', 'x_max', 'x_scale', 'x_title',
+    'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'line_width', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
@@ -476,6 +476,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     wdg['plot_title'] = bmw.TextInput(title='Plot Title', value='', css_classes=['wdgkey-plot_title', 'adjust-drop'])
     wdg['plot_title_size'] = bmw.TextInput(title='Plot Title Font Size', value=str(PLOT_FONT_SIZE), css_classes=['wdgkey-plot_title_size', 'adjust-drop'])
     wdg['opacity'] = bmw.TextInput(title='Opacity (0-1)', value=str(OPACITY), css_classes=['wdgkey-opacity', 'adjust-drop'])
+    wdg['sync_axes'] = bmw.Select(title='Sync Axes', value='Yes', options=['Yes', 'No'], css_classes=['adjust-drop'])
     wdg['x_scale'] = bmw.TextInput(title='X Scale', value=str(X_SCALE), css_classes=['wdgkey-x_scale', 'adjust-drop'])
     wdg['x_min'] = bmw.TextInput(title='X Min', value='', css_classes=['wdgkey-x_min', 'adjust-drop'])
     wdg['x_max'] = bmw.TextInput(title='X Max', value='', css_classes=['wdgkey-x_max', 'adjust-drop'])
@@ -689,8 +690,61 @@ def create_figures(df_plots, wdg, cols):
                 for explode_val in df_exploded_group[wdg['explode'].value].unique().tolist():
                     df_exploded = df_exploded_group[df_exploded_group[wdg['explode'].value].isin([explode_val])]
                     plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, explode_val, explode_group))
+    set_axis_bounds(df_plots, plot_list, wdg, cols)
     print('***Done Building Figures.')
     return plot_list
+
+def set_axis_bounds(df, plots, wdg, cols):
+    if wdg['x'].value in cols['continuous']:
+        if wdg['x_min'].value != '':
+            for p in plots:
+                p.x_range.start = float(wdg['x_min'].value)
+        elif wdg['sync_axes'].value == 'Yes':
+            min_x = df[wdg['x'].value].min()
+            if wdg['chart_type'].value == 'Bar':
+                min_x = min_x - float(wdg['bar_width'].value)/2
+            for p in plots:
+                p.x_range.start = min_x
+        if wdg['x_max'].value != '':
+            for p in plots:
+                p.x_range.end = float(wdg['x_max'].value)
+        elif wdg['sync_axes'].value == 'Yes':
+            max_x = df[wdg['x'].value].max()
+            if wdg['chart_type'].value == 'Bar':
+                max_x = max_x + float(wdg['bar_width'].value)/2
+            for p in plots:
+                p.x_range.end = max_x
+    if wdg['y'].value in cols['continuous']:
+        #find grouped cols for stacked manipulations
+        col_names = df.columns.values.tolist()
+        groupby_cols = [i for i in col_names if i not in [wdg['series'].value, wdg['y'].value]]
+        if wdg['y_min'].value != '':
+            for p in plots:
+                p.y_range.start = float(wdg['y_min'].value)
+        elif wdg['sync_axes'].value == 'Yes':
+            if wdg['chart_type'].value in STACKEDTYPES:
+                #sum negative values across series
+                df_neg = df[df[wdg['y'].value] < 0]
+                df_neg_sum = df_neg.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
+                min_y = df_neg_sum[wdg['y'].value].min() if df_neg_sum[wdg['y'].value].min() < 0 else 0
+            else:
+                min_y = df[wdg['y'].value].min() if df[wdg['y'].value].min() < 0 else 0
+            for p in plots:
+                p.y_range.start = min_y
+        if wdg['y_max'].value != '':
+            for p in plots:
+                p.y_range.end = float(wdg['y_max'].value)
+        elif wdg['sync_axes'].value == 'Yes':
+            if wdg['chart_type'].value in STACKEDTYPES:
+                #sum postive values across series
+                df_pos = df[df[wdg['y'].value] > 0]
+                df_pos_sum = df_pos.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
+                max_y = df_pos_sum[wdg['y'].value].max() if df_pos_sum[wdg['y'].value].max() > 0 else 0
+            else:
+                max_y = df[wdg['y'].value].max() if df[wdg['y'].value].max() > 0 else 0
+            for p in plots:
+                p.y_range.end = max_y
+
 
 def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_group=None):
     '''
@@ -770,12 +824,6 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
     p.xaxis.major_label_text_font_size = wdg['x_major_label_size'].value + 'pt'
     p.yaxis.major_label_text_font_size = wdg['y_major_label_size'].value + 'pt'
     p.xaxis.major_label_orientation = 'horizontal' if wdg['x_major_label_orientation'].value == '0' else math.radians(float(wdg['x_major_label_orientation'].value))
-    if wdg['x'].value in cols['continuous']:
-        if wdg['x_min'].value != '': p.x_range.start = float(wdg['x_min'].value)
-        if wdg['x_max'].value != '': p.x_range.end = float(wdg['x_max'].value)
-    if wdg['y'].value in cols['continuous']:
-        if wdg['y_min'].value != '': p.y_range.start = float(wdg['y_min'].value)
-        if wdg['y_max'].value != '': p.y_range.end = float(wdg['y_max'].value)
 
     #Add glyphs to figure
     c = C_NORM
