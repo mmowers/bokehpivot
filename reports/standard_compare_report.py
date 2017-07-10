@@ -6,8 +6,8 @@ import os, sys
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import core
 
-path = r'C:\Users\mmowers\Projects\Model Improvement\Bokeh\reeds_pivot_test'
-base = 'Master'
+path = r'\\nrelqnap01d\ReEDS\FY17-WindRuns-MRM-d1c8e69-wind_cost_scenarios\runs\20170322_jedi_outputs'
+base = 'ATB_Mid'
 static_presets = [
     {'result': 'Capacity (GW)', 'presets': ['Stacked Bars'], 'modify': 'base_only'},
     {'result': 'Capacity (GW)', 'presets': ['Stacked Bars'], 'modify': 'diff'},
