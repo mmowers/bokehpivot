@@ -309,12 +309,32 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
     return (df, cols)
 
 def build_reeds_presets_wdg(preset_options):
+    '''
+    Build the presets widget
+
+    Args:
+        preset_options (list): List of strings for preset selections.
+
+    Returns:
+        wdg (ordered dict): Dictionary of bokeh.model.widgets, with 'presets' as the only key.
+    '''
     wdg = collections.OrderedDict()
     wdg['presets'] = bmw.Select(title='Presets', value='None', options=['None'] + preset_options, css_classes=['wdgkey-presets'])
     wdg['presets'].on_change('value', update_reeds_presets)
     return wdg
 
 def update_reeds_data_source(path, init_load, init_config):
+    '''
+    Respond to updates of data_source_wdg which are identified as ReEDS paths
+
+    Args:
+        path: The updated value of data_source_wdg
+        init_load (boolean): True if this is the initial load of the page
+        init_config (dict): Initial configuration supplied by the URL.
+
+    Returns:
+        Nothing: Core Globals are updated
+    '''
     core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'])
     core.GL['widgets'].update(core.GL['variant_wdg'])
     #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
