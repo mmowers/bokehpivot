@@ -308,6 +308,15 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
     print('***Done with joins, maps, ordering.')
     return (df, cols)
 
+def build_reeds_presets_wdg(preset_options, init_load=False, init_config={}, wdg_defaults={}):
+    wdg = collections.OrderedDict()
+    wdg['presets'] = bmw.Select(title='Presets', value='None', options=['None'] + preset_options, css_classes=['wdgkey-presets'])
+    core.save_wdg_defaults(wdg, wdg_defaults)
+    if init_load:
+        core.initialize_wdg(wdg, init_config)
+    wdg['presets'].on_change('value', update_reeds_presets)
+    return wdg
+
 def update_reeds_data_source(path, init_load, init_config):
     core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'])
     core.GL['widgets'].update(core.GL['variant_wdg'])
@@ -318,7 +327,8 @@ def update_reeds_data_source(path, init_load, init_config):
         preset_options = []
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
             preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
-        core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], init_load, init_config, preset_options, wdg_defaults=core.GL['wdg_defaults']))
+        core.GL['widgets'].update(build_reeds_presets_wdg(preset_options, init_load, init_config, wdg_defaults=core.GL['wdg_defaults']))
+        core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], init_load, init_config, wdg_defaults=core.GL['wdg_defaults']))
 
 def update_reeds_meta(attr, old, new):
     '''
@@ -346,7 +356,8 @@ def update_reeds_wdg(type):
             if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
                 preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
         core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], GL_REEDS['result_dfs'])
-        core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], preset_options=preset_options, wdg_defaults=core.GL['wdg_defaults']))
+        core.GL['widgets'].update(build_reeds_presets_wdg(preset_options, wdg_defaults=core.GL['wdg_defaults']))
+        core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], wdg_defaults=core.GL['wdg_defaults']))
     core.GL['controls'].children = list(core.GL['widgets'].values())
     core.update_plots()
 

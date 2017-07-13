@@ -150,7 +150,7 @@ def get_wdg_gdx(data_source):
     '''
     return #need to implement!
 
-def build_widgets(df_source, cols, init_load=False, init_config={}, preset_options=None, wdg_defaults={}):
+def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults={}):
     '''
     Use a dataframe and its columns to set widget options. Widget values may
     be set by URL parameters via init_config.
@@ -160,7 +160,6 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
         init_load (boolean, optional): If this is the initial page load, then this will be True, else False.
         init_config (dict): Initial widget configuration passed via URL.
-        preset_options (list): List of strings for preset selections.
         wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
 
     Returns:
@@ -169,8 +168,6 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     #Add widgets
     print('***Build main widgets...')
     wdg = collections.OrderedDict()
-    if preset_options != None:
-        wdg['presets'] = bmw.Select(title='Presets', value='None', options=['None'] + preset_options, css_classes=['wdgkey-presets'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
@@ -249,8 +246,6 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         initialize_wdg(wdg, init_config)
 
     #Add update functions for widgets
-    if preset_options != None:
-        wdg['presets'].on_change('value', rb.update_reeds_presets)
     wdg['filters_update'].on_click(update_plots)
     wdg['update'].on_click(update_plots)
     wdg['download'].on_click(download)
