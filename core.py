@@ -60,12 +60,14 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity']
 
 #initialize globals dict for variables that are modified within update functions.
-GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None, 'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None}
+#custom_sorts: keys are column names. Values are lists of values in the desired sort order
+GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None,
+      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {}}
 
 #ReEDS globals
-custom_sorts = {} #keys are column names. Values are lists of values in the desired sort order
-scenarios = [] #each element is a dict with name of scenario and path to scenario
-result_dfs = {} #keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
+#scenarios: each element is a dict with name of scenario and path to scenario
+#result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
+GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
 #os globals
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -223,7 +225,7 @@ def get_wdg_gdx(data_source):
     '''
     return #need to implement!
 
-def get_wdg_reeds(path, init_load=False, wdg_config={}, wdg_defaults={}):
+def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
     From data source path, fetch paths to scenarios and return dict of widgets for
     meta files, scenarios, and results
@@ -250,7 +252,7 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}, wdg_defaults={}):
             topwdg['meta_style_'+col] = bmw.TextInput(title='"'+col+ '" Style', value=columns_meta[col]['style'], css_classes=['wdgkey-meta_style_'+col, 'meta-drop'])
 
     #Filter Scenarios widgets and Result widget
-    scenarios[:] = []
+    scenarios = []
     runs_paths = path.split('|')
     for runs_path in runs_paths:
         runs_path = runs_path.strip()
@@ -298,9 +300,9 @@ def get_wdg_reeds(path, init_load=False, wdg_config={}, wdg_defaults={}):
     topwdg['result'].on_change('value', update_reeds_result)
     
     print('***Done fetching ReEDS scenarios.')
-    return topwdg
+    return (topwdg, scenarios)
 
-def get_reeds_data(topwdg):
+def get_reeds_data(topwdg, scenarios, result_dfs):
     '''
     For a selected ReEDS result and set of scenarios, fetch gdx data,
     preprocess it, and add to global result_dfs dictionary if the data
@@ -359,7 +361,7 @@ def get_reeds_data(topwdg):
         print('***Done fetching ' + str(result) + ' for ' + str(scenario_name) + '.')
     print('***Done fetching ' + str(result) + '.')
 
-def process_reeds_data(topwdg):
+def process_reeds_data(topwdg, custom_sorts, result_dfs):
     '''
     Apply joins, mappings, ordering data to a selected result dataframe.
     Also categorize the columns of the dataframe and fill NA values.
@@ -1283,12 +1285,12 @@ def update_data_source(init_load=False, init_config={}):
     elif path.lower().endswith('.gdx'):
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
     else: #reeds
-        GL['variant_wdg'] = get_wdg_reeds(path, init_load, init_config, GL['wdg_defaults'])
+        GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, GL['wdg_defaults'], GL['custom_sorts'])
         GL['widgets'].update(GL['variant_wdg'])
         #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
         if init_load and GL['variant_wdg']['result'].value is not 'None':
-            get_reeds_data(GL['variant_wdg'])
-            GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'])
+            get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
+            GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
             preset_options = []
             if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
                 preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
@@ -1318,10 +1320,10 @@ def update_reeds_wdg(type):
     if 'result' in GL['variant_wdg'] and GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
         if type == 'result':
-            get_reeds_data(GL['variant_wdg'])
+            get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
             if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
                 preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
-        GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'])
+        GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], preset_options=preset_options, wdg_defaults=GL['wdg_defaults']))
     GL['controls'].children = list(GL['widgets'].values())
     update_plots()
@@ -1430,7 +1432,7 @@ def update_plots():
     if GL['widgets']['x'].value == 'None' or GL['widgets']['y'].value == 'None':
         GL['plots'].children = []
         return
-    GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], custom_sorts)
+    GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], GL['custom_sorts'])
     if GL['widgets']['render_plots'].value == 'Yes':
         if GL['widgets']['chart_type'].value == 'Map':
             figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
