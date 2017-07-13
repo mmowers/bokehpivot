@@ -57,8 +57,10 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
+#custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None,
-      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {}}
+      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {},
+      'custom_colors': {}}
 
 #os globals
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -402,7 +404,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
     return df_plots
 
-def create_figures(df_plots, wdg, cols):
+def create_figures(df_plots, wdg, cols, custom_colors):
     '''
     Create figures based on the data in a dataframe and widget configuration, and return figures in a list.
     The explode widget determines if there will be multiple figures.
@@ -411,6 +413,7 @@ def create_figures(df_plots, wdg, cols):
         df_plots (pandas dataframe): Dataframe of csv source after being filtered, scaled, aggregated, and sorted.
         wdg (ordered dict): Dictionary of bokeh model widgets.
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
+        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 
     Returns:
         plot_list (list): List of bokeh.model.figures.
@@ -419,18 +422,18 @@ def create_figures(df_plots, wdg, cols):
     plot_list = []
     df_plots_cp = df_plots.copy()
     if wdg['explode'].value == 'None':
-        plot_list.append(create_figure(df_plots_cp, df_plots, wdg, cols))
+        plot_list.append(create_figure(df_plots_cp, df_plots, wdg, cols, custom_colors))
     else:
         if wdg['explode_group'].value == 'None':
             for explode_val in df_plots_cp[wdg['explode'].value].unique().tolist():
                 df_exploded = df_plots_cp[df_plots_cp[wdg['explode'].value].isin([explode_val])]
-                plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, explode_val))
+                plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val))
         else:
             for explode_group in df_plots_cp[wdg['explode_group'].value].unique().tolist():
                 df_exploded_group = df_plots_cp[df_plots_cp[wdg['explode_group'].value].isin([explode_group])]
                 for explode_val in df_exploded_group[wdg['explode'].value].unique().tolist():
                     df_exploded = df_exploded_group[df_exploded_group[wdg['explode'].value].isin([explode_val])]
-                    plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, explode_val, explode_group))
+                    plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val, explode_group))
     set_axis_bounds(df_plots, plot_list, wdg, cols)
     print('***Done Building Figures.')
     return plot_list
@@ -499,7 +502,7 @@ def set_axis_bounds(df, plots, wdg, cols):
                 p.y_range.end = max_y
 
 
-def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_group=None):
+def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=None, explode_group=None):
     '''
     Create and return a figure based on the data in a dataframe and widget configuration.
 
@@ -508,6 +511,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
         df_plots (pandas dataframe): Dataframe of all plots data, used only for maintaining consistent series colors.
         wdg (ordered dict): Dictionary of bokeh model widgets.
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
+        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
         explode_val (string, optional): The value in the column designated by wdg['explode'] that applies to this figure.
         explode_group (string, optional): The value in the wdg['explode_group'] column that applies to this figure.
 
@@ -589,7 +593,10 @@ def create_figure(df_exploded, df_plots, wdg, cols, explode_val=None, explode_gr
             y_bases_pos = [0]*len(xs_full)
             y_bases_neg = [0]*len(xs_full)
         for i, ser in enumerate(df_exploded[wdg['series'].value].unique().tolist()):
-            c = COLORS[full_series.index(ser)]
+            if custom_colors and wdg['series'].value in custom_colors and ser in custom_colors[wdg['series'].value]:
+                c = custom_colors[wdg['series'].value][ser]
+            else:
+                c = COLORS[full_series.index(ser)]
             df_series = df_exploded[df_exploded[wdg['series'].value].isin([ser])]
             xs_ser = df_series[x_col].values.tolist()
             ys_ser = df_series[wdg['y'].value].values.tolist()
@@ -890,13 +897,14 @@ def build_map_legend(labels):
     legend_string = build_legend(labels, colors)
     return legend_string
 
-def build_plot_legend(df_plots, series_val):
+def build_plot_legend(df_plots, series_val, custom_colors):
     '''
     Return html for series legend, based on values of column that was chosen for series, and global COLORS.
 
     Args:
         df_plots (pandas dataframe): Dataframe of all plots data.
         series_val (string): Header for column chosen as series.
+        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 
     Returns:
         legend_string (string): html to be used as legend.
@@ -905,6 +913,10 @@ def build_plot_legend(df_plots, series_val):
         return ''
     labels = df_plots[series_val].unique().tolist()
     colors = [COLORS[i] for i, t in enumerate(labels)]
+    if custom_colors and series_val in custom_colors:
+        for i, lab in enumerate(labels):
+             if lab in custom_colors[series_val]:
+                 colors[i] = custom_colors[series_val][lab]
     labels.reverse()
     colors.reverse()
     legend_string = build_legend(labels, colors)
@@ -1109,8 +1121,8 @@ def update_plots():
             figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
             legend_text = build_map_legend(legend_labels)
         else:
-            figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'])
-            legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value)
+            figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'], GL['custom_colors'])
+            legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value, GL['custom_colors'])
         GL['widgets']['legend'].text = legend_text
         GL['plots'].children = figs
 

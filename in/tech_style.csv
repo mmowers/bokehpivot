@@ -1,21 +1,21 @@
-order
-Nuclear
-Coal
-Coal-IGCC
-Coal-CCS
-Cofire
-Gas-CC
-Gas-CC-CCS
-Gas-CT
-Oil-Gas-Steam
-Hydro
-Ocean
-Geothermal
-Biopower
-Landfill-gas
-Wind
-CSP
-PV (AC)
-Distributed PV (AC)
-Storage
-Interruptible Load
+order,color,color description
+Nuclear,#8B0000,red4
+Coal,#000000,black
+Coal-IGCC,#b3b3b3,gray70
+Coal-CCS,#e5e5e5,gray90
+Cofire,#528b8b,darkslategray4
+Gas-CC,#d2691e,chocolate
+Gas-CC-CCS,#ee7621,chocolate2
+Gas-CT,#CD661D,chocolate3
+Oil-Gas-Steam,#cd5c5c,indianred
+Hydro,#27408b,royalblue4
+Ocean,#000080,navyblue
+Geothermal,#eedc82,lightgoldenrod2
+Biopower,#54ff9f,seagreen
+Landfill-gas,#3cb371,mediumseagreen
+Wind,#4f94cd,steelblue3
+CSP,#ee4000,orangered2
+PV (AC),#ffa500,orange
+Distributed PV (AC),#cd8500,orange3
+Storage,#f8f8ff,ghostwhite
+Interruptible Load,#8b008b,magenta4

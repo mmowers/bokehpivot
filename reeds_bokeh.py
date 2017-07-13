@@ -240,7 +240,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
         print('***Done fetching ' + str(result) + ' for ' + str(scenario_name) + '.')
     print('***Done fetching ' + str(result) + '.')
 
-def process_reeds_data(topwdg, custom_sorts, result_dfs):
+def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     '''
     Apply joins, mappings, ordering data to a selected result dataframe.
     Also categorize the columns of the dataframe and fill NA values.
@@ -248,6 +248,7 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
     Args:
         topwdg (ordered dict): ReEDS widgets (meta widgets, scenarios widget, result widget)
         custom_sorts (dict): Keys are column names. Values are lists of values in the desired sort order.
+        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
         result_dfs (dict): Keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 
     Returns:
@@ -288,6 +289,8 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
             df = df[df[col].isin(df_style['order'].values.tolist())]
             #add to custom_sorts with new order
             custom_sorts[col] = df_style['order'].tolist()
+            if 'color' in df_style:
+                custom_colors[col] = dict(zip(df_style['order'],df_style['color']))
     cols = {}
     cols['all'] = df.columns.values.tolist()
     for c in cols['all']:
@@ -340,7 +343,7 @@ def update_reeds_data_source(path, init_load, init_config):
     #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
     if init_load and core.GL['variant_wdg']['result'].value is not 'None':
         get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
-        core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], GL_REEDS['result_dfs'])
+        core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         preset_options = []
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
             preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
@@ -372,7 +375,7 @@ def update_reeds_wdg(type):
             get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
             if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
                 preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
-        core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], GL_REEDS['result_dfs'])
+        core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], wdg_defaults=core.GL['wdg_defaults']))
     core.GL['controls'].children = list(core.GL['widgets'].values())

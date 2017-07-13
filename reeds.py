@@ -438,6 +438,7 @@ results_meta = collections.OrderedDict((
 ))
 
 #Columns metadata.
+#For 'style', colors are in hex, but descriptions are given (see http://www.color-hex.com/color-names.html).
 columns_meta = {
     'tech':{
         'type': 'string',
