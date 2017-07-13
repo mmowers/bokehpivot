@@ -20,7 +20,7 @@ import bokeh.embed as be
 import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
-from reeds import results_meta, columns_meta
+import reeds
 import subprocess as sp
 import jinja2 as ji
 
@@ -154,7 +154,7 @@ def reeds_static(data_source, static_presets, base=None):
                     GL['widgets']['x'].value = x_val
                     title_end = ' - Difference'
             #for comparison presets, if base is given, use it as base
-            results_meta_preset = results_meta[result]['presets'][preset]
+            results_meta_preset = reeds.results_meta[result]['presets'][preset]
             if 'adv_col_base' in results_meta_preset and results_meta_preset['adv_col_base'] == 'placeholder':
                 GL['widgets']['adv_col_base'].value = base
             title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + title_end + '</h2>')
@@ -255,13 +255,13 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
 
     #Meta widgets
     topwdg['meta'] = bmw.Div(text='Meta', css_classes=['meta-dropdown'])
-    for col in columns_meta:
-        if 'map' in columns_meta[col]:
-            topwdg['meta_map_'+col] = bmw.TextInput(title='"'+col+ '" Map', value=columns_meta[col]['map'], css_classes=['wdgkey-meta_map_'+col, 'meta-drop'])
-        if 'join' in columns_meta[col]:
-            topwdg['meta_join_'+col] = bmw.TextInput(title='"'+col+ '" Join', value=columns_meta[col]['join'], css_classes=['wdgkey-meta_join_'+col, 'meta-drop'])
-        if 'style' in columns_meta[col]:
-            topwdg['meta_style_'+col] = bmw.TextInput(title='"'+col+ '" Style', value=columns_meta[col]['style'], css_classes=['wdgkey-meta_style_'+col, 'meta-drop'])
+    for col in reeds.columns_meta:
+        if 'map' in reeds.columns_meta[col]:
+            topwdg['meta_map_'+col] = bmw.TextInput(title='"'+col+ '" Map', value=reeds.columns_meta[col]['map'], css_classes=['wdgkey-meta_map_'+col, 'meta-drop'])
+        if 'join' in reeds.columns_meta[col]:
+            topwdg['meta_join_'+col] = bmw.TextInput(title='"'+col+ '" Join', value=reeds.columns_meta[col]['join'], css_classes=['wdgkey-meta_join_'+col, 'meta-drop'])
+        if 'style' in reeds.columns_meta[col]:
+            topwdg['meta_style_'+col] = bmw.TextInput(title='"'+col+ '" Style', value=reeds.columns_meta[col]['style'], css_classes=['wdgkey-meta_style_'+col, 'meta-drop'])
 
     #Filter Scenarios widgets and Result widget
     scenarios = []
@@ -299,7 +299,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         labels = [a['name'] for a in scenarios]
         topwdg['filter_scenarios_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['filter-scenarios-dropdown'])
         topwdg['filter_scenarios'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-filter_scenarios'])
-        topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(results_meta.keys()), css_classes=['wdgkey-result'])
+        topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults
     save_wdg_defaults(topwdg, wdg_defaults)
     #set initial config
@@ -339,7 +339,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
         cur_scenarios = result_dfs[result]['scenario'].unique().tolist() #the scenarios that have already been retrieved and stored in result_dfs
     #For each selected scenario, retrieve the data from gdx if we don't already have it,
     #and update result_dfs with the new data.
-    result_meta = results_meta[result]
+    result_meta = reeds.results_meta[result]
     for i in topwdg['filter_scenarios'].active:
         scenario_name = scenarios[i]['name']
         if scenario_name not in cur_scenarios:
@@ -364,8 +364,8 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     df_scen_result = preprocess['func'](df_scen_result, **preprocess['args'])
             #preprocess columns in this dataframe
             for col in df_scen_result.columns.values.tolist():
-                if col in columns_meta and 'preprocess' in columns_meta[col]:
-                    for preprocess in columns_meta[col]['preprocess']:
+                if col in reeds.columns_meta and 'preprocess' in reeds.columns_meta[col]:
+                    for preprocess in reeds.columns_meta[col]['preprocess']:
                         df_scen_result[col] = preprocess(df_scen_result[col])
             df_scen_result['scenario'] = scenario_name
             if result_dfs[result] is None:
@@ -426,18 +426,18 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
     cols = {}
     cols['all'] = df.columns.values.tolist()
     for c in cols['all']:
-        if c in columns_meta:
-            if columns_meta[c]['type'] is 'number':
+        if c in reeds.columns_meta:
+            if reeds.columns_meta[c]['type'] is 'number':
                 df[c] = pd.to_numeric(df[c], errors='coerce')
-            elif columns_meta[c]['type'] is 'string':
+            elif reeds.columns_meta[c]['type'] is 'string':
                 df[c] = df[c].astype(str)
 
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
-    cols['y-axis'] = [x for x in cols['continuous'] if x not in columns_meta or columns_meta[x]['y-allow']]
+    cols['y-axis'] = [x for x in cols['continuous'] if x not in reeds.columns_meta or reeds.columns_meta[x]['y-allow']]
     cols['x-axis'] = [x for x in cols['all'] if x not in cols['y-axis']]
-    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['filterable']]
-    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in columns_meta and columns_meta[x]['seriesable']]
+    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['filterable']]
+    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['seriesable']]
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
     df[cols['continuous']] = df[cols['continuous']].fillna(0)
     print('***Done with joins, maps, ordering.')
@@ -1349,8 +1349,8 @@ def update_data_source(init_load=False, init_config={}):
             get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
             GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
             preset_options = []
-            if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
-                preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
+            if 'presets' in reeds.results_meta[GL['variant_wdg']['result'].value]:
+                preset_options = reeds.results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
             GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, preset_options, wdg_defaults=GL['wdg_defaults']))
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
@@ -1378,8 +1378,8 @@ def update_reeds_wdg(type):
         preset_options = []
         if type == 'result':
             get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
-            if 'presets' in results_meta[GL['variant_wdg']['result'].value]:
-                preset_options = results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
+            if 'presets' in reeds.results_meta[GL['variant_wdg']['result'].value]:
+                preset_options = reeds.results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
         GL['df_source'], GL['columns'] = process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], preset_options=preset_options, wdg_defaults=GL['wdg_defaults']))
     GL['controls'].children = list(GL['widgets'].values())
@@ -1405,7 +1405,7 @@ def update_reeds_presets(attr, old, new):
             elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
                 wdg[key].value = wdg_defaults[key]
         #set all presets except x and filter. x will be set at end, triggering render of chart.
-        preset = results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
+        preset = reeds.results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
         common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
         for key in common_presets:
             wdg[key].value = preset[key]
