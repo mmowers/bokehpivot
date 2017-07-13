@@ -33,6 +33,7 @@ CIRCLE_SIZE = 9
 BAR_WIDTH = 0.8
 LINE_WIDTH = 2
 COLORS = ['#5e4fa2', '#3288bd', '#66c2a5', '#abdda4', '#e6f598', '#fee08b', '#fdae61', '#f46d43', '#d53e4f', '#9e0142']*1000
+MAP_COLORS = list(reversed(COLORS))
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
@@ -843,7 +844,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
             value = df_values[index]
             values.append(value)
             bin_num = df_bins[index]
-            colors.append(COLORS[int(bin_num)])
+            colors.append(MAP_COLORS[int(bin_num)])
         else:
             values.append('NA')
             colors.append('#ffffff')
@@ -893,7 +894,7 @@ def build_map_legend(labels):
     Returns:
         legend_string (string): full html to be used as legend.
     '''
-    colors = [COLORS[i] for i, t in enumerate(labels)]
+    colors = [MAP_COLORS[i] for i, t in enumerate(labels)]
     legend_string = build_legend(labels, colors)
     return legend_string
 
