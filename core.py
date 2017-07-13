@@ -725,7 +725,7 @@ def create_maps(df, wdg, cols):
         index_step = (len(val_list) - 1)/map_num_bins
         indices = [int((i+1)*index_step) for i in range(map_num_bins - 1)]
         breakpoints = [val_list[i] for i in indices]
-        breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
+        breakpoint_strings = prettify_numbers(breakpoints)
     elif wdg['map_bin'].value == 'Auto Equal Width': #bins of equal width
         map_num_bins = int(wdg['map_num'].value)
         if wdg['map_min'].value != '' and wdg['map_max'].value != '':
@@ -733,13 +733,12 @@ def create_maps(df, wdg, cols):
             map_max = float(wdg['map_max'].value)
             bin_width = (map_max - map_min)/(map_num_bins - 2)
             breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
-            breakpoint_strings = [str(bp) for bp in breakpoints]
         else:
             bin_width = float(y_axis.max() - y_axis.min())/map_num_bins
             map_min = y_axis.min() + bin_width
             map_max = y_axis.max() - bin_width
             breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
-            breakpoint_strings = ['%.2E' % bp for bp in breakpoints]
+        breakpoint_strings = prettify_numbers(breakpoints)
     elif wdg['map_bin'].value == 'Manual':
         breakpoint_strings = wdg['map_manual'].value.split(',')
         breakpoints = [float(bp) for bp in breakpoint_strings]
@@ -1028,6 +1027,22 @@ def ratio_consecutive(group):
     out_list += [group_list[i+1]/group_list[i] if group_list[i] else 0 for i in range(len(group_list) - 1)]
     out_series = pd.Series(out_list, index=group.index)
     return out_series
+
+def prettify_numbers(number_list):
+    str_list = []
+    for x in number_list:
+        if abs(x) < .001 or abs(x) >= 100000:
+            s = '%.2E' % x
+        else:
+            s = round_to_n(x, 3)
+        s = str(s)
+        if s.endswith('.0'):
+            s = s[:-2]
+        str_list.append(s)
+    return str_list
+
+def round_to_n(x, n):
+    return round(x, -int(math.floor(math.log10(x))) + (n - 1))
 
 def update_data(attr, old, new):
     '''
