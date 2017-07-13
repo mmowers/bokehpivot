@@ -105,6 +105,15 @@ def initialize():
     print('***Done Initializing')
 
 def reeds_static(data_source, static_presets, base=None):
+    '''
+    Build static html and excel reports based on specified ReEDS presets
+    Args:
+        data_source (string): Path to ReEDS runs that will be included in report
+        static_presets (list of dicts): List of presets for which to make report
+        base (string): Identifier for base scenario, if making comparison charts
+    Returns:
+        Nothing: HTML and Excel files are created
+    '''
     #build initial widgets and plots globals
     GL['data_source_wdg'] = build_data_source_wdg('')
     GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
@@ -233,10 +242,13 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     Args:
         path (string): Path to a ReEDS run folder or a folder containing ReEDS runs folders.
         init_load (Boolean): True if this is the initial page load. False otherwise.
-        wdg_config (dict): initial configuration for widgets.
+        wdg_config (dict): Initial configuration for widgets.
+        wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
+        custom_sorts (dict): Keys are column names. Values are lists of values in the desired sort order.
 
     Returns:
         topwdg (ordered dict): Dictionary of bokeh.model.widgets.
+        scenarios (array of dicts): Each element is a dict with name of scenario and path to scenario.
     '''
     print('***Fetching ReEDS scenarios...')
     topwdg = collections.OrderedDict()
@@ -310,9 +322,11 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
 
     Args:
         topwdg (ordered dict): ReEDS widgets (meta widgets, scenarios widget, result widget)
+        scenarios (array of dicts): Each element is a dict with name of scenario and path to scenario.
+        result_dfs (dict): Keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 
     Returns:
-        Nothing. Global result_dfs is modified
+        Nothing: result_dfs is modified
     '''
     result = topwdg['result'].value
     print('***Fetching ' + str(result) + ' for selected scenarios...')
@@ -368,6 +382,8 @@ def process_reeds_data(topwdg, custom_sorts, result_dfs):
 
     Args:
         topwdg (ordered dict): ReEDS widgets (meta widgets, scenarios widget, result widget)
+        custom_sorts (dict): Keys are column names. Values are lists of values in the desired sort order.
+        result_dfs (dict): Keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 
     Returns:
         df (pandas dataframe): A dataframe of the ReEDS result, with filled NA values.
@@ -438,6 +454,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
         init_load (boolean, optional): If this is the initial page load, then this will be True, else False.
         init_config (dict): Initial widget configuration passed via URL.
         preset_options (list): List of strings for preset selections.
+        wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
 
     Returns:
         wdg (ordered dict): Dictionary of bokeh.model.widgets.
@@ -541,6 +558,16 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
     return wdg
 
 def initialize_wdg(wdg, init_config):
+    '''
+    Set values of wdg based on init_config
+
+    Args:
+        wdg (ordered dict): Dictionary of bokeh.model.widgets.
+        init_config (dict): Initial widget configuration passed via URL.
+
+    Returns:
+        Nothing: wdg is modified
+    '''
     for key in init_config:
         if key in wdg:
             if hasattr(wdg[key], 'value'):
@@ -549,6 +576,16 @@ def initialize_wdg(wdg, init_config):
                 wdg[key].active = init_config[key]
 
 def save_wdg_defaults(wdg, wdg_defaults):
+    '''
+    Save wdg_defaults based on wdg
+
+    Args:
+        wdg (ordered dict): Dictionary of bokeh.model.widgets.
+        wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
+
+    Returns:
+        Nothing: wdg_defaults is set for applicable keys in wdg
+    '''
     for key in wdg:
         if isinstance(wdg[key], bmw.groups.Group):
             wdg_defaults[key] = wdg[key].active
@@ -697,6 +734,18 @@ def create_figures(df_plots, wdg, cols):
     return plot_list
 
 def set_axis_bounds(df, plots, wdg, cols):
+    '''
+    Set minimums and maximums for x and y axes.
+
+    Args:
+        df (pandas dataframe): Dataframe of all data currently being viewed.
+        plots (list): List of bokeh.model.figures.
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
+
+    Returns:
+        Nothing. Axes of plots are modified.
+    '''
     if wdg['x'].value in cols['continuous']:
         if wdg['x_min'].value != '':
             for p in plots:
@@ -1177,6 +1226,14 @@ def build_legend(labels, colors):
 
 def display_config(wdg, wdg_defaults):
     '''
+    Build HTML for displaying list of non-default widget configurations
+
+    Args:
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
+
+    Returns:
+        output: HTML of displayed list of widget configurations
     '''
     output = '<div class="config-display-title">Config Summary</div>'
     for key in wdg_defaults:
@@ -1445,6 +1502,7 @@ def update_plots():
 
 def export_config_url():
     '''
+    Export configuration URL query string to text file
     '''
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
