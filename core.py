@@ -4,7 +4,6 @@ Pivot chart maker for CSVs, GDX files, and ReEDS run results.
 '''
 from __future__ import division
 import os
-import re
 import math
 import json
 import pandas as pd
@@ -15,15 +14,11 @@ import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
 import bokeh.plotting as bp
-import bokeh.resources as br
-import bokeh.embed as be
 import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
-import reeds
 import reeds_bokeh as rb
 import subprocess as sp
-import jinja2 as ji
 
 #Defaults to configure:
 PLOT_WIDTH = 300
@@ -65,11 +60,6 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None,
       'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {}}
 
-#ReEDS globals
-#scenarios: each element is a dict with name of scenario and path to scenario
-#result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
-GL_REEDS = {'scenarios': [], 'result_dfs': {}}
-
 #os globals
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -104,81 +94,6 @@ def initialize():
     bio.curdoc().add_root(layout)
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
-
-def reeds_static(data_source, static_presets, base=None):
-    '''
-    Build static html and excel reports based on specified ReEDS presets
-    Args:
-        data_source (string): Path to ReEDS runs that will be included in report
-        static_presets (list of dicts): List of presets for which to make report
-        base (string): Identifier for base scenario, if making comparison charts
-    Returns:
-        Nothing: HTML and Excel files are created
-    '''
-    #build initial widgets and plots globals
-    GL['data_source_wdg'] = build_data_source_wdg('')
-    GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
-    GL['plots'] = bl.column([])
-    #Update data source widget with input value
-    GL['data_source_wdg']['data'].value = data_source
-    time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    static_plots = []
-    excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
-    excel_report = pd.ExcelWriter(excel_report_path)
-    sheet_i = 1
-    #Now, look through reeds results to find those with presets, and load those presets
-    for static_preset in static_presets:
-        #Load the result
-        result = static_preset['result']
-        presets = static_preset['presets']
-        GL['widgets']['result'].value = result
-        for preset in presets:
-            #Flip preset to 'None' to trigger change when it is set to 'preset'
-            GL['widgets']['presets'].value = 'None'
-            GL['widgets']['presets'].value = preset
-            title_end = ''
-            if 'modify' in static_preset:
-                if static_preset['modify'] == 'base_only':
-                    #if designated as base_only, filter to only include base scenario
-                    scenario_filter_i = GL['columns']['filterable'].index('scenario')
-                    wdg_fil = GL['widgets']['filter_'+str(scenario_filter_i)]
-                    wdg_fil.active = [wdg_fil.labels.index(base)]
-                    update_plots() #needed because filters don't automatically update
-                elif static_preset['modify'] == 'diff':
-                    #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
-                    x_val = GL['widgets']['x'].value
-                    GL['widgets']['x'].value = 'None'
-                    GL['widgets']['adv_op'].value = 'Difference'
-                    GL['widgets']['adv_col'].value = 'scenario'
-                    GL['widgets']['adv_col_base'].value = base
-                    GL['widgets']['y_min'].value = ''
-                    GL['widgets']['x'].value = x_val
-                    title_end = ' - Difference'
-            #for comparison presets, if base is given, use it as base
-            results_meta_preset = reeds.results_meta[result]['presets'][preset]
-            if 'adv_col_base' in results_meta_preset and results_meta_preset['adv_col_base'] == 'placeholder':
-                GL['widgets']['adv_col_base'].value = base
-            title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + title_end + '</h2>')
-            static_plots.append(bl.row(title))
-            legend = bmw.Div(text=GL['widgets']['legend'].text)
-            static_plots.append(bl.row(GL['plots'].children + [legend]))
-            excel_sheet_name = str(sheet_i) + '_' + result + ' ' + preset + title_end
-            excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
-            excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
-            sheet_i += 1
-            GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
-    excel_report.save()
-    sp.Popen(excel_report_path, shell=True)
-    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
-        template_string=template_file.read()
-    template = ji.Template(template_string)
-    resources = br.Resources()
-    html = be.file_html(static_plots, resources=resources, template=template)
-    html_path = this_dir_path + '/out/static_report_'+ time +'.html'
-    with open(html_path, 'w') as f:
-        f.write(html)
-    sp.Popen(html_path, shell=True)
-    #bio.save(static_plots, filename='summary.html')
 
 def build_data_source_wdg(data_source):
     '''
@@ -335,7 +250,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, preset_optio
 
     #Add update functions for widgets
     if preset_options != None:
-        wdg['presets'].on_change('value', update_reeds_presets)
+        wdg['presets'].on_change('value', rb.update_reeds_presets)
     wdg['filters_update'].on_click(update_plots)
     wdg['update'].on_click(update_plots)
     wdg['download'].on_click(download)
@@ -1133,98 +1048,10 @@ def update_data_source(init_load=False, init_config={}):
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
     elif path.lower().endswith('.gdx'):
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
-    else: #reeds
-        GL['variant_wdg'], GL_REEDS['scenarios'] = rb.get_wdg_reeds(path, init_load, init_config, GL['wdg_defaults'], GL['custom_sorts'])
-        GL['widgets'].update(GL['variant_wdg'])
-        #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
-        if init_load and GL['variant_wdg']['result'].value is not 'None':
-            rb.get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
-            GL['df_source'], GL['columns'] = rb.process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
-            preset_options = []
-            if 'presets' in reeds.results_meta[GL['variant_wdg']['result'].value]:
-                preset_options = reeds.results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
-            GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, preset_options, wdg_defaults=GL['wdg_defaults']))
+    else: #reeds path was entered
+        rb.update_reeds_data_source(path, init_load, init_config)
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
-
-def update_reeds_meta(attr, old, new):
-    '''
-    When ReEDS meta fields are updated, call update_reeds_wdg with the 'meta' flag
-    '''
-    update_reeds_wdg(type='meta')
-
-def update_reeds_result(attr, old, new):
-    '''
-    When ReEDS Result field is updated, call update_reeds_wdg with the 'result' flag
-    '''
-    update_reeds_wdg(type='result')
-
-def update_reeds_wdg(type):
-    '''
-    When ReEDS result field or meta field are updated, build core widgets accordingly
-    
-    Args:
-        type (string): 'meta' or 'result'. Indicates the type of widget that was changed.
-    '''
-    if 'result' in GL['variant_wdg'] and GL['variant_wdg']['result'].value is not 'None':
-        preset_options = []
-        if type == 'result':
-            rb.get_reeds_data(GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
-            if 'presets' in reeds.results_meta[GL['variant_wdg']['result'].value]:
-                preset_options = reeds.results_meta[GL['variant_wdg']['result'].value]['presets'].keys()
-        GL['df_source'], GL['columns'] = rb.process_reeds_data(GL['variant_wdg'], GL['custom_sorts'], GL_REEDS['result_dfs'])
-        GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], preset_options=preset_options, wdg_defaults=GL['wdg_defaults']))
-    GL['controls'].children = list(GL['widgets'].values())
-    update_plots()
-
-def update_reeds_presets(attr, old, new):
-    '''
-    When ReEDS preset is selected, clear all filter and main selectors, and set them
-    to the state specified in the preset in reeds.py
-    '''
-    df = GL['df_source']
-    wdg = GL['widgets']
-    wdg_defaults = GL['wdg_defaults']
-    if wdg['presets'].value != 'None':
-        #First set x to none to prevent chart rerender
-        wdg['x'].value = 'None'
-        #gather widgets to reset
-        wdg_resets = [i for i in wdg_defaults if i not in GL['variant_wdg'].keys()+['x', 'data', 'presets']]
-        #reset widgets if they are not default
-        for key in wdg_resets:
-            if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
-                wdg[key].active = wdg_defaults[key]
-            elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
-                wdg[key].value = wdg_defaults[key]
-        #set all presets except x and filter. x will be set at end, triggering render of chart.
-        preset = reeds.results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
-        common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
-        for key in common_presets:
-            wdg[key].value = preset[key]
-        #adv_base may have a placeholder, to be replaced by a value
-        if 'adv_col_base' in preset:
-            if preset['adv_col_base'] == 'placeholder':
-                wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
-            else:
-                wdg['adv_col_base'].value = preset[key]
-        #filters are handled separately. We must deal with the active arrays of each filter
-        if 'filter' in preset:
-            for fil in preset['filter']:
-                #find index of associated filter:
-                for j, col in enumerate(GL['columns']['filterable']):
-                    if col == fil:
-                        #get filter widget associated with found index
-                        wdg_fil = wdg['filter_'+str(j)]
-                        #build the new_active list, starting with zeros
-                        new_active = []
-                        #for each label given in the preset, set corresponding active to 1
-                        for lab in preset['filter'][fil]:
-                            index = wdg_fil.labels.index(str(lab))
-                            new_active.append(index)
-                        wdg_fil.active = new_active
-                        break
-        #finally, set x, which will trigger the data and chart updates.
-        wdg['x'].value = preset['x']
 
 def update_wdg(attr, old, new):
     '''

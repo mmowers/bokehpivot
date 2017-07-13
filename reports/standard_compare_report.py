@@ -4,7 +4,7 @@ Static HTML report maker
 '''
 import os, sys
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-import core
+import reeds_bokeh as rb
 
 path = r'\\nrelqnap01d\ReEDS\FY17-WindRuns-MRM-d1c8e69-wind_cost_scenarios\runs\20170322_jedi_outputs'
 base = 'ATB_Mid'
@@ -26,4 +26,4 @@ static_presets = [
     {'result': 'Sys Cost (Bil 2015$)', 'presets': ['2017-2050 Stacked Bars']},
     {'result': 'Sys Cost (Bil 2015$)', 'presets': ['2017-2050 Stacked Bars'], 'modify': 'diff'},
 ]
-core.reeds_static(path, static_presets, base)
+rb.reeds_static(path, static_presets, base)
