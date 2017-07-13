@@ -103,6 +103,8 @@ Static reports are simply made as a list of presets. See *reports\\standard_repo
 
 ## Pro tips
 1. Pressing *Alt* will collapse all expandable sections.
+1. Shift+Right Click on a file or folder in Windows Explorer will show the "Copy as Path" option, which may be pasted directly in the data source field.
+1. Shift+Right Click on a folder or in a folder in Windows Explorer will show the "Open Command Window Here" option, which is helpful when running the static report .py files.
 1. To suppress the automatic update of the plot while configuring the widgets, simply set *Auto-Update* to *Disable* to stop rendering of plots, then make your widget changes, then finally click the *Manual Update* button.
 1. You may interact with the bokeh server with multiple browser windows/tabs, and these interactions will be independent, so you can leave one result open in one tab while you load another in a separate tab, for example.
 1. The charts themselves have some useful features shown on the right-hand-side of each chart. For example, hovering over data on a chart will show you the series, x-value, and y-value of the data (not currently working for Area charts). You may also box-zoom or pan (and reset to go back to the initial view). Finally, the charts can be saved as pngs.
