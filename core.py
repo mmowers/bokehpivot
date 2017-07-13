@@ -939,7 +939,7 @@ def display_config(wdg, wdg_defaults):
     '''
     output = '<div class="config-display-title">Config Summary</div>'
     for key in wdg_defaults:
-        if key not in ['data', 'chart_type', 'presets']:
+        if key not in ['data', 'chart_type']:
             label = key
             item_string = ''
             if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
