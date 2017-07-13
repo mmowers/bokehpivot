@@ -1,5 +1,5 @@
 '''
-ReEDS-specific functions and variables.
+ReEDS results metadata and preprocess functions.
 '''
 from __future__ import division
 import os

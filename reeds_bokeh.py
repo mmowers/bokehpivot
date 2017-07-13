@@ -1,3 +1,6 @@
+'''
+ReEDS functions and globals for bokehpivot integration
+'''
 from __future__ import division
 import os
 import re

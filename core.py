@@ -1,5 +1,5 @@
 '''
-Pivot chart maker for CSVs, GDX files, and ReEDS run results.
+Pivot chart maker core functionality and csv, gdx applications
 
 '''
 from __future__ import division
