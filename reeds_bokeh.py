@@ -198,8 +198,8 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
     #A result has been selected, so either we retrieve it from result_dfs,
     #which is a dict with one dataframe for each result, or we make a new key in the result_dfs
     if result not in result_dfs:
-            result_dfs[result] = None
-            cur_scenarios = []
+        result_dfs[result] = None
+        cur_scenarios = []
     else:
         cur_scenarios = result_dfs[result]['scenario'].unique().tolist() #the scenarios that have already been retrieved and stored in result_dfs
     #For each selected scenario, retrieve the data from gdx if we don't already have it,
