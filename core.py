@@ -454,7 +454,7 @@ def set_axis_bounds(df, plots, wdg, cols):
     Returns:
         Nothing. Axes of plots are modified.
     '''
-    if wdg['x'].value in cols['continuous']:
+    if wdg['x'].value in cols['continuous'] and wdg['x_group'].value == 'None':
         if wdg['x_min'].value != '':
             for p in plots:
                 p.x_range.start = float(wdg['x_min'].value)
