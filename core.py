@@ -403,6 +403,8 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     unsorted_columns = [col for col in df_plots.columns if col not in sortby_cols + [wdg['y'].value]]
     df_plots = df_plots[unsorted_columns + sortby_cols + [wdg['y'].value]]
     print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
+    if wdg['render_plots'].value == 'No':
+        print('***Ready for download!')
     return df_plots
 
 def create_figures(df_plots, wdg, cols, custom_colors):
