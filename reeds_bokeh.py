@@ -4,6 +4,7 @@ ReEDS functions and globals for bokehpivot integration
 from __future__ import division
 import os
 import re
+import copy
 import pandas as pd
 import collections
 import bokeh.layouts as bl
@@ -46,7 +47,9 @@ def reeds_static(data_source, static_presets, base=None):
         if 'result' in static_preset:
             config.update({'result': static_preset['result']})
             if 'preset' in static_preset:
-                config.update(reeds.results_meta[static_preset['result']]['presets'][static_preset['preset']])
+                #deepcopy is needed to prevent 'filter', a key within the preset, from pointing to the same object in config as in the original preset dict in results_meta.
+                preset_config = copy.deepcopy(reeds.results_meta[static_preset['result']]['presets'][static_preset['preset']])
+                config.update(preset_config)
         if 'modify' in static_preset:
             if static_preset['modify'] == 'base_only':
                 #if designated as base_only, filter to only include base scenario
