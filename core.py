@@ -159,7 +159,6 @@ def preset_wdg(preset):
     Returns:
         Nothing: widget values are set.
     '''
-    df = GL['df_source']
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
     #First set all variant_wdg values, if they exist
