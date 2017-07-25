@@ -344,46 +344,6 @@ def update_reeds_presets(attr, old, new):
     When ReEDS preset is selected, clear all filter and main selectors, and set them
     to the state specified in the preset in reeds.py
     '''
-    df = core.GL['df_source']
     wdg = core.GL['widgets']
-    wdg_defaults = core.GL['wdg_defaults']
-    if wdg['presets'].value != 'None':
-        #First set x to none to prevent chart rerender
-        wdg['x'].value = 'None'
-        #gather widgets to reset
-        wdg_resets = [i for i in wdg_defaults if i not in core.GL['variant_wdg'].keys()+['x', 'data', 'render_plots']]
-        #reset widgets if they are not default
-        for key in wdg_resets:
-            if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
-                wdg[key].active = wdg_defaults[key]
-            elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
-                wdg[key].value = wdg_defaults[key]
-        #set all presets except x and filter. x will be set at end, triggering render of chart.
-        preset = reeds.results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
-        common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
-        for key in common_presets:
-            wdg[key].value = preset[key]
-        #adv_base may have a placeholder, to be replaced by a value
-        if 'adv_col_base' in preset:
-            if preset['adv_col_base'] == 'placeholder':
-                wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
-            else:
-                wdg['adv_col_base'].value = preset[key]
-        #filters are handled separately. We must deal with the active arrays of each filter
-        if 'filter' in preset:
-            for fil in preset['filter']:
-                #find index of associated filter:
-                for j, col in enumerate(core.GL['columns']['filterable']):
-                    if col == fil:
-                        #get filter widget associated with found index
-                        wdg_fil = wdg['filter_'+str(j)]
-                        #build the new_active list, starting with zeros
-                        new_active = []
-                        #for each label given in the preset, set corresponding active to 1
-                        for lab in preset['filter'][fil]:
-                            index = wdg_fil.labels.index(str(lab))
-                            new_active.append(index)
-                        wdg_fil.active = new_active
-                        break
-        #finally, set x, which will trigger the data and chart updates.
-        wdg['x'].value = preset['x']
+    preset = reeds.results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
+    core.preset_wdg(preset)
