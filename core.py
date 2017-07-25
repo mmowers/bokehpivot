@@ -104,10 +104,14 @@ def initialize():
 
 def static_report(data_source, static_presets):
     '''
-    Build static html and excel reports based on specified presets
+    Build static HTML and excel report based on specified presets. The HTML report will have
+    separate sections for each preset, and the excel report will have the data for each preset in separate
+    sheets.
     Args:
         data_source (string): Path to data for which a report will be made
-        static_presets (list of dicts): List of presets for which to make report. Each preset is in the form of {'name':{}, 'config':{}}
+        static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
+            'name': name of preset
+            'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -122,9 +126,9 @@ def static_report(data_source, static_presets):
     excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
     excel_report = pd.ExcelWriter(excel_report_path)
     sheet_i = 1
-    #Now, look through reeds results to find those with presets, and load those presets
+    #for each preset, set the widgets in preset_wdg(). Gather plots into separate sections of the html report,
+    #and gather data into separate sheets of excel report
     for static_preset in static_presets:
-        #Load the result
         name = static_preset['name']
         print('***Building report section: ' + name + '...')
         preset = static_preset['config']
@@ -155,7 +159,7 @@ def preset_wdg(preset):
     '''
     Reset widgets and then set them to that specified in input preset
     Args:
-        preset (dict): keys are widget names, and values are the desired widget values.
+        preset (dict): keys are widget names, and values are the desired widget values. Filters are entered as a list of labels under the 'filter' key.
     Returns:
         Nothing: widget values are set.
     '''
