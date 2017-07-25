@@ -175,10 +175,14 @@ def preset_wdg(preset):
             wdg[key].active = wdg_defaults[key]
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             wdg[key].value = wdg_defaults[key]
-    #set all presets except x and filter. x will be set at end, triggering render of chart.
-    common_presets = [key for key in preset if key not in ['x', 'filter']]
+    #set all presets except x, filter, and adv_col_base.
+    #adv_col_base must be set after adv_col. Filters are handled separately, after that. x will be set at end, triggering render of chart.
+    common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
     for key in common_presets:
         wdg[key].value = preset[key]
+    #Set adv_col_base separately because it must be after adv_col
+    if 'adv_col_base' in preset:
+        wdg['adv_col_base'].value = preset['adv_col_base']
     #filters are handled separately. We must deal with the active arrays of each filter
     if 'filter' in preset:
         for fil in preset['filter']:
