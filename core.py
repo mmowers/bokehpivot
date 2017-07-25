@@ -4,6 +4,7 @@ Pivot chart maker core functionality and csv, gdx applications
 '''
 from __future__ import division
 import os
+import re
 import math
 import json
 import pandas as pd
@@ -14,11 +15,14 @@ import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
 import bokeh.plotting as bp
+import bokeh.resources as br
+import bokeh.embed as be
 import datetime
 import six.moves.urllib.parse as urlp
 import gdx2py
-import reeds_bokeh as rb
 import subprocess as sp
+import jinja2 as ji
+import reeds_bokeh as rb
 
 #Defaults to configure:
 PLOT_WIDTH = 300
@@ -59,7 +63,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
 #custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
-GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':None,
+GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':{},
       'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {},
       'custom_colors': {}}
 
@@ -97,6 +101,107 @@ def initialize():
     bio.curdoc().add_root(layout)
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
+
+def static_report(data_source, static_presets):
+    '''
+    Build static html and excel reports based on specified presets
+    Args:
+        data_source (string): Path to data for which a report will be made
+        static_presets (list of dicts): List of presets for which to make report
+    Returns:
+        Nothing: HTML and Excel files are created
+    '''
+    #build initial widgets and plots globals
+    GL['data_source_wdg'] = build_data_source_wdg('')
+    GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
+    GL['plots'] = bl.column([])
+    #Update data source widget with input value
+    GL['data_source_wdg']['data'].value = data_source
+    time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
+    static_plots = []
+    excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
+    excel_report = pd.ExcelWriter(excel_report_path)
+    sheet_i = 1
+    #Now, look through reeds results to find those with presets, and load those presets
+    for static_preset in static_presets:
+        #Load the result
+        name = static_preset['name']
+        preset = static_preset['preset']
+        preset_wdg(preset)
+        title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + name + '</h2>')
+        static_plots.append(bl.row(title))
+        legend = bmw.Div(text=GL['widgets']['legend'].text)
+        static_plots.append(bl.row(GL['plots'].children + [legend]))
+        excel_sheet_name = str(sheet_i) + '_' + name
+        excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
+        excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
+        sheet_i += 1
+        GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+    excel_report.save()
+    sp.Popen(excel_report_path, shell=True)
+    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
+        template_string=template_file.read()
+    template = ji.Template(template_string)
+    resources = br.Resources()
+    html = be.file_html(static_plots, resources=resources, template=template)
+    html_path = this_dir_path + '/out/static_report_'+ time +'.html'
+    with open(html_path, 'w') as f:
+        f.write(html)
+    sp.Popen(html_path, shell=True)
+
+def preset_wdg(preset):
+    '''
+    Reset widgets and then set them to that specified in input preset
+    Args:
+        preset (dict): keys are widget names, and values are the desired widget values.
+    Returns:
+        Nothing: widget values are set.
+    '''
+    df = GL['df_source']
+    wdg = GL['widgets']
+    wdg_defaults = GL['wdg_defaults']
+    #First set all variant_wdg values, if they exist
+    variant_presets = [key for key in preset if key in GL['variant_wdg'].keys()]
+    for key in variant_presets:
+        wdg[key].value = preset[key]
+    #Now set x to none to prevent chart rerender
+    wdg['x'].value = 'None'
+    #gather widgets to reset
+    wdg_resets = [i for i in wdg_defaults if i not in GL['variant_wdg'].keys()+['x', 'data', 'render_plots']]
+    #reset widgets if they are not default
+    for key in wdg_resets:
+        if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+            wdg[key].active = wdg_defaults[key]
+        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
+            wdg[key].value = wdg_defaults[key]
+    #set all presets except x and filter. x will be set at end, triggering render of chart.
+    common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
+    for key in common_presets:
+        wdg[key].value = preset[key]
+    #adv_base may have a placeholder, to be replaced by a value
+    if 'adv_col_base' in preset:
+        if preset['adv_col_base'] == 'placeholder':
+            wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
+        else:
+            wdg['adv_col_base'].value = preset[key]
+    #filters are handled separately. We must deal with the active arrays of each filter
+    if 'filter' in preset:
+        for fil in preset['filter']:
+            #find index of associated filter:
+            for j, col in enumerate(GL['columns']['filterable']):
+                if col == fil:
+                    #get filter widget associated with found index
+                    wdg_fil = wdg['filter_'+str(j)]
+                    #build the new_active list, starting with zeros
+                    new_active = []
+                    #for each label given in the preset, set corresponding active to 1
+                    for lab in preset['filter'][fil]:
+                        index = wdg_fil.labels.index(str(lab))
+                        new_active.append(index)
+                    wdg_fil.active = new_active
+                    break
+    #finally, set x, which will trigger the data and chart updates.
+    wdg['x'].value = preset['x']
 
 def build_data_source_wdg(data_source):
     '''
