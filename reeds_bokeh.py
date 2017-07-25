@@ -29,20 +29,19 @@ def reeds_static(data_source, static_presets, base=None):
     Build static html and excel reports based on specified ReEDS presets
     Args:
         data_source (string): Path to ReEDS runs that will be included in report
-        static_presets (list of dicts): List of presets for which to make report
+        static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
+            'name' (required): Displayed name of the result 
+            'result': ReEDS result name in reeds.py.
+            'preset': ReEDS result preset as defined in reeds.py
+            'modify': Preset modifications, either 'base_only' or 'diff'.
+            'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
         base (string): Identifier for base scenario, if making comparison charts
     Returns:
         Nothing: HTML and Excel files are created
     '''
     core_presets = []
     for static_preset in static_presets:
-        #do name first, starting with a default
-        name = 'Unnamed'
-        if 'name' in static_preset:
-            name = preset['name']
-        elif 'result' in static_preset:
-            name = static_preset['result']
-        #now build the config
+        #build the full widget configuration for each preset.
         config = {}
         if 'result' in static_preset:
             config.update({'result': static_preset['result']})
@@ -53,17 +52,13 @@ def reeds_static(data_source, static_presets, base=None):
                 #if designated as base_only, filter to only include base scenario
                 if 'filter' not in config:
                     config['filter'] = {}
-                config['filter'].update({'scenario': base})
-                if 'name' not in static_preset:
-                    name = name + ' - Base Only'
+                config['filter'].update({'scenario': [base]})
             elif static_preset['modify'] == 'diff':
                 #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
                 config.update({'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': base})
-                if 'name' not in static_preset:
-                    name = name + ' - Difference'
         if 'config' in static_preset:
             config.update(static_preset['config'])
-        core_presets.append({'name': name, 'config': config})
+        core_presets.append({'name': static_preset['name'], 'config': config})
     core.static_report(data_source, core_presets)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):

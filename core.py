@@ -107,7 +107,7 @@ def static_report(data_source, static_presets):
     Build static html and excel reports based on specified presets
     Args:
         data_source (string): Path to data for which a report will be made
-        static_presets (list of dicts): List of presets for which to make report
+        static_presets (list of dicts): List of presets for which to make report. Each preset is in the form of {'name':{}, 'config':{}}
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -126,6 +126,7 @@ def static_report(data_source, static_presets):
     for static_preset in static_presets:
         #Load the result
         name = static_preset['name']
+        print('***Building report section: ' + name + '...')
         preset = static_preset['config']
         preset_wdg(preset)
         title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + name + '</h2>')
@@ -148,6 +149,7 @@ def static_report(data_source, static_presets):
     with open(html_path, 'w') as f:
         f.write(html)
     sp.Popen(html_path, shell=True)
+    print('***Done building report')
 
 def preset_wdg(preset):
     '''
@@ -175,15 +177,9 @@ def preset_wdg(preset):
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             wdg[key].value = wdg_defaults[key]
     #set all presets except x and filter. x will be set at end, triggering render of chart.
-    common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
+    common_presets = [key for key in preset if key not in ['x', 'filter']]
     for key in common_presets:
         wdg[key].value = preset[key]
-    #adv_base may have a placeholder, to be replaced by a value
-    if 'adv_col_base' in preset:
-        if preset['adv_col_base'] == 'placeholder':
-            wdg['adv_col_base'].value = df[wdg['adv_col'].value].iloc[0]
-        else:
-            wdg['adv_col_base'].value = preset[key]
     #filters are handled separately. We must deal with the active arrays of each filter
     if 'filter' in preset:
         for fil in preset['filter']:
