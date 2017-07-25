@@ -3,19 +3,12 @@ ReEDS functions and globals for bokehpivot integration
 '''
 from __future__ import division
 import os
-import re
 import copy
 import pandas as pd
 import collections
-import bokeh.layouts as bl
 import bokeh.models.widgets as bmw
-import bokeh.resources as br
-import bokeh.embed as be
-import datetime
 import gdx2py
 import reeds
-import subprocess as sp
-import jinja2 as ji
 import core
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
