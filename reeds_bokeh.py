@@ -34,70 +34,37 @@ def reeds_static(data_source, static_presets, base=None):
     Returns:
         Nothing: HTML and Excel files are created
     '''
-    #build initial widgets and plots globals
-    core.GL['data_source_wdg'] = core.build_data_source_wdg('')
-    core.GL['controls'] = bl.widgetbox(list(core.GL['data_source_wdg'].values()))
-    core.GL['plots'] = bl.column([])
-    #Update data source widget with input value
-    core.GL['data_source_wdg']['data'].value = data_source
-    time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    static_plots = []
-    excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
-    excel_report = pd.ExcelWriter(excel_report_path)
-    sheet_i = 1
-    #Now, look through reeds results to find those with presets, and load those presets
+    core_presets = []
     for static_preset in static_presets:
-        #Load the result
-        result = static_preset['result']
-        presets = static_preset['presets']
-        core.GL['widgets']['result'].value = result
-        for preset in presets:
-            #Flip preset to 'None' to trigger change when it is set to 'preset'
-            core.GL['widgets']['presets'].value = 'None'
-            core.GL['widgets']['presets'].value = preset
-            title_end = ''
-            if 'modify' in static_preset:
-                if static_preset['modify'] == 'base_only':
-                    #if designated as base_only, filter to only include base scenario
-                    scenario_filter_i = core.GL['columns']['filterable'].index('scenario')
-                    wdg_fil = core.GL['widgets']['filter_'+str(scenario_filter_i)]
-                    wdg_fil.active = [wdg_fil.labels.index(base)]
-                    core.update_plots() #needed because filters don't automatically update
-                elif static_preset['modify'] == 'diff':
-                    #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
-                    x_val = core.GL['widgets']['x'].value
-                    core.GL['widgets']['x'].value = 'None'
-                    core.GL['widgets']['adv_op'].value = 'Difference'
-                    core.GL['widgets']['adv_col'].value = 'scenario'
-                    core.GL['widgets']['adv_col_base'].value = base
-                    core.GL['widgets']['y_min'].value = ''
-                    core.GL['widgets']['x'].value = x_val
-                    title_end = ' - Difference'
-            #for comparison presets, if base is given, use it as base
-            results_meta_preset = reeds.results_meta[result]['presets'][preset]
-            if 'adv_col_base' in results_meta_preset and results_meta_preset['adv_col_base'] == 'placeholder':
-                core.GL['widgets']['adv_col_base'].value = base
-            title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + result + ': ' + preset + title_end + '</h2>')
-            static_plots.append(bl.row(title))
-            legend = bmw.Div(text=core.GL['widgets']['legend'].text)
-            static_plots.append(bl.row(core.GL['plots'].children + [legend]))
-            excel_sheet_name = str(sheet_i) + '_' + result + ' ' + preset + title_end
-            excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
-            excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
-            sheet_i += 1
-            core.GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
-    excel_report.save()
-    sp.Popen(excel_report_path, shell=True)
-    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
-        template_string=template_file.read()
-    template = ji.Template(template_string)
-    resources = br.Resources()
-    html = be.file_html(static_plots, resources=resources, template=template)
-    html_path = this_dir_path + '/out/static_report_'+ time +'.html'
-    with open(html_path, 'w') as f:
-        f.write(html)
-    sp.Popen(html_path, shell=True)
-    #bio.save(static_plots, filename='summary.html')
+        #do name first, starting with a default
+        name = 'Unnamed'
+        if 'name' in static_preset:
+            name = preset['name']
+        elif 'result' in static_preset:
+            name = static_preset['result']
+        #now build the config
+        config = {}
+        if 'result' in static_preset:
+            config.update({'result': static_preset['result']})
+            if 'preset' in static_preset:
+                config.update(reeds.results_meta[static_preset['result']]['presets'][static_preset['preset']])
+        if 'modify' in static_preset:
+            if static_preset['modify'] == 'base_only':
+                #if designated as base_only, filter to only include base scenario
+                if 'filter' not in config:
+                    config['filter'] = {}
+                config['filter'].update({'scenario': base})
+                if 'name' not in static_preset:
+                    name = name + ' - Base Only'
+            elif static_preset['modify'] == 'diff':
+                #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
+                config.update({'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': base})
+                if 'name' not in static_preset:
+                    name = name + ' - Difference'
+        if 'config' in static_preset:
+            config.update(static_preset['config'])
+        core_presets.append({'name': name, 'config': config})
+    core.static_report(data_source, core_presets)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''

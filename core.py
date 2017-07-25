@@ -126,7 +126,7 @@ def static_report(data_source, static_presets):
     for static_preset in static_presets:
         #Load the result
         name = static_preset['name']
-        preset = static_preset['preset']
+        preset = static_preset['config']
         preset_wdg(preset)
         title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + name + '</h2>')
         static_plots.append(bl.row(title))

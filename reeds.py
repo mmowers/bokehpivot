@@ -93,7 +93,6 @@ results_meta = collections.OrderedDict((
             ('PCA Map 2030 Solar',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2030]}}),
             ('PCA Map 2050 Wind',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['Wind'], 'year': [2050]}}),
             ('PCA Map 2050 Solar',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'tech': ['PV (AC)', 'Distributed PV (AC)', 'CSP'], 'year': [2050]}}),
-            ('Stacked Difference',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario', 'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': 'placeholder', 'chart_type':'Bar', 'bar_width': '1.75'}),
         )),
         }
     ),
