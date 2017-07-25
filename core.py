@@ -1145,7 +1145,8 @@ def prettify_numbers(number_list):
     return str_list
 
 def round_to_n(x, n):
-    return round(x, -int(math.floor(math.log10(x))) + (n - 1))
+    #https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
+    return round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1))
 
 def update_data(attr, old, new):
     '''
