@@ -116,12 +116,12 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
                         abs_subdir = str(os.path.abspath(abs_path+'/'+subdir))
                         scenarios.append({'name': subdir, 'path': abs_subdir})
     #If we have scenarios, build widgets for scenario filters and result.
-    for key in ["filter_scenarios_dropdown", "filter_scenarios", "result"]:
+    for key in ["scenario_filter_dropdown", "scenario_filter", "result"]:
         topwdg.pop(key, None)
     if scenarios:
         labels = [a['name'] for a in scenarios]
-        topwdg['filter_scenarios_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['filter-scenarios-dropdown'])
-        topwdg['filter_scenarios'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-filter_scenarios'])
+        topwdg['scenario_filter_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['scenario-filter-dropdown'])
+        topwdg['scenario_filter'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-scenario_filter'])
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults
     core.save_wdg_defaults(topwdg, wdg_defaults)
@@ -163,7 +163,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
     #For each selected scenario, retrieve the data from gdx if we don't already have it,
     #and update result_dfs with the new data.
     result_meta = reeds.results_meta[result]
-    for i in topwdg['filter_scenarios'].active:
+    for i in topwdg['scenario_filter'].active:
         scenario_name = scenarios[i]['name']
         if scenario_name not in cur_scenarios:
             #get the gdx result and preprocess

@@ -8,8 +8,8 @@ $(document).ready(function(){
     $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label, .wdgkey-chart_type label', function(){
         $(this).next().toggle();
     });
-    $('body').on('click', '.filter-scenarios-dropdown', function(){
-        $('.wdgkey-filter_scenarios').toggle();
+    $('body').on('click', '.scenario-filter-dropdown', function(){
+        $('.wdgkey-scenario_filter').toggle();
     });
     $('body').on('click', '.x-dropdown', function(){
         $('.x-drop').toggle();
@@ -41,7 +41,7 @@ $(document).ready(function(){
         $('.select-all-none').hide();
         $('.filter').hide();
     });
-    $('body').on('click', '.filter-head, .filter-scenarios-dropdown', function(){
+    $('body').on('click', '.filter-head, .scenario-filter-dropdown', function(){
         if($(this).next('.select-all-none').length == 0){
             $(this).after('<div class="select-all-none"><span class="select-all select-opt">All</span>|<span class="select-none select-opt">None</span>');
         }else{
@@ -73,7 +73,7 @@ document.onkeydown = function(e) {
     $('.wdgkey-result select').hide();
     $('.wdgkey-presets select').hide();
     $('.wdgkey-chart_type select').hide();
-    $('.wdgkey-filter_scenarios').hide();
+    $('.wdgkey-scenario_filter').hide();
     $('.x-drop').hide();
     $('.y-drop').hide();
     $('.legend-drop').hide();
