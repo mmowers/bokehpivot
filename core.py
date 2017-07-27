@@ -164,24 +164,25 @@ def preset_wdg(preset):
         Nothing: widget values are set.
     '''
     wdg = GL['widgets']
+    wdg_variant = GL['variant_wdg']
     wdg_defaults = GL['wdg_defaults']
-    #First set all variant_wdg values, if they exist
-    variant_presets = [key for key in preset if key in GL['variant_wdg'].keys()]
+    #First set all wdg_variant values, if they exist, in order that they appear in wdg_variant, an ordered dict.
+    variant_presets = [key for key in wdg_variant.keys() if key in preset]
     for key in variant_presets:
         wdg[key].value = preset[key]
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
-    wdg_resets = [i for i in wdg_defaults if i not in GL['variant_wdg'].keys()+['x', 'data', 'render_plots']]
+    wdg_resets = [i for i in wdg_defaults if i not in wdg_variant.keys()+['x', 'data', 'render_plots']]
     #reset widgets if they are not default
     for key in wdg_resets:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
             wdg[key].active = wdg_defaults[key]
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             wdg[key].value = wdg_defaults[key]
-    #set all presets except x, filter, and adv_col_base.
-    #adv_col_base must be set after adv_col. Filters are handled separately, after that. x will be set at end, triggering render of chart.
-    common_presets = [key for key in preset if key not in ['x', 'filter', 'adv_col_base']]
+    #set all presets except x and filter, in order that they appear in wdg, an ordered dict.
+    #Filters are handled separately, after that. x will be set at end, triggering render of chart.
+    common_presets = [key for key in wdg.keys() if key in preset and key not in wdg_variant.keys()+['x', 'filter']]
     for key in common_presets:
         wdg[key].value = preset[key]
     #Set adv_col_base separately because it must be after adv_col
