@@ -155,14 +155,16 @@ def static_report(data_source, static_presets):
     sp.Popen(html_path, shell=True)
     print('***Done building report')
 
-def preset_wdg(preset):
+def preset_wdg(preset_in):
     '''
     Reset widgets and then set them to that specified in input preset
     Args:
-        preset (dict): keys are widget names, and values are the desired widget values. Filters are entered as a list of labels under the 'filter' key.
+        preset_in (dict, OrderedDict, or list of tuples): Keys are widget names, and values are the
+            desired widget values. Filters are entered as a list of labels under the 'filter' key.
     Returns:
         Nothing: widget values are set.
     '''
+    preset = collections.OrderedDict(preset_in)
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
     #First set all variant_wdg values, if they exist
