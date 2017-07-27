@@ -36,7 +36,7 @@ def reeds_static(data_source, static_presets, base=None):
     core_presets = []
     for static_preset in static_presets:
         #build the full widget configuration for each preset.
-        config = collections.OrderedDict()
+        config = {}
         if 'result' in static_preset:
             config.update({'result': static_preset['result']})
             if 'preset' in static_preset:
