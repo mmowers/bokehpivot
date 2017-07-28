@@ -346,7 +346,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
-    wdg['config_url'] = bmw.Button(label='Export Config to URL', button_type='success', css_classes=['download-drop'])
+    wdg['config_url'] = bmw.Button(label='Export Config', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
     wdg['display_config'] = bmw.Div(text='', css_classes=['display-config'])
@@ -1256,22 +1256,35 @@ def update_plots():
 
 def export_config_url():
     '''
-    Export configuration URL query string to text file
+    Export configuration URL query string and python dict formats to text file
     '''
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
     non_defaults = {}
+    config_string = '{'
+    filter_string = "'filter': {"
     for key in wdg_defaults:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
             non_defaults[key] = wdg[key].active
+            if key.startswith('filter_'):
+                title = wdg['heading_'+key].text
+                labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
+                filter_string += "'" + title + "':[" + ",".join(labels) + "], "
+            else:
+                config_string += "'" + key + "':'" + str(wdg[key].active) + "', "
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             non_defaults[key] = wdg[key].value
+            if key != 'data':
+                config_string += "'" + key + "':'" + str(wdg[key].value) + "', "
     json_string = json.dumps(non_defaults)
     #url_args = urlp.quote(json_string.encode("utf-8"))
     url_query = '?widgets=' + urlp.quote(json_string)
+    config_string += filter_string + '}}'
+
     path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
     with open(path, 'w') as f:
-        f.write(url_query)
+        f.write('URL query string: ' + url_query + '\n\n')
+        f.write('Preset config: ' + config_string)
     sp.Popen(path, shell=True)
     
 def download():
