@@ -346,7 +346,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
-    wdg['config_url'] = bmw.Button(label='Export Config', button_type='success', css_classes=['download-drop'])
+    wdg['config_url'] = bmw.Button(label='Export URL/Config', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
     wdg['display_config'] = bmw.Div(text='', css_classes=['display-config'])
@@ -1283,8 +1283,8 @@ def export_config_url():
 
     path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
     with open(path, 'w') as f:
-        f.write('URL query string: ' + url_query + '\n\n')
-        f.write('Preset config: ' + config_string)
+        f.write('URL query string:\n' + url_query + '\n\n')
+        f.write('Preset config:\n' + config_string + '\n')
     sp.Popen(path, shell=True)
     
 def download():
