@@ -169,7 +169,10 @@ def preset_wdg(preset):
     #First set all wdg_variant values, if they exist, in order that they appear in wdg_variant, an ordered dict.
     variant_presets = [key for key in wdg_variant.keys() if key in preset]
     for key in variant_presets:
-        wdg[key].value = preset[key]
+        if isinstance(wdg[key], bmw.groups.Group):
+            wdg[key].active = [wdg[key].labels.index(i) for i in preset[key]]
+        elif isinstance(wdg[key], bmw.inputs.InputWidget):
+            wdg[key].value = preset[key]
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
@@ -184,7 +187,10 @@ def preset_wdg(preset):
     #Filters are handled separately, after that. x will be set at end, triggering render of chart.
     common_presets = [key for key in wdg.keys() if key in preset and key not in wdg_variant.keys()+['x', 'filter']]
     for key in common_presets:
-        wdg[key].value = preset[key]
+        if isinstance(wdg[key], bmw.groups.Group):
+            wdg[key].active = [wdg[key].labels.index(i) for i in preset[key]]
+        elif isinstance(wdg[key], bmw.inputs.InputWidget):
+            wdg[key].value = preset[key]
     #filters are handled separately. We must deal with the active arrays of each filter
     if 'filter' in preset:
         for fil in preset['filter']:
