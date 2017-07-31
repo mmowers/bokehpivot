@@ -1069,16 +1069,19 @@ def display_config(wdg, wdg_defaults):
     for key in wdg_defaults:
         if key not in ['data', 'chart_type']:
             label = key
-            item_string = ''
+            item_string = False
             if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
                 if key.startswith('filter_'):
                     label = 'filter-' + wdg['heading_'+key].text
+                item_string = ''
                 active_indices = wdg[key].active
                 for i in active_indices:
                     item_string += wdg[key].labels[i] + ', '
             elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
                 item_string = wdg[key].value
-            if item_string != '':
+            if item_string != False:
+                if item_string == '':
+                    item_string = 'NONE'
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
