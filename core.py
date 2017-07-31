@@ -348,6 +348,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['render_plots'] = bmw.Select(title='Render Plots', value='Yes', options=['Yes', 'No'], css_classes=['update-drop'])
     wdg['download_dropdown'] = bmw.Div(text='Download/Export', css_classes=['download-dropdown'])
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
+    wdg['download_html'] = bmw.Button(label='Download html of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
     wdg['config_url'] = bmw.Button(label='Export URL/Config', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
@@ -364,6 +365,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['filters_update'].on_click(update_plots)
     wdg['update'].on_click(update_plots)
     wdg['download'].on_click(download)
+    wdg['download_html'].on_click(download_html)
     wdg['download_all'].on_click(download_all)
     wdg['adv_col'].on_change('value', update_adv_col)
     wdg['config_url'].on_click(export_config_url)
@@ -1304,6 +1306,29 @@ def download():
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
     sp.Popen(path, shell=True)
+
+def download_html():
+    '''
+    Download html file of the currently viewed data to the downloads/ directory,
+    with the current timestamp.
+    '''
+    print('***Downloading View...')
+    html_path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
+    static_plots = []
+    legend = bmw.Div(text=GL['widgets']['legend'].text)
+    plots = GL['plots'].children
+    GL['plots'].children = []
+    static_plots.append(bl.row(plots + [legend]))
+    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
+        template_string=template_file.read()
+    template = ji.Template(template_string)
+    resources = br.Resources()
+    html = be.file_html(static_plots, resources=resources, template=template)
+    with open(html_path, 'w') as f:
+        f.write(html)
+    sp.Popen(html_path, shell=True)
+    GL['plots'].children = plots
+    print('***Done downloading View to ' + html_path)
 
 def download_all():
     '''
