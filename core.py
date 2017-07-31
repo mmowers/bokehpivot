@@ -1279,7 +1279,10 @@ def export_config_url():
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             non_defaults[key] = wdg[key].value
             if key != 'data':
-                config_string += "'" + key + "':'" + str(wdg[key].value) + "', "
+                raw_flag = ''
+                if isinstance(wdg[key], bmw.inputs.TextInput):
+                    raw_flag = 'r'
+                config_string += "'" + key + "':" + raw_flag + "'" + str(wdg[key].value) + "', "
     json_string = json.dumps(non_defaults)
     #url_args = urlp.quote(json_string.encode("utf-8"))
     url_query = '?widgets=' + urlp.quote(json_string)
