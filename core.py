@@ -1274,7 +1274,8 @@ def export_config_url():
                 labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
                 filter_string += "'" + title + "':[" + ",".join(labels) + "], "
             else:
-                config_string += "'" + key + "':'" + str(wdg[key].active) + "', "
+                labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
+                config_string += "'" + key + "':[" + ",".join(labels) + "], "
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
             non_defaults[key] = wdg[key].value
             if key != 'data':
