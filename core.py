@@ -163,16 +163,17 @@ def preset_wdg(preset):
     Returns:
         Nothing: widget values are set.
     '''
+    #First set all wdg_variant values, if they exist, in order that they appear in wdg_variant, an ordered dict.
+    variant_presets = [key for key in GL['variant_wdg'].keys() if key in preset]
+    for key in variant_presets:
+        if isinstance(GL['widgets'][key], bmw.groups.Group):
+            GL['widgets'][key].active = [GL['widgets'][key].labels.index(i) for i in preset[key]]
+        elif isinstance(GL['widgets'][key], bmw.inputs.InputWidget):
+            GL['widgets'][key].value = preset[key]
+    #these variables are set after the variant_wdg presets because otherwise they diverge from the globals
     wdg = GL['widgets']
     wdg_variant = GL['variant_wdg']
     wdg_defaults = GL['wdg_defaults']
-    #First set all wdg_variant values, if they exist, in order that they appear in wdg_variant, an ordered dict.
-    variant_presets = [key for key in wdg_variant.keys() if key in preset]
-    for key in variant_presets:
-        if isinstance(wdg[key], bmw.groups.Group):
-            wdg[key].active = [wdg[key].labels.index(i) for i in preset[key]]
-        elif isinstance(wdg[key], bmw.inputs.InputWidget):
-            wdg[key].value = preset[key]
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
