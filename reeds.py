@@ -230,7 +230,9 @@ results_meta = collections.OrderedDict((
             {'func': add_huc_reg, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
+            ('Total',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
+            ('Explode huc',{'x':'year','y':'value', 'series':'scenario', 'explode':'huc_custom', 'chart_type':'Line'}),
+            ('Explode scenario for huc',{'x':'year','y':'value', 'series':'huc_custom', 'explode':'scenario', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -243,7 +245,9 @@ results_meta = collections.OrderedDict((
             {'func': add_huc_reg, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
+            ('Total',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
+            ('Custom huc',{'x':'year','y':'value', 'series':'scenario', 'explode':'huc_custom', 'chart_type':'Line'}),
+            ('Explode scenario for huc',{'x':'year','y':'value', 'series':'huc_custom', 'explode':'scenario', 'chart_type':'Line'}),
         )),
         }
     ),
