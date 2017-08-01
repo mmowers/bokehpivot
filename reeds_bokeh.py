@@ -241,6 +241,8 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
 
     #apply custom styling
     for col in df.columns.values.tolist():
+        custom_sorts.pop(col, None)
+        custom_colors.pop(col, None)
         if 'meta_style_'+col in topwdg and topwdg['meta_style_'+col].value != '':
             df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''), dtype=object)
             #filter out values that aren't in order column
