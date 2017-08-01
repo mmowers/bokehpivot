@@ -1182,6 +1182,8 @@ def update_data_source(init_load=False, init_config={}):
         Nothing: All plots are cleared, and widgets are set to accept further configuration.
     '''
     GL['widgets'] = GL['data_source_wdg'].copy()
+    GL['wdg_defaults'] = collections.OrderedDict()
+    GL['wdg_defaults']['data'] = ''
     path = GL['data_source_wdg']['data'].value
     path = path.replace('"', '')
     if path == '':
