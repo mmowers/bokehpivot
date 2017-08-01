@@ -329,6 +329,8 @@ def update_reeds_wdg(type):
     Args:
         type (string): 'meta' or 'result'. Indicates the type of widget that was changed.
     '''
+    core.GL['widgets'] = core.GL['data_source_wdg'].copy()
+    core.GL['widgets'].update(core.GL['variant_wdg'])
     if 'result' in core.GL['variant_wdg'] and core.GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
         if type == 'result':
@@ -338,8 +340,8 @@ def update_reeds_wdg(type):
         core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], wdg_defaults=core.GL['wdg_defaults']))
-        core.GL['controls'].children = list(core.GL['widgets'].values())
-        core.update_plots()
+    core.GL['controls'].children = list(core.GL['widgets'].values())
+    core.update_plots()
 
 def update_reeds_presets(attr, old, new):
     '''
