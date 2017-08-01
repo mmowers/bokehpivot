@@ -102,7 +102,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets):
+def static_report(data_source, static_presets, report_format='both'):
     '''
     Build static HTML and excel report based on specified presets. The HTML report will have
     separate sections for each preset, and the excel report will have the data for each preset in separate
@@ -112,6 +112,7 @@ def static_report(data_source, static_presets):
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name': name of preset
             'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
+        report_format (string): 'html', 'excel', or 'both', specifying which reports to make
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -142,17 +143,19 @@ def static_report(data_source, static_presets):
         excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
         sheet_i += 1
         GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
-    excel_report.save()
-    sp.Popen(excel_report_path, shell=True)
-    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
-        template_string=template_file.read()
-    template = ji.Template(template_string)
-    resources = br.Resources()
-    html = be.file_html(static_plots, resources=resources, template=template)
-    html_path = this_dir_path + '/out/static_report_'+ time +'.html'
-    with open(html_path, 'w') as f:
-        f.write(html)
-    sp.Popen(html_path, shell=True)
+    if report_format in ['excel', 'both']:
+        excel_report.save()
+        sp.Popen(excel_report_path, shell=True)
+    if report_format in ['html', 'both']:
+        with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
+            template_string=template_file.read()
+        template = ji.Template(template_string)
+        resources = br.Resources()
+        html = be.file_html(static_plots, resources=resources, template=template)
+        html_path = this_dir_path + '/out/static_report_'+ time +'.html'
+        with open(html_path, 'w') as f:
+            f.write(html)
+        sp.Popen(html_path, shell=True)
     print('***Done building report')
 
 def preset_wdg(preset):
