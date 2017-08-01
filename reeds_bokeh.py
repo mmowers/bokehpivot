@@ -335,8 +335,8 @@ def update_reeds_wdg(type):
         preset_options = []
         if type == 'result':
             get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
-            if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
-                preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
+        if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
+            preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
         core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], wdg_defaults=core.GL['wdg_defaults']))
