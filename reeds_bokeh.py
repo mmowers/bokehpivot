@@ -331,6 +331,9 @@ def update_reeds_wdg(type):
     '''
     core.GL['widgets'] = core.GL['data_source_wdg'].copy()
     core.GL['widgets'].update(core.GL['variant_wdg'])
+    for key in core.GL['wdg_defaults'].keys():
+        if key not in core.GL['variant_wdg'].keys() + ['data']:
+            core.GL['wdg_defaults'].pop(key, None)
     if 'result' in core.GL['variant_wdg'] and core.GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
         if type == 'result':
