@@ -1,7 +1,8 @@
 '''
 Static HTML report maker
 
-To use, copy this file into the implementations/ directory, change path, and run
+To use, copy this file into the implementations/ directory and change the "path" and "base" variables below.
+Run this file on command line with "python path/to/file.py"
 '''
 import os, sys
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
