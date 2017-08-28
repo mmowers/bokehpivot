@@ -677,9 +677,9 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
     seperator = '' if kw['title'] == '' else ', '
     if explode_val is not None:
         if explode_group is not None:
-            kw['title'] = kw['title'] + seperator + "%s = %s" % (wdg['explode_group'].value, str(explode_group))
+            kw['title'] = kw['title'] + seperator + str(explode_group)
         seperator = '' if kw['title'] == '' else ', '
-        kw['title'] = kw['title'] + seperator + "%s = %s" % (wdg['explode'].value, str(explode_val))
+        kw['title'] = kw['title'] + seperator + str(explode_val)
 
     #Add figure tools
     hover = bmt.HoverTool(
