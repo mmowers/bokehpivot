@@ -100,7 +100,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
             for i_scen, scen in df_scen.iterrows():
                 if os.path.isdir(scen['path']):
                     abs_path_scen = os.path.abspath(scen['path'])
-                    if os.path.isdir(abs_path_scen+'/gdxfiles'):
+                    if os.path.isfile(abs_path_scen+'/gdxfiles/CONVqn.gdx'):
                         custom_sorts['scenario'].append(scen['name'])
                         scenarios.append({'name': scen['name'], 'path': abs_path_scen})
         #Else if the path is pointing to a directory, check if the directory is a run folder
@@ -108,12 +108,12 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         #run folders, so gather all of those scenarios.
         elif os.path.isdir(runs_path):
             abs_path = str(os.path.abspath(runs_path))
-            if os.path.isdir(abs_path+'/gdxfiles'):
+            if os.path.isfile(abs_path+'/gdxfiles/CONVqn.gdx'):
                 scenarios.append({'name': os.path.basename(abs_path), 'path': abs_path})
             else:
                 subdirs = os.walk(abs_path).next()[1]
                 for subdir in subdirs:
-                    if os.path.isdir(abs_path+'/'+subdir+'/gdxfiles'):
+                    if os.path.isfile(abs_path+'/'+subdir+'/gdxfiles/CONVqn.gdx'):
                         abs_subdir = str(os.path.abspath(abs_path+'/'+subdir))
                         scenarios.append({'name': subdir, 'path': abs_subdir})
     #If we have scenarios, build widgets for scenario filters and result.
