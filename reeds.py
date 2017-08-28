@@ -252,24 +252,18 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('JEDI Wind Cost',
-        {'file': "JediWind.gdx",
-        'param': 'JediWindCost',
-        'columns': ["category", "TRG", "windtype", "n", "year","Cost (2015$)"],
-        'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'Cost (2015$)'}},
-        ],
+    ('JEDI Outputs',
+        {'file': "JEDI_out.gdx",
+        'param': 'JEDI',
+        'columns': ["jedi_scenario", "jedi_tech", "st", "state_plus_dc", "output", "category", "metric", "directness", "year", "value"],
         'presets': collections.OrderedDict((
-            ('Scenario Compare',{'x':'year','y':'Cost (2015$)', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
-        )),
-        }
-    ),
-    ('JEDI Wind Capacity',
-        {'file': "JediWind.gdx",
-        'param': 'JediWindBuilds',
-        'columns': ["category", "TRG", "windtype", "n", "year","Capacity (MW)"],
-        'presets': collections.OrderedDict((
-            ('Scenario Compare',{'x':'year','y':'Capacity (MW)', 'series':'scenario', 'explode':'category', 'chart_type':'Line'}),
+            ('Main Metrics',{'x':'year','y':'value', 'series':'scenario', 'explode':'metric', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
+            ('All Outputs',{'x':'year','y':'value', 'series':'scenario', 'explode':'output', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
+            ('Jobs By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['jobs']}}),
+            ('Earnings By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['earnings']}}),
+            ('Output By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['output']}}),
+            ('Value Add By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['value_add']}}),
+            ('2050 Direct Jobs Map',{'chart_type':'Map', 'x':'st', 'y':'value', 'explode':'scenario', 'explode_group':'jedi_scenario', 'filter': {'metric':['jobs'], 'directness':['direct'], 'year':['2050'], }}),
         )),
         }
     ),
