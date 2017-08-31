@@ -197,6 +197,13 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
             else:
                 result_dfs[result] = pd.concat([result_dfs[result], df_scen_result]).reset_index(drop=True)
         print('***Done fetching ' + str(result) + ' for ' + str(scenario_name) + '.')
+
+    #fill missing values with 0:
+    df = result_dfs[result]
+    if 'index' in result_meta:
+        idx_cols = ['scenario'] + result_meta['index']
+        full_idx = pd.MultiIndex.from_product([df[col].unique().tolist() for col in idx_cols], names=idx_cols)
+        result_dfs[result] = df.set_index(idx_cols).reindex(full_idx).reset_index()
     print('***Done fetching ' + str(result) + '.')
 
 def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
@@ -267,6 +274,8 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     cols['x-axis'] = [x for x in cols['all'] if x not in cols['y-axis']]
     cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['filterable']]
     cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['seriesable']]
+
+    #fill NA depending on column type
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
     df[cols['continuous']] = df[cols['continuous']].fillna(0)
     print('***Done with joins, maps, ordering.')

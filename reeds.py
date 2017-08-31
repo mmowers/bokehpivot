@@ -76,6 +76,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'CONVqnallyears',
         'columns': ['tech', 'n', 'year', 'Capacity (GW)'],
+        'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
@@ -100,6 +101,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'CONVqn_newallyears',
         'columns': ['tech', 'n', 'year', 'Capacity (GW)'],
+        'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
@@ -114,6 +116,7 @@ results_meta = collections.OrderedDict((
         {'file': "CONVqn.gdx",
         'param': 'Retireqnallyears',
         'columns': ["tech", "n", "year", "Capacity (GW)"],
+        'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
             {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['UPV', 'DUPV', 'distPV'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
@@ -128,6 +131,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'Windiallc',
         'columns': ["windtype", "i", "year", "class", "Capacity (GW)"],
+        'index': ["windtype", "i", "year", "class"],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -140,6 +144,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallyears',
         'columns': ['tech', 'n', 'year', 'Generation (TWh)'],
+        'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': 0.000001, 'column': 'Generation (TWh)'}},
         ],
@@ -164,6 +169,7 @@ results_meta = collections.OrderedDict((
         {'file': 'Reporting.gdx',
         'param': 'AnnualReport',
         'columns': ['n', 'year', 'type', 'value'],
+        'index': ['n','year','type'],
         'presets': collections.OrderedDict((
             ('CO2 Emissions (MMton)',{'x':'year','y':'value','series':'scenario','chart_type':'Line', 'filter': {'type': ['CO2']}, 'y_scale':'1e-6'}),
         )),
@@ -173,6 +179,7 @@ results_meta = collections.OrderedDict((
         {'file': 'systemcost.gdx',
         'param': 'aSystemCost_ba',
         'columns': ['cost_cat', 'n', 'year', 'Cost (Bil 2015$)'],
+        'index': ['cost_cat', 'n', 'year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': inflation_mult/1e9, 'column': 'Cost (Bil 2015$)'}},
             {'func': discount_costs, 'args': {}},
@@ -186,6 +193,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
         'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
+        'index': ['tech', 'n', 'year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
         ],
@@ -198,6 +206,7 @@ results_meta = collections.OrderedDict((
         {'file': 'Reporting.gdx',
         'param': 'ElecPriceOut',
         'columns': ['n', 'year', 'elem', 'value'],
+        'index': ['n', 'year', 'type'],
         'preprocess': [
             {'func': pre_elec_price, 'args': {}},
         ],
@@ -256,6 +265,7 @@ results_meta = collections.OrderedDict((
         {'file': "JEDI_out.gdx",
         'param': 'JEDI',
         'columns': ["jedi_scenario", "jedi_tech", "st", "state_plus_dc", "output", "category", "metric", "directness", "year", "value"],
+        'index': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'output', 'year'],
         'presets': collections.OrderedDict((
             ('Main Metrics',{'x':'year','y':'value', 'series':'scenario', 'explode':'metric', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
             ('All Outputs',{'x':'year','y':'value', 'series':'scenario', 'explode':'output', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
