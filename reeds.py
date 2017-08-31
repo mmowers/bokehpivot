@@ -266,6 +266,10 @@ results_meta = collections.OrderedDict((
         'param': 'JEDI',
         'columns': ["jedi_scenario", "jedi_tech", "st", "state_plus_dc", "output", "category", "metric", "directness", "year", "value"],
         'index': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'output', 'year'],
+        'preprocess': [
+            {'func': scale_column_filtered, 'args': {'by_column': 'metric', 'by_vals': ['jobs'], 'change_column': 'value', 'scale_factor': .000001}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'metric', 'by_vals': ['earnings','output','value_add'], 'change_column': 'value', 'scale_factor': .001}},
+        ],
         'presets': collections.OrderedDict((
             ('Main Metrics',{'x':'year','y':'value', 'series':'scenario', 'explode':'metric', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
             ('All Outputs',{'x':'year','y':'value', 'series':'scenario', 'explode':'output', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'sync_axes':'No'}),
