@@ -286,7 +286,7 @@ results_meta = collections.OrderedDict((
             ('Output By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['output']}}),
             ('Stacked Value Add By Tech',{'x':'year','y':'value', 'series':'jedi_tech', 'explode':'scenario', 'explode_group':'jedi_scenario', 'chart_type':'Bar', 'filter': {'metric':['value_add']}}),
             ('Value Add By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['value_add']}}),
-            ('Average Direct Jobs Map 2017-2050',{'chart_type':'Map', 'x':'st', 'y':'value', 'y_agg':'Ave', 'explode':'scenario', 'explode_group':'jedi_scenario', 'filter': {'metric':['jobs'], 'directness':['direct'], 'year': list(range(2017,2051)),}}),
+            ('Average Onsite Jobs Map 2017-2050',{'chart_type':'Map', 'x':'st', 'y':'value', 'y_agg':'Ave', 'explode':'scenario', 'explode_group':'jedi_scenario', 'filter': {'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),}}),
         )),
         }
     ),
@@ -470,6 +470,11 @@ columns_meta = {
     'jedi_tech':{
         'type': 'string',
         'style': this_dir_path + '/in/jedi_tech_style.csv',
+        'preprocess': [tolowercase,]
+    },
+    'directness':{
+        'type': 'string',
+        'map': this_dir_path + '/in/directness_map.csv',
         'preprocess': [tolowercase,]
     },
     'i':{
