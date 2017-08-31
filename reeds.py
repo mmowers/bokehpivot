@@ -454,6 +454,11 @@ columns_meta = {
         'style': this_dir_path + '/in/tech_style.csv',
         'preprocess': [tolowercase,]
     },
+    'jedi_tech':{
+        'type': 'string',
+        'style': this_dir_path + '/in/jedi_tech_style.csv',
+        'preprocess': [tolowercase,]
+    },
     'i':{
         'type': 'string',
         'join': this_dir_path + '/in/hierarchy.csv',
