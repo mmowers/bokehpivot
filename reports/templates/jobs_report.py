@@ -41,11 +41,11 @@ static_presets = [
     {'name': 'Gas Jobs Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Stacked Jobs By Directness', 'modify': 'diff', 'config': {'filter': {'jedi_tech':['gas'], 'metric':['jobs']}}},
     {'name': 'Jobs (millions)', 'result': 'JEDI Outputs', 'preset': 'Stacked Jobs By Category'},
     {'name': 'Jobs Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Stacked Jobs By Category', 'modify': 'diff'},
-    {'name': 'Average Onsite Jobs 2017-2050 (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050'},
-    {'name': 'Average Onsite Jobs 2017-2050 Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff'},
-    {'name': 'Average Onsite Renewable Jobs 2017-2050 (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'config':{'filter':{'jedi_tech':['wind','upv']}}},
-    {'name': 'Average Onsite Renewable Jobs 2017-2050 Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff', 'config':{'filter':{'jedi_tech':['wind','upv']}}},
-    {'name': 'Average Onsite Fossil Jobs 2017-2050 (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'config':{'filter':{'jedi_tech':['coal','gas']}}},
-    {'name': 'Average Onsite Fossil Jobs 2017-2050 Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff', 'config':{'filter':{'jedi_tech':['coal','gas']}}},
+    {'name': 'Average Onsite Jobs 2017-2050', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050'},
+    {'name': 'Average Onsite Jobs 2017-2050 Diff', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff'},
+    {'name': 'Average Onsite Renewable Jobs 2017-2050', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['wind','upv']}}},
+    {'name': 'Average Onsite Renewable Jobs 2017-2050 Diff', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['wind','upv']}}},
+    {'name': 'Average Onsite Fossil Jobs 2017-2050', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['coal','gas']}}},
+    {'name': 'Average Onsite Fossil Jobs 2017-2050 Diff', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['coal','gas']}}},
 ]
 rb.reeds_static(path, static_presets, base)
