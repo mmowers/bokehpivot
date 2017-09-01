@@ -474,7 +474,8 @@ columns_meta = {
     },
     'directness':{
         'type': 'string',
-        'map': this_dir_path + '/in/directness_map.csv',
+        'map': this_dir_path + '/in/jedi_directness_map.csv',
+        'style': this_dir_path + '/in/jedi_directness_style.csv',
         'preprocess': [tolowercase,]
     },
     'i':{
