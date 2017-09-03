@@ -193,7 +193,7 @@ results_meta = collections.OrderedDict((
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
         'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
-        'index': ['tech', 'n', 'year'],
+        'index': ['tech', 'n', 'year', 'm'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
         ],
