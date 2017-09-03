@@ -25,7 +25,7 @@ def discount_costs(df, **kw):
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
-    df['Discounted Cost (2015$)'] = df['Cost (Bil 2015$)'] * df['pv_mult']
+    df['Discounted Cost (Bil 2015$)'] = df['Cost (Bil 2015$)'] * df['pv_mult']
     return df
 
 #Return present value multiplier
@@ -185,7 +185,7 @@ results_meta = collections.OrderedDict((
             {'func': discount_costs, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('2017-2050 Stacked Bars',{'x':'scenario','y':'Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': list(range(2017,2051))}}),
+            ('2017-2050 Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': list(range(2017,2051))}}),
         )),
         }
     ),
