@@ -1,15 +1,3 @@
-'''
-Static HTML report maker
-
-To use, copy this file into the implementations/ directory and change the "path" and "base" variables below.
-Run this file on command line with "python path/to/file.py"
-'''
-import os, sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
-import reeds_bokeh as rb
-
-path = r'\\nrelqnap01d\ReEDS\FY17-JEDI-MRM-jedi\runs\2017-08-22 runs'
-base = 'Base'
 static_presets = [
     {'name': 'Base Generation (TWh)', 'result': 'Generation (TWh)', 'preset': 'Stacked Bars'},
     {'name': 'Generation Diff (TWh)', 'result': 'Generation (TWh)', 'preset': 'Stacked Bars', 'modify': 'diff'},
@@ -56,4 +44,3 @@ static_presets = [
     {'name': 'Average Onsite Fossil Jobs 2017-2050', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['coal','gas']}}},
     {'name': 'Average Onsite Fossil Jobs 2017-2050 Diff', 'result': 'JEDI Outputs', 'preset': 'Average Onsite Jobs Map 2017-2050', 'modify': 'diff', 'config':{'filter':{'metric':['jobs'], 'directness':['Onsite'], 'year': list(range(2017,2051)),'jedi_tech':['coal','gas']}}},
 ]
-rb.reeds_static(path, static_presets, base)

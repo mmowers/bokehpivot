@@ -1,14 +1,3 @@
-'''
-Static HTML report maker
-
-To use, copy this file into the implementations/ directory and change the "path" and "base" variables below.
-Run this file on command line with "python path/to/file.py"
-'''
-import os, sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
-import reeds_bokeh as rb
-
-path = r'\\nrelqnap01d\ReEDS\FY17-WindRuns-MRM-d1c8e69-wind_cost_scenarios\runs\20170322_jedi_outputs\ATB_Mid'
 static_presets = [
     {'name': 'Capacity (GW)', 'result': 'Capacity (GW)', 'preset': 'Stacked Bars'},
     {'name': 'New Capacity (GW)', 'result': 'New Capacity (GW)', 'preset': 'Stacked Bars'},
@@ -21,4 +10,4 @@ static_presets = [
     {'name': 'Elec Price (2015$/MWh)', 'result': 'Elec Price (2015$/MWh)', 'preset': 'National Scenario'},
     {'name': '2017-2050 System Cost (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': '2017-2050 Stacked Bars'},
 ]
-rb.reeds_static(path, static_presets)
+

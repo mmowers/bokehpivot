@@ -1,15 +1,6 @@
 '''
-This is an example of a custom static report with documenation on the different ways
-to configure a report.
+These are examples of custom configurations that can be added directly to create_report.py
 '''
-import os, sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
-import reeds_bokeh as rb
-
-path = r'\\nrelqnap01d\ReEDS\FY17-WindRuns-MRM-d1c8e69-wind_cost_scenarios\runs\20170322_jedi_outputs'
-
-#base is not necessary, but it allows for 'modify' to be used below to show only the base, or difference with base
-base = 'ATB_Mid'
 
 static_presets = [
     #ReEDS presets may be used. 'result' and 'preset' values are required to match those in reeds.py. 'modify' (optional) may then
@@ -31,13 +22,3 @@ static_presets = [
     {'name': 'Capacity Diff (GW)', 'result': 'Capacity (GW)', 'preset': 'Stacked Bars', 'modify': 'diff',
      'config': {'bar_width':'8', 'filter': {'year':['2020','2030','2040','2050'], }}},
 ]
-
-
-rb.reeds_static(path, static_presets, base=base, report_format='both')
-'''
-Notes on the function call:
-    -core.static_report() may be called instead of reeds_bokeh.reeds_static(), but this disallows any elements above
-        that use the top-level 'result', 'preset', or 'modify' keys, which are reeds-specific, and 'base' is also not an argument to core.static_report().
-    -'report_format' allows 'excel', 'html', or 'both'
-    - base is necessary if 'modify' is used above
-'''

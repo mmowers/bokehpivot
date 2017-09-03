@@ -2,3 +2,5 @@
 *
 # Except this file
 !.gitignore
+!create_report.py
+!example_reeds_custom_config.py
