@@ -767,7 +767,9 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
         heights_orig = list(heights) #we make a copy so we aren't modifying the list we are iterating on.
         xs_cp = list(xs) #we don't want to modify xs that are passed into function
         for i, h in reversed(list(enumerate(heights_orig))):
-            if h == 0:
+            #Ok this is getting absurd, but rects with near-zero heights also break the glyphs.
+            #See https://github.com/bokeh/bokeh/issues/6583.
+            if abs(h) <= 1e-13:
                 del xs_cp[i]
                 del centers[i]
                 del heights[i]
