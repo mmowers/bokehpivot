@@ -37,7 +37,7 @@ def reeds_static(data_source, static_presets, base=None, report_format='both'):
     core_presets = []
     for static_preset in static_presets:
         #build the full widget configuration for each preset.
-        config = {}
+        config = {'filter':{}}
         if 'result' in static_preset:
             config.update({'result': static_preset['result']})
             if 'preset' in static_preset:
@@ -47,14 +47,16 @@ def reeds_static(data_source, static_presets, base=None, report_format='both'):
         if 'modify' in static_preset:
             if static_preset['modify'] == 'base_only':
                 #if designated as base_only, filter to only include base scenario
-                if 'filter' not in config:
-                    config['filter'] = {}
                 config['filter'].update({'scenario': [base]})
             elif static_preset['modify'] == 'diff':
                 #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
                 config.update({'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': base})
         if 'config' in static_preset:
-            config.update(static_preset['config'])
+            for key in static_preset['config']:
+                if key == 'filter':
+                    config['filter'].update(static_preset['config']['filter'])
+                else:
+                    config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
     core.static_report(data_source, core_presets, report_format)
 
