@@ -37,15 +37,16 @@ Y_SCALE = 1
 CIRCLE_SIZE = 9
 BAR_WIDTH = 0.8
 LINE_WIDTH = 2
-COLORS = bpa.brewer['Spectral'][10]*1000
-MAP_COLORS = list(reversed(COLORS))
+ALLBLUES = ['#%02x%02x%02x' % (0, 0, i) for i in range(256)]
+COLORS = bpa.all_palettes['Spectral'][10]*1000
+MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
 ADV_BASES = ['Consecutive', 'Total']
 MAP_FONT_SIZE = 10
-MAP_NUM_BINS = 10
+MAP_NUM_BINS = 9
 MAP_WIDTH = 500
 MAP_OPACITY = 1
 MAP_LINE_WIDTH = 0.1
@@ -59,7 +60,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'line_width', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
-    'map_width', 'map_font_size', 'map_line_width', 'map_opacity']
+    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette']
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
@@ -347,6 +348,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_font_size'] = bmw.TextInput(title='Title Font Size', value=str(MAP_FONT_SIZE), css_classes=['wdgkey-map_font_size', 'map-drop'])
     wdg['map_line_width'] = bmw.TextInput(title='Line Width', value=str(MAP_LINE_WIDTH), css_classes=['wdgkey-map_line_width', 'map-drop'])
     wdg['map_opacity'] = bmw.TextInput(title='Opacity (0-1)', value=str(MAP_OPACITY), css_classes=['wdgkey-map_opacity', 'map-drop'])
+    wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
     wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
     wdg['update'] = bmw.Button(label='Manual Update', button_type='success', css_classes=['update-drop'])
@@ -950,6 +952,8 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     df_values = df.iloc[:,1].tolist()
     df_bins = df.iloc[:,2].tolist()
 
+    colors_full = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value))
+
     xs = [] #list of lists of x values of boundaries of regions
     ys = [] #list of lists of y values of boundaries of regions
     regions = []
@@ -966,7 +970,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
             value = df_values[index]
             values.append(value)
             bin_num = df_bins[index]
-            colors.append(MAP_COLORS[int(bin_num)])
+            colors.append(colors_full[int(bin_num)])
         else:
             values.append('NA')
             colors.append('#ffffff')
@@ -1007,7 +1011,7 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
     return fig_map
 
-def build_map_legend(labels):
+def build_map_legend(labels, wdg):
     '''
     Return html for map legend, based on supplied labels and global COLORS
 
@@ -1016,9 +1020,15 @@ def build_map_legend(labels):
     Returns:
         legend_string (string): full html to be used as legend.
     '''
-    colors = [MAP_COLORS[i] for i, t in enumerate(labels)]
+    colors = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value))
     legend_string = build_legend(labels, colors)
     return legend_string
+
+def get_map_colors(palette, num):
+    if palette == 'allblues':
+        return bpa.linear_palette(ALLBLUES,num)
+    else:
+        return list(reversed(bpa.all_palettes[palette][num]))
 
 def build_plot_legend(df_plots, series_val, custom_colors):
     '''
@@ -1264,7 +1274,7 @@ def update_plots():
     if GL['widgets']['render_plots'].value == 'Yes':
         if GL['widgets']['chart_type'].value == 'Map':
             figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
-            legend_text = build_map_legend(legend_labels)
+            legend_text = build_map_legend(legend_labels, GL['widgets'])
         else:
             figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'], GL['custom_colors'])
             legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value, GL['custom_colors'])
