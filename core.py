@@ -15,6 +15,7 @@ import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
 import bokeh.plotting as bp
+import bokeh.palettes as bpa
 import bokeh.resources as br
 import bokeh.embed as be
 import datetime
@@ -36,7 +37,7 @@ Y_SCALE = 1
 CIRCLE_SIZE = 9
 BAR_WIDTH = 0.8
 LINE_WIDTH = 2
-COLORS = ['#5e4fa2', '#3288bd', '#66c2a5', '#abdda4', '#e6f598', '#fee08b', '#fdae61', '#f46d43', '#d53e4f', '#9e0142']*1000
+COLORS = bpa.brewer['Spectral'][10]*1000
 MAP_COLORS = list(reversed(COLORS))
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
