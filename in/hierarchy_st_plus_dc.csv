@@ -1,0 +1,51 @@
+state_plus_dc,st,country,custreg
+WASHINGTON,WA,USA,Pacific
+OREGON,OR,USA,Pacific
+CALIFORNIA,CA,USA,Pacific
+NEVADA,NV,USA,Mountain
+IDAHO,ID,USA,Mountain
+UTAH,UT,USA,Mountain
+ARIZONA,AZ,USA,Mountain
+MONTANA,MT,USA,Mountain
+WYOMING,WY,USA,Mountain
+COLORADO,CO,USA,Mountain
+NEW MEXICO,NM,USA,Mountain
+TEXAS,TX,USA,West South Central
+SOUTH DAKOTA,SD,USA,West North Central
+NORTH DAKOTA,ND,USA,West North Central
+NEBRASKA,NE,USA,West North Central
+MINNESOTA,MN,USA,West North Central
+WISCONSIN,WI,USA,Great Lakes
+IOWA,IA,USA,West North Central
+KANSAS,KS,USA,West North Central
+MISSOURI,MO,USA,West North Central
+OKLAHOMA,OK,USA,West South Central
+ARKANSAS,AR,USA,West South Central
+LOUISIANA,LA,USA,West South Central
+MICHIGAN,MI,USA,Great Lakes
+ILLINOIS,IL,USA,Great Lakes
+INDIANA,IN,USA,Great Lakes
+OHIO,OH,USA,Great Lakes
+KENTUCKY,KY,USA,Southeast
+VIRGINIA,VA,USA,Southeast
+WEST VIRGINIA,WV,USA,Southeast
+PENNSYLVANIA,PA,USA,Northeast
+MARYLAND,MD,USA,Southeast
+DISTRICT OF COLUMBIA,MD,USA,Southeast
+MISSISSIPPI,MS,USA,Southeast
+ALABAMA,AL,USA,Southeast
+FLORIDA,FL,USA,Southeast
+GEORGIA,GA,USA,Southeast
+TENNESSEE,TN,USA,Southeast
+NORTH CAROLINA,NC,USA,Southeast
+SOUTH CAROLINA,SC,USA,Southeast
+DELAWARE,DE,USA,Southeast
+NEW JERSEY,NJ,USA,Northeast
+NEW YORK,NY,USA,Northeast
+CONNECTICUT,CT,USA,Northeast
+RHODE ISLAND,RI,USA,Northeast
+MASSACHUSETTS,MA,USA,Northeast
+VERMONT,VT,USA,Northeast
+NEW HAMPSHIRE,NH,USA,Northeast
+MAINE,ME,USA,Northeast
+MEXICO,MEX,MEX,Mexico

@@ -264,7 +264,7 @@ results_meta = collections.OrderedDict((
     ('JEDI Outputs',
         {'file': "JEDI_out.gdx",
         'param': 'JEDI',
-        'columns': ["jedi_scenario", "jedi_tech", "st", "state_plus_dc", "category", "metric", "directness", "year", "value"],
+        'columns': ["jedi_scenario", "jedi_tech", "state_plus_dc", "category", "metric", "directness", "year", "value"],
         'index': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'category', 'metric', 'directness', 'year'],
         'preprocess': [
             {'func': scale_column_filtered, 'args': {'by_column': 'metric', 'by_vals': ['jobs'], 'change_column': 'value', 'scale_factor': .000001}},
@@ -485,6 +485,10 @@ columns_meta = {
     'n':{
         'type': 'string',
         'join': this_dir_path + '/in/hierarchy.csv',
+    },
+    'state_plus_dc':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy_st_plus_dc.csv',
     },
     'huc_2':{
         'type': 'string',
