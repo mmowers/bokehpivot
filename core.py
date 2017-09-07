@@ -37,7 +37,6 @@ Y_SCALE = 1
 CIRCLE_SIZE = 9
 BAR_WIDTH = 0.8
 LINE_WIDTH = 2
-ALLBLUES = ['#%02x%02x%02x' % (0, 0, i) for i in range(256)]
 COLORS = bpa.all_palettes['Spectral'][10]*1000
 MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
@@ -343,7 +342,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
     wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
-    wdg['map_palette_desc'] = bmw.Div(text='<a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">(See Palette Options)</a>', css_classes=['map-drop'])
+    wdg['map_palette_desc'] = bmw.Div(text='See <a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">palette options</a> or all_red, all_blue, all_green, all_gray', css_classes=['map-drop', 'description'])
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
@@ -1027,8 +1026,15 @@ def build_map_legend(labels, wdg):
     return legend_string
 
 def get_map_colors(palette, num):
-    if palette == 'allblues':
-        return bpa.linear_palette(ALLBLUES,num)
+    if palette.startswith('all_'):
+        if palette == 'all_red':
+            return bpa.linear_palette(['#%02x%02x%02x' % (255, 255-i, 255-i) for i in range(256)],num)
+        elif palette == 'all_green':
+            return bpa.linear_palette(['#%02x%02x%02x' % (255-i, 255, 255-i) for i in range(256)],num)
+        elif palette == 'all_blue':
+            return bpa.linear_palette(['#%02x%02x%02x' % (255-i, 255-i, 255) for i in range(256)],num)
+        elif palette == 'all_gray':
+            return bpa.linear_palette(['#%02x%02x%02x' % (255-i, 255-i, 255-i) for i in range(256)],num)
     else:
         return list(reversed(bpa.all_palettes[palette][num]))
 

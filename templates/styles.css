@@ -5,6 +5,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+.description{
+    font-size: 90%;
+}
 .full_layout{
     width: auto !important;
     height: auto !important;
