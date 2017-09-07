@@ -225,6 +225,7 @@ def build_data_source_wdg(data_source):
         wdg (ordered dict): ordered dictionary of bokeh.models.widgets (in this case only one) for data source.
     '''
     wdg = collections.OrderedDict()
+    wdg['readme'] = bmw.Div(text='<a href="https://github.nrel.gov/ReEDS/bokehpivot" target="_blank">README</a>')
     wdg['data_dropdown'] = bmw.Div(text='Data Source (required)', css_classes=['data-dropdown'])
     wdg['data'] = bmw.TextInput(value=data_source, css_classes=['wdgkey-data', 'data-drop'])
     wdg['data'].on_change('value', update_data)
@@ -341,6 +342,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
+    wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
+    wdg['map_palette_desc'] = bmw.Div(text='<a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">(See Palette Options)</a>', css_classes=['map-drop'])
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
@@ -348,7 +351,6 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_font_size'] = bmw.TextInput(title='Title Font Size', value=str(MAP_FONT_SIZE), css_classes=['wdgkey-map_font_size', 'map-drop'])
     wdg['map_line_width'] = bmw.TextInput(title='Line Width', value=str(MAP_LINE_WIDTH), css_classes=['wdgkey-map_line_width', 'map-drop'])
     wdg['map_opacity'] = bmw.TextInput(title='Opacity (0-1)', value=str(MAP_OPACITY), css_classes=['wdgkey-map_opacity', 'map-drop'])
-    wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
     wdg['auto_update'] = bmw.Select(title='Auto Update (except filters)', value='Enable', options=['Enable', 'Disable'], css_classes=['update-drop'])
     wdg['update'] = bmw.Button(label='Manual Update', button_type='success', css_classes=['update-drop'])
