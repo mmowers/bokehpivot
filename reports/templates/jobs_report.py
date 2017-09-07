@@ -1,9 +1,9 @@
 static_presets = [
-    {'name': 'Base Generation (TWh)', 'result': 'Generation (TWh)', 'preset': 'Stacked Bars'},
+    {'name': 'Generation (TWh)', 'result': 'Generation (TWh)', 'preset': 'Stacked Bars'},
     {'name': 'Generation Diff (TWh)', 'result': 'Generation (TWh)', 'preset': 'Stacked Bars', 'modify': 'diff'},
-    {'name': 'Base Capacity (GW)', 'result': 'Capacity (GW)', 'preset': 'Stacked Bars'},
+    {'name': 'Capacity (GW)', 'result': 'Capacity (GW)', 'preset': 'Stacked Bars'},
     {'name': 'Capacity Diff (GW)', 'result': 'Capacity (GW)', 'preset': 'Stacked Bars', 'modify': 'diff'},
-    {'name': 'Base New Capacity (GW, 2-year)', 'result': 'New Capacity (GW)', 'preset': 'Stacked Bars'},
+    {'name': 'New Capacity (GW, 2-year)', 'result': 'New Capacity (GW)', 'preset': 'Stacked Bars'},
     {'name': 'New Capacity Diff (GW, 2-year)', 'result': 'New Capacity (GW)', 'preset': 'Stacked Bars', 'modify': 'diff'},
     {'name': 'Jobs (millions)', 'result': 'JEDI Outputs', 'preset': 'Total Jobs'},
     {'name': 'Jobs Diff (millions)', 'result': 'JEDI Outputs', 'preset': 'Total Jobs', 'modify': 'diff'},
