@@ -57,6 +57,18 @@ def pre_elec_price_components(dfs, **kw):
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
+def pre_value_streams(df, **kw):
+    #first, get load (quantity) into a separate column, then add $/MWh column
+    df_load = df[df['val_stream_type']=='quantity'].copy()
+    df_load.drop('val_stream_type', axis='columns', inplace=True)
+    df = df[df['val_stream_type']!='quantity'].copy()
+    df['value'] = df['value'] * inflation_mult
+    df = pd.merge(left=df, right=df_load, how='left', on=['n', 'm', 'year'], sort=False)
+    df.rename(columns={'value_x': 'Bil $', 'value_y': 'MWh'}, inplace=True)
+    df['$/MWh'] = df['Bil $']/df['MWh']
+    df['Bil $'] = df['Bil $']/1e9
+    return df
+
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
@@ -186,6 +198,22 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('2017-2050 Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': list(range(2017,2051))}}),
+        )),
+        }
+    ),
+    ('Value Streams',
+        {'file': 'valuestreams.gdx',
+        'param': 'value_streams',
+        'columns': ['val_stream_type', 'n', 'm', 'year', 'value'],
+        'index': ['val_stream_type', 'n', 'm', 'year'],
+        'preprocess': [
+            {'func': pre_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'filter':{'val_stream_type':['load','RPS']}}),
+            ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['RPS','load'], 'year':['2040'], }}),
+            ('2040 State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
+            ('2040 State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
         )),
         }
     ),
