@@ -1,6 +1,6 @@
 import os, sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
-sys.path.insert(1, os.path.join(sys.path[0], '../templates'))
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], 'templates'))
 import reeds_bokeh as rb
 import importlib
 report = importlib.import_module(sys.argv[1])

@@ -354,7 +354,7 @@ def build_reeds_report():
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
-    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base, shell=True, cwd=this_dir_path+r'/reports/implementations')
+    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base, shell=True, cwd=this_dir_path+r'/reports')
 
 def update_reeds_wdg(type):
     '''
