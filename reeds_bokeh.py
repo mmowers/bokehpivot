@@ -10,6 +10,7 @@ import bokeh.models.widgets as bmw
 import gdx2py
 import reeds
 import core
+import subprocess as sp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -125,6 +126,14 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         labels = [a['name'] for a in scenarios]
         topwdg['scenario_filter_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['scenario-filter-dropdown'])
         topwdg['scenario_filter'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-scenario_filter'])
+        #Add code to build report
+        options = [o for o in os.listdir(this_dir_path+'/reports/templates') if o.endswith(".py")]
+        scenario_names = [i['name'] for i in scenarios]
+        topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
+        topwdg['report_options'] = bmw.Select(title='Report', value=options[0], options=options, css_classes=['report-drop'])
+        topwdg['report_base'] = bmw.Select(title='Base Case', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
+        topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
+
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults
     core.save_wdg_defaults(topwdg, wdg_defaults)
@@ -135,6 +144,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     for key in topwdg:
         if key.startswith('meta_'):
             topwdg[key].on_change('value', update_reeds_meta)
+    topwdg['report_build'].on_click(build_reeds_report)
     topwdg['result'].on_change('value', update_reeds_result)
     
     print('***Done fetching ReEDS scenarios.')
@@ -333,6 +343,18 @@ def update_reeds_result(attr, old, new):
     When ReEDS Result field is updated, call update_reeds_wdg with the 'result' flag
     '''
     update_reeds_wdg(type='result')
+
+def build_reeds_report():
+    '''
+    Build the chosen ReEDS report. Note that Base Case is irrelevant for certain reports, but necessary for others.
+    '''
+    base = '"' + core.GL['widgets']['report_base'].value + '"'
+    report = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
+    scenario_filter = core.GL['widgets']['scenario_filter']
+    scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
+    scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
+    scenarios_string = '"' + '|'.join(scenario_paths) + '"'
+    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base, shell=True, cwd=this_dir_path+r'/reports/implementations')
 
 def update_reeds_wdg(type):
     '''

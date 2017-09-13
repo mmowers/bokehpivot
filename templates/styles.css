@@ -37,6 +37,7 @@ body {
     display: none !important;
 }
 .meta-drop,
+.report-drop,
 .bk-widget.wdgkey-chart_type select,
 .x-drop,
 .y-drop,
@@ -60,6 +61,7 @@ body {
 }
 .data-dropdown,
 .meta-dropdown,
+.report-dropdown,
 .x-dropdown,
 .y-dropdown,
 .series-dropdown,
