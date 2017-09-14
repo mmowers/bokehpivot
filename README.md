@@ -69,6 +69,7 @@ After starting up the app in a browser window, you must enter a path in the *Dat
 ## ReEDS Widgets
 * **Meta**: Click the *Meta* section to expand, and see the files used for some default *maps* (to rename and aggregate ReEDS categories), *styles* (to reorder categories and style them), and *merges* (to join more columns, e.g. to add regional aggregations). If you'd like to update any of these files, simply edit the file (only if you're working locally), or point to a new file.
 * **Filter Scenarios**: A list of scenarios will be fetched after entering a path in *Runs*. Use the *Filter Scenarios* section to reduce the scenarios from which the app will fetch data.
+* **Build Report**: Build HTML/Excel reports based on a preset list of configurations (stored in the *reports\\templates\\* folder). Select the report to build and the base case to use, if necessary. Click the button to initiate a separate process that builds the HTML/Excel report. Note that Filter Scenarios may be used to limit the scenarios in the report. See the *Creating/Building Reports* section below for more info.
 * **Result**: Select a result from the *Result* select box. It may take a few seconds to fetch the data, depending on the number of scenarios being analyzed. After the result data is fetched, the following widgets will appear
 * **Presets**: You may select a preset result from the *Preset* select box. For example, for *Generation*, *Stacked Generation* is a preset result.
 * See the *Core Pivot Functionality* section below for the rest of the available widgets.
@@ -97,14 +98,18 @@ and/or resize your browser screen to make a nice 2d array of charts.
 * **Auto/Manual Update**: Setting *Auto Update* to *Disable* will disallow plots and data to be updated automatically while widgets are altered. The *Manual Update* button can be used to manually update plots and data. Setting *Render plots* to *No* will disallow rendering of figures. This is useful if, for instance, rendering plots is taking a very long time, and you simply want to download the data for a given widget config.
 * **Download/Export**: Download any data you're viewing with the *Download csv of View* button, or download all data for a given source/result with the *Download csv of Source* button. It will be downloaded into a timestamped file in the *out\\* folder. Note that if you're accessing a bokeh server on Orion, this folder is in *D:\\CommonGitRepos\\Bokeh\\bokehpivot*. *Export Config to URL* will save any non-default widget configuration as a URL query string (starting with "?") in a text file for later use/sharing. At a later time, you will be able to load the same view by simply appending the query string to your bokehpivot URL (with your bokeh server running). If the URL is from Orion, you may access the URL from any computer connected to the NREL network (while the bokeh server on Orion is still running).
 
-## Creating reports
+## Building reports
+HTML and Excel reports can be built with a list of desired widget configurations.  See examples in the *reports\\templates\\* folder. There are two methods for building reports:
+* The easiest method is to build a report directly from the bokehpivot interface using the *Build Report* ReEDS widget mentioned above.
+* Another method is to edit and run *create_report.py* within *reports\\implementations\\*. Follow instructions in this file. Configurations may come from report templates within the *reports\\templates\\* folder, and custom configurations and ReEDS presets may be added directly to this file as well. See *reports\\implementations\\example_reeds_custom_report.py* for examples of custom configurations that can be added directly to *create_report.py*.
 
-HTML and Excel reports can be built with a list of desired widget configurations by editing and running *reports\\implementations\\create_report.py*. Configurations may come from report templates within the *reports\\templates\\* folder, and custom configurations and ReEDS presets may be added directly to this file as well. See *reports\\templates\\standard_report.py* and *reports\\templates\\standard_compare_report.py* for example standard reports relying solely on ReEDS presets, and *reports\\implementations\\example_reeds_custom_report.py* for examples of custom configurations that can be added directly to *reports\\implementations\\create_report.py*.
-
-In building ReEDS reports, a base case may be specified with its run folder name. Specifying a base case allows difference charts to be built using the *modify* key (see *reports\\templates\\standard_compare_report.py* for examples). *'modify': 'diff'* indicates that a difference chart should be shown, while *'modify': 'base_only'* indicates that the result should only be shown for the base case.
-
-To create a report, open *reports\\implementations\\create_report.py* and follow instructions in that file.
-
+## Creating report templates:
+Report templates are in the *reports\\templates\\* folder. Each of these files consists of a list of configurations. Every configuration has these keys:
+* *name*: The title of this section of the report, shown in both the HTML and Excel sheets
+* *result* (optional): The ReEDS result name (required if using the *preset* key).
+* *preset* (optional): The preset name.
+* *config* (optional): Full configuration if not using *result* or *preset* keys, or additional configuration to add. See *reports\\templates\\jobs_report.py* for examples of the *config* key used in addition to ReEDS presets.
+* *modify* (optional): This allows comparison charts to be built when a base case has been specified. *'modify': 'diff'* indicates that difference charts should be shown with the base case, while *'modify': 'base_only'* indicates that the result should only be shown for the base case.
 
 ## Pro tips
 1. Pressing *Alt* will collapse all expandable sections.
