@@ -63,10 +63,12 @@ def pre_value_streams(df, **kw):
     df_load.drop('val_stream_type', axis='columns', inplace=True)
     df = df[df['val_stream_type']!='quantity'].copy()
     df['value'] = df['value'] * inflation_mult
-    df = pd.merge(left=df, right=df_load, how='left', on=['n', 'm', 'year'], sort=False)
-    df.rename(columns={'value_x': 'Bil $', 'value_y': 'MWh'}, inplace=True)
-    df['$/MWh'] = df['Bil $']/df['MWh']
-    df['Bil $'] = df['Bil $']/1e9
+    merge_index = [i for i in df.columns if i not in ['val_stream_type', 'value']]
+    df = pd.merge(left=df, right=df_load, how='left', on=merge_index, sort=False)
+    df.rename(columns={'value_x': '$', 'value_y': 'MWh'}, inplace=True)
+    df['$/MWh'] = df['$']/df['MWh']
+    df['$'] = df['$']/1e9
+    df.rename(columns={'$':'Bil $'}, inplace=True) 
     return df
 
 def add_huc_reg(df, **kw):
@@ -201,22 +203,6 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Value Streams',
-        {'file': 'valuestreams.gdx',
-        'param': 'value_streams',
-        'columns': ['val_stream_type', 'n', 'm', 'year', 'value'],
-        'index': ['val_stream_type', 'n', 'm', 'year'],
-        'preprocess': [
-            {'func': pre_value_streams, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'filter':{'val_stream_type':['load','RPS']}}),
-            ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['RPS','load'], 'year':['2040'], }}),
-            ('2040 State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
-            ('2040 State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
-        )),
-        }
-    ),
     ('Gen by m (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
@@ -286,6 +272,34 @@ results_meta = collections.OrderedDict((
             ('Total',{'x':'year','y':'value', 'series':'scenario', 'chart_type':'Line'}),
             ('Custom huc',{'x':'year','y':'value', 'series':'scenario', 'explode':'huc_custom', 'chart_type':'Line'}),
             ('Explode scenario for huc',{'x':'year','y':'value', 'series':'huc_custom', 'explode':'scenario', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+    ('Value Streams',
+        {'file': 'valuestreams.gdx',
+        'param': 'val_streams',
+        'columns': ['val_stream_type', 'n', 'm', 'year', 'value'],
+        'index': ['val_stream_type', 'n', 'm', 'year'],
+        'preprocess': [
+            {'func': pre_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'filter':{'val_stream_type':['load','RPS']}}),
+            ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['RPS','load'], 'year':['2040'], }}),
+            ('2040 State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
+            ('2040 State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
+        )),
+        }
+    ),
+    ('Tech Value Streams',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': pre_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
