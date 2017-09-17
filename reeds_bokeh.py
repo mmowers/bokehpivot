@@ -188,11 +188,13 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + src['file'], src['param'])
                     df_src = pd.DataFrame(data)
                     df_src.columns = src['columns']
+                    df_src = df_to_lowercase(df_src)
                     df_scen_result[src['name']] = df_src
             else:
                 #else we have only one parameter as a data source
                 data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file'], result_meta['param'])
                 df_scen_result = pd.DataFrame(data)
+                df_scen_result = df_to_lowercase(df_scen_result)
                 df_scen_result.columns = result_meta['columns']
             #preprocess and return one dataframe
             if 'preprocess' in result_meta:
@@ -388,3 +390,9 @@ def update_reeds_presets(attr, old, new):
     wdg = core.GL['widgets']
     preset = reeds.results_meta[wdg['result'].value]['presets'][wdg['presets'].value]
     core.preset_wdg(preset)
+
+def df_to_lowercase(df):
+    for col in df:
+        if df[col].dtype == object:
+            df[col] = df[col].str.lower()
+    return df
