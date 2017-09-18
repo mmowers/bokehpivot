@@ -58,7 +58,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'line_width', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -338,6 +338,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
+    wdg['net_levels'] = bmw.Select(title='Add Net Levels to Stacked', value='Yes', options=['Yes','No'], css_classes=['wdgkey-net_levels', 'adjust-drop'])
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
@@ -709,11 +710,12 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
 
     #Add glyphs to figure
     c = C_NORM
+    chart_type = wdg['chart_type'].value
     if wdg['series'].value == 'None':
-        add_glyph(wdg, p, xs, ys, c)
+        add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
-        if wdg['chart_type'].value in STACKEDTYPES: #We are stacking the series
+        if chart_type in STACKEDTYPES: #We are stacking the series
             xs_full = sorted(df_exploded[x_col].unique().tolist())
             y_bases_pos = [0]*len(xs_full)
             y_bases_neg = [0]*len(xs_full)
@@ -725,24 +727,28 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
             df_series = df_exploded[df_exploded[wdg['series'].value].isin([ser])]
             xs_ser = df_series[x_col].values.tolist()
             ys_ser = df_series[wdg['y'].value].values.tolist()
-            if wdg['chart_type'].value not in STACKEDTYPES: #The series will not be stacked
-                add_glyph(wdg, p, xs_ser, ys_ser, c, series=ser)
+            if chart_type not in STACKEDTYPES: #The series will not be stacked
+                add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
             else: #We are stacking the series
                 ys_pos = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] > 0 else 0 for i, x in enumerate(xs_full)]
                 ys_neg = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] < 0 else 0 for i, x in enumerate(xs_full)]
                 ys_stacked_pos = [ys_pos[i] + y_bases_pos[i] for i in range(len(xs_full))]
                 ys_stacked_neg = [ys_neg[i] + y_bases_neg[i] for i in range(len(xs_full))]
-                add_glyph(wdg, p, xs_full, ys_stacked_pos, c, y_bases=y_bases_pos, series=ser)
-                add_glyph(wdg, p, xs_full, ys_stacked_neg, c, y_bases=y_bases_neg, series=ser)
+                add_glyph(chart_type, wdg, p, xs_full, ys_stacked_pos, c, y_bases=y_bases_pos, series=ser)
+                add_glyph(chart_type, wdg, p, xs_full, ys_stacked_neg, c, y_bases=y_bases_neg, series=ser)
                 y_bases_pos = ys_stacked_pos
                 y_bases_neg = ys_stacked_neg
+        if wdg['net_levels'].value == 'Yes' and chart_type in STACKEDTYPES:
+            ys_net = [ys_stacked_pos[i] + ys_stacked_neg[i] for i,x in enumerate(xs_full)]
+            add_glyph('Dot', wdg, p, xs_full, ys_net, 'black', series='Net Level')
     return p
 
-def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
+def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
     '''
     Add a glyph to a Bokeh figure, depending on the chosen chart type.
 
     Args:
+        glyph_type (str): Type of glyph (e.g. 'Dot', 'Line', 'Bar', 'Area')
         wdg (ordered dict): Dictionary of bokeh model widgets.
         p (bokeh.model.figure): Bokeh figure.
         xs (list): List of x-values. These could be numeric or strings.
@@ -757,13 +763,13 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
     alpha = float(wdg['opacity'].value)
     y_unstacked = list(ys) if y_bases is None else [ys[i] - y_bases[i] for i in range(len(ys))]
     ser = ['None']*len(xs) if series is None else [series]*len(xs)
-    if wdg['chart_type'].value == 'Dot':
+    if glyph_type == 'Dot':
         source = bms.ColumnDataSource({'x': xs, 'y': ys, 'x_legend': xs, 'y_legend': y_unstacked, 'ser_legend': ser})
         p.circle('x', 'y', source=source, color=c, size=int(wdg['circle_size'].value), fill_alpha=alpha, line_color=None, line_width=None)
-    elif wdg['chart_type'].value == 'Line':
+    elif glyph_type == 'Line':
         source = bms.ColumnDataSource({'x': xs, 'y': ys, 'x_legend': xs, 'y_legend': y_unstacked, 'ser_legend': ser})
         p.line('x', 'y', source=source, color=c, alpha=alpha, line_width=float(wdg['line_width'].value))
-    elif wdg['chart_type'].value == 'Bar' and y_unstacked != [0]*len(y_unstacked):
+    elif glyph_type == 'Bar' and y_unstacked != [0]*len(y_unstacked):
         if y_bases is None: y_bases = [0]*len(ys)
         centers = [(ys[i] + y_bases[i])/2 for i in range(len(ys))]
         heights = [abs(ys[i] - y_bases[i]) for i in range(len(ys))]
@@ -781,7 +787,7 @@ def add_glyph(wdg, p, xs, ys, c, y_bases=None, series=None):
                 del ser[i]
         source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': xs_cp, 'y_legend': y_unstacked, 'h': heights, 'ser_legend': ser})
         p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width=float(wdg['bar_width'].value), line_color=None, line_width=None)
-    elif wdg['chart_type'].value == 'Area' and y_unstacked != [0]*len(y_unstacked):
+    elif glyph_type == 'Area' and y_unstacked != [0]*len(y_unstacked):
         if y_bases is None: y_bases = [0]*len(ys)
         xs_around = xs + xs[::-1]
         ys_around = y_bases + ys[::-1]
