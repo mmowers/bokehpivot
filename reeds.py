@@ -313,6 +313,12 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_BA_allyrs',
+        'columns': ['n', 'm', 'type', 'year', 'value'],
+        }
+    ),
     ('JEDI Outputs',
         {'file': "JEDI_out.gdx",
         'param': 'JEDI',
