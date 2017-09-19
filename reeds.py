@@ -58,17 +58,27 @@ def pre_elec_price_components(dfs, **kw):
     return df
 
 def pre_value_streams(df, **kw):
-    #first, get load (quantity) into a separate column, then add $/MWh column
-    df_load = df[df['val_stream_type']=='quantity'].copy()
-    df_load.drop('val_stream_type', axis='columns', inplace=True)
+    #Get quantity into a separate column, then add $/MWh column.
+    #First, separate quantities into their own dataframe.
+    df_quant = df[df['val_stream_type']=='quantity'].copy()
+    df_quant.drop('val_stream_type', axis='columns', inplace=True)
     df = df[df['val_stream_type']!='quantity'].copy()
+    #apply inflation to all values/costs.
     df['value'] = df['value'] * inflation_mult
+    val_stream_types = df['val_stream_type'].unique().tolist()
     merge_index = [i for i in df.columns if i not in ['val_stream_type', 'value']]
-    df = pd.merge(left=df, right=df_load, how='left', on=merge_index, sort=False)
+    #before merging with quantity, make sure we have values for all val stream types wherever we have costs.
+    #Without this we won't get the right weighted averages later.
+    df = df.pivot_table(index=merge_index, columns='val_stream_type', values='value').reset_index()
+    df.columns.name = None
+    df = pd.melt(df, id_vars=merge_index, value_vars=val_stream_types, var_name='val_stream_type', value_name= 'value')
+    df['value'] = df['value'].fillna(0)
+    #Now do the merge.
+    df = pd.merge(left=df, right=df_quant, how='outer', on=merge_index, sort=False)
     df.rename(columns={'value_x': '$', 'value_y': 'MWh'}, inplace=True)
     df['$/MWh'] = df['$']/df['MWh']
     df['$'] = df['$']/1e9
-    df.rename(columns={'$':'Bil $'}, inplace=True) 
+    df.rename(columns={'$':'Bil $'}, inplace=True)
     return df
 
 def add_huc_reg(df, **kw):
@@ -284,8 +294,8 @@ results_meta = collections.OrderedDict((
             {'func': pre_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter':{'val_stream_type':['load','rps']}}),
-            ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['rps','load'], 'year':['2040'], }}),
+            ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75',}),
+            ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'year':['2040'], }}),
             ('2040 State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
             ('2040 State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
         )),
