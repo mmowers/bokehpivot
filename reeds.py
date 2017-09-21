@@ -319,6 +319,12 @@ results_meta = collections.OrderedDict((
         'columns': ['n', 'm', 'type', 'year', 'value'],
         }
     ),
+    ('Nat Ann Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_nat_ann_allyrs',
+        'columns': ['type', 'year', 'value'],
+        }
+    ),
     ('JEDI Outputs',
         {'file': "JEDI_out.gdx",
         'param': 'JEDI',
