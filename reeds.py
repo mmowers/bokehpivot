@@ -58,6 +58,35 @@ def pre_elec_price_components(dfs, **kw):
     return df
 
 def pre_value_streams(df, **kw):
+    #Separate marginals and quantities into separate columns and add load_marginal ($/MWh) and load (MWh) columns
+
+    #First, fill missing data with 0 by pivoting out and melting back, so that everywhere we have load quantities,
+    #we'll have marginals and values for all our constraints. Without this we won't get the right weighted averages later.
+    val_stream_types = df['val_stream_type'].unique().tolist()
+    pivot_index = [i for i in df.columns if i not in ['val_stream_type', 'value']]
+    df = df.pivot_table(index=pivot_index, columns='val_stream_type', values='value').reset_index()
+    df.columns.name = None
+    df = pd.melt(df, id_vars=pivot_index, value_vars=val_stream_types, var_name='val_stream_type', value_name= 'value')
+    df['value'] = df['value'].fillna(0)
+    #Pivot out by val_out_type so that marginal and quantity are separate columns
+    pivot_index = [i for i in df.columns if i not in ['val_out_type', 'value']]
+    df = df.pivot_table(index=pivot_index, columns='val_out_type', values='value').reset_index()
+    df.columns.name = None
+    #adjust marginals by inflation
+    df['marginal'] = df['marginal'] * inflation_mult
+    #Find the load quantities and store in separate dataframe
+    df_load = df[(df['val_stream_type']=='load_pca')].copy()
+    df_load.drop(['val_stream_type','marginal'], axis='columns', inplace=True)
+    #Now merge load quantities back into dataframe
+    merge_index = [i for i in df.columns if i not in ['val_stream_type', 'marginal', 'quantity']]
+    df = pd.merge(left=df, right=df_load, how='outer', on=merge_index, sort=False)
+    df.rename(columns={'quantity_x': 'quantity', 'quantity_y': 'MWh'}, inplace=True)
+    df['$/MWh'] = df['quantity']*df['marginal']/df['MWh']
+    df['Bil $'] = df['quantity']*df['marginal']/1e9
+    return df
+
+
+def pre_tech_value_streams(df, **kw):
     #Get quantity into a separate column, then add $/MWh column.
     #First, separate quantities into their own dataframe.
     df_quant = df[df['val_stream_type']=='quantity'].copy()
@@ -288,13 +317,15 @@ results_meta = collections.OrderedDict((
     ('Value Streams',
         {'file': 'valuestreams.gdx',
         'param': 'val_streams',
-        'columns': ['val_stream_type', 'n', 'm', 'year', 'value'],
-        'index': ['val_stream_type', 'n', 'm', 'year'],
+        'columns': ['val_stream_type', 'year', 'n', 'm', 'val_out_type', 'value'],
+        'index': ['val_stream_type', 'year', 'n', 'm'],
         'preprocess': [
             {'func': pre_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','y_agg':'Sum','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75',}),
             ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75',}),
+            ('Marginal Prices', {'x':'year','y':'marginal','y_agg':'Weighted Ave', 'y_weight':'quantity','explode':'val_stream_type','series': 'scenario', 'chart_type':'Line', 'sync_axes':'No',}),
             ('2040 $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'year':['2040'], }}),
             ('2040 State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
             ('2040 State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':['2040'], }}),
@@ -306,7 +337,7 @@ results_meta = collections.OrderedDict((
         'param': 'tech_val_streams',
         'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
         'preprocess': [
-            {'func': pre_value_streams, 'args': {}},
+            {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
