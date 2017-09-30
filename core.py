@@ -199,17 +199,30 @@ def preset_wdg(preset):
     #filters are handled separately. We must deal with the active arrays of each filter
     if 'filter' in preset:
         for fil in preset['filter']:
+            preset_filter = preset['filter'][fil]
             #find index of associated filter:
             for j, col in enumerate(GL['columns']['filterable']):
                 if col == fil:
                     #get filter widget associated with found index
                     wdg_fil = wdg['filter_'+str(j)]
                     #build the new_active list, starting with zeros
-                    new_active = []
                     #for each label given in the preset, set corresponding active to 1
-                    for lab in preset['filter'][fil]:
-                        index = wdg_fil.labels.index(str(lab))
-                        new_active.append(index)
+                    if isinstance(preset_filter, str):
+                        if preset_filter == 'last':
+                            new_active = [len(wdg_fil.labels) - 1]
+                    elif isinstance(preset_filter, dict):
+                        if 'start' in preset_filter:
+                            start = wdg_fil.labels.index(str(preset_filter['start']))
+                            if 'end' in preset_filter:
+                                end = wdg_fil.labels.index(str(preset_filter['end']))
+                            else:
+                                end = len(wdg_fil.labels) - 1
+                            new_active = list(range(start,end+1))
+                    else: #we are using a list of labels
+                        new_active = []
+                        for lab in preset_filter:
+                            index = wdg_fil.labels.index(str(lab))
+                            new_active.append(index)
                     wdg_fil.active = new_active
                     break
     #finally, set x, which will trigger the data and chart updates.
