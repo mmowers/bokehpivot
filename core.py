@@ -221,8 +221,9 @@ def preset_wdg(preset):
                     else: #we are using a list of labels
                         new_active = []
                         for lab in preset_filter:
-                            index = wdg_fil.labels.index(str(lab))
-                            new_active.append(index)
+                            if str(lab) in wdg_fil.labels:
+                                index = wdg_fil.labels.index(str(lab))
+                                new_active.append(index)
                     wdg_fil.active = new_active
                     break
     #finally, set x, which will trigger the data and chart updates.
