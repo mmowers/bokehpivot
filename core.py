@@ -126,11 +126,17 @@ def static_report(data_source, static_presets, report_format='both'):
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
     excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
     excel_report = pd.ExcelWriter(excel_report_path)
+    excel_meta = []
+    excel_meta.append('Build date/time: ' + time)
+    excel_meta.append('Data Source(s):')
+    data_sources = data_source.split('|')
+    for ds in data_sources:
+        excel_meta.append(ds)
+    pd.Series(excel_meta).to_excel(excel_report, 'meta', index=False, header=False)
     sheet_i = 1
     static_plots = []
-    header = ''
+    header = '<h3>Build date/time:</h3><p>' + time + '</p>'
     header += '<h3>Data Source(s):</h3><ul>'
-    data_sources = data_source.split('|')
     for ds in data_sources:
         header += '<li>' + ds + '</li>'
     header += '</ul>'
