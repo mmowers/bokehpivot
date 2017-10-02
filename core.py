@@ -124,10 +124,17 @@ def static_report(data_source, static_presets, report_format='both'):
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    static_plots = []
     excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
     excel_report = pd.ExcelWriter(excel_report_path)
     sheet_i = 1
+    static_plots = []
+    header = ''
+    header += '<h3>Data Source(s):</h3><ul>'
+    data_sources = data_source.split('|')
+    for ds in data_sources:
+        header += '<li>' + ds + '</li>'
+    header += '</ul>'
+    static_plots.append(bl.row(bmw.Div(text=header)))
     #for each preset, set the widgets in preset_wdg(). Gather plots into separate sections of the html report,
     #and gather data into separate sheets of excel report
     for static_preset in static_presets:
