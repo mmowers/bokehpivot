@@ -836,6 +836,7 @@ def create_maps(df, wdg, cols):
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     Returns:
         maps (list of bokeh.plotting.figure): These maps are created by the create_map function.
+        breakpoints (list of float): Breakpoints that separate the color-shaded bins.
     '''
     print('***Building Maps...')
     maps = []
@@ -956,6 +957,7 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         df (pandas dataframe): input dataframe described above
         region_boundaries (pandas dataframe): This dataframe has columns for region id, group (if the region has non-contiguous pieces), and x and y values of all boundary points.
         wdg (ordered dict): Dictionary of bokeh model widgets.
+        colors_full (list of strings): Colors to shade the map
         title (string): The displayed title for this map
     Returns:
         fig_map (bokeh.plotting.figure): the bokeh figure for the map.
@@ -1030,7 +1032,7 @@ def get_map_bin_index(val, breakpoints):
 
     Args:
         val (float): The value that is to be binned
-        breakpoints (list of float): List of breakpoint values
+        breakpoints (list of float): Breakpoints that separate the color-shaded bins.
     Returns:
         bin index (int): the bin number that will determine the color of the region.
     '''
@@ -1045,7 +1047,8 @@ def build_map_legend(wdg, breakpoints):
     Return html for map legend, based on supplied labels and global COLORS
 
     Args:
-        labels(list of strings): Displayed labels for each legend entry
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        breakpoints (list of float): Breakpoints that separate the color-shaded bins.
     Returns:
         legend_string (string): full html to be used as legend.
     '''
@@ -1064,6 +1067,18 @@ def build_map_legend(wdg, breakpoints):
     return legend_string
 
 def get_map_colors(wdg, breakpoints):
+    '''
+    Return list of map colors. If we have a second palette, we will reverse it and use it
+    at the beginning. We also may have map_palette_break, which will be used as a breakpoint
+    to separate the colors.
+
+    Args:
+        wdg (ordered dict): Dictionary of bokeh model widgets.
+        breakpoints (list of float): Breakpoints that separate the color-shaded bins.
+    Returns:
+        List of hex strings that represent map colors
+    '''
+
     palette = wdg['map_palette'].value
     palette_2 = wdg['map_palette_2'].value
     palette_break = wdg['map_palette_break'].value
@@ -1091,6 +1106,19 @@ def get_map_colors(wdg, breakpoints):
 
 
 def get_palette(palette, num):
+    '''
+    Return list of colors in palette based on the palette name and number of bins.
+    Most are taken from bokeh.palettes.all_palettes[palette][num], but 'all_red', 'all_green',
+    'all_blue', and 'all_gray' are also allowed as names for palette, and are generated from
+    bokeh.palettes.linear_palette().
+
+    Args:
+        palette (string): The name of the palette
+        num (int): Number of colors to return
+    Returns:
+        List of hex strings in palette
+    '''
+
     if palette.startswith('all_'):
         if palette == 'all_red':
             return bpa.linear_palette(['#%02x%02x%02x' % (255, 255-i, 255-i) for i in range(256)],num)
