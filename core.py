@@ -943,23 +943,6 @@ def create_maps(df, wdg, cols):
     print('***Done building maps.')
     return (maps, breakpoints) #multiple maps
 
-def get_map_bin_index(val, breakpoints):
-    '''
-    Helper function for determining the bin number for a given value and set of breakpoints.
-    This assumes that bin ranges are less than or equal to the upper value and
-    strictly greater than the lower value.
-
-    Args:
-        val (float): The value that is to be binned
-        breakpoints (list of float): List of breakpoint values
-    Returns:
-        bin index (int): the bin number that will determine the color of the region.
-    '''
-    for i, breakpoint in enumerate(breakpoints):
-        if val <= breakpoint:
-            return i
-    return len(breakpoints)
-
 def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
     '''
     Create map based on an input dataframe.The third-to-last column of this
@@ -1037,6 +1020,24 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
     return fig_map
+
+def get_map_bin_index(val, breakpoints):
+    '''
+    Helper function for determining the bin number for a given value and set of breakpoints.
+    This assumes that bin ranges are less than or equal to the upper value and
+    strictly greater than the lower value.
+
+    Args:
+        val (float): The value that is to be binned
+        breakpoints (list of float): List of breakpoint values
+    Returns:
+        bin index (int): the bin number that will determine the color of the region.
+    '''
+    for i, breakpoint in enumerate(breakpoints):
+        if val <= breakpoint:
+            return i
+    return len(breakpoints)
+
 
 def build_map_legend(wdg, breakpoints):
     '''
