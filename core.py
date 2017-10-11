@@ -898,7 +898,7 @@ def create_maps(df, wdg, cols):
             map_max = y_axis.max() - bin_width
             breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
     elif wdg['map_bin'].value == 'Manual':
-        breakpoints = [float(bp) for bp in breakpoint_strings]
+        breakpoints = [float(bp) for bp in wdg['map_manual'].value.split(',')]
 
     colors_full = get_map_colors(wdg, breakpoints)
 
