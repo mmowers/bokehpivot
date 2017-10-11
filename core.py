@@ -371,6 +371,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
     wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
     wdg['map_palette_desc'] = bmw.Div(text='See <a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">palette options</a> or all_red, all_blue, all_green, all_gray', css_classes=['map-drop', 'description'])
+    wdg['map_palette_2'] = bmw.TextInput(title='Map Palette 2', value='', css_classes=['wdgkey-map_palette_2', 'map-drop'])
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
@@ -923,6 +924,7 @@ def create_maps(df, wdg, cols):
     df_unique.drop_duplicates(inplace=True)
     #Loop through rows of df_unique, filter df_maps based on values in each row,
     #and send filtered dataframe to mapping function
+    colors_full = get_map_colors(wdg['map_palette'].value, wdg['map_palette_2'].value, int(wdg['map_num'].value))
     for i, row in df_unique.iterrows():
         reg_bound = region_boundaries
         df_map = df_maps
@@ -944,7 +946,7 @@ def create_maps(df, wdg, cols):
         df_map = df_map[df_map.columns[-3:]]
         #remove final comma of title
         title = title[:-2]
-        maps.append(create_map(df_map, ranges, reg_bound, wdg, title))
+        maps.append(create_map(df_map, ranges, reg_bound, wdg, colors_full, title))
     print('***Done building maps.')
     return (maps, legend_labels) #multiple maps
 
@@ -965,7 +967,7 @@ def get_map_bin_index(val, breakpoints):
             return i
     return len(breakpoints)
 
-def create_map(df, ranges, region_boundaries, wdg, title=''):
+def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
     '''
     Create map based on an input dataframe.The third-to-last column of this
     dataframe is assumed to be the column of regions that are to be mapped.
@@ -985,8 +987,6 @@ def create_map(df, ranges, region_boundaries, wdg, title=''):
     df_regions = df.iloc[:,0].tolist()
     df_values = df.iloc[:,1].tolist()
     df_bins = df.iloc[:,2].tolist()
-
-    colors_full = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value))
 
     xs = [] #list of lists of x values of boundaries of regions
     ys = [] #list of lists of y values of boundaries of regions
@@ -1054,11 +1054,25 @@ def build_map_legend(labels, wdg):
     Returns:
         legend_string (string): full html to be used as legend.
     '''
-    colors = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value))
+    colors = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value), wdg['map_palette_2'].value)
     legend_string = build_legend(labels, colors)
     return legend_string
 
-def get_map_colors(palette, num):
+def get_map_colors(palette, palette_2, num):
+    import pdb; pdb.set_trace()
+    if palette_2 == '':
+        return get_palette(palette, num)
+    else:
+        if num % 2 == 0:
+            #even number of bins, so we split num equally between the palettes
+            return list(reversed(get_palette(palette_2, num/2))) + get_palette(palette, num/2)
+        else:
+            #odd number of bins, so the middle bin is white and we split the rest equally between the other palettes
+            return list(reversed(get_palette(palette_2, (num-1)/2))) + ['#ffffff'] + get_palette(palette, (num-1)/2)
+
+
+
+def get_palette(palette, num):
     if palette.startswith('all_'):
         if palette == 'all_red':
             return bpa.linear_palette(['#%02x%02x%02x' % (255, 255-i, 255-i) for i in range(256)],num)
