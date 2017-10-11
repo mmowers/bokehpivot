@@ -1059,7 +1059,6 @@ def build_map_legend(labels, wdg):
     return legend_string
 
 def get_map_colors(palette, palette_2, num):
-    import pdb; pdb.set_trace()
     if palette_2 == '':
         return get_palette(palette, num)
     else:
