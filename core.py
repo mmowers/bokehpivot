@@ -59,7 +59,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'line_width', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
-    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette']
+    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2']
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
@@ -1054,7 +1054,7 @@ def build_map_legend(labels, wdg):
     Returns:
         legend_string (string): full html to be used as legend.
     '''
-    colors = get_map_colors(wdg['map_palette'].value, int(wdg['map_num'].value), wdg['map_palette_2'].value)
+    colors = get_map_colors(wdg['map_palette'].value, wdg['map_palette_2'].value, int(wdg['map_num'].value))
     legend_string = build_legend(labels, colors)
     return legend_string
 
