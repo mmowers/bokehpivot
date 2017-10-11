@@ -838,13 +838,13 @@ def create_maps(df, wdg, cols):
     '''
     print('***Building Maps...')
     maps = []
-    legend_labels = []
+    breakpoints = []
     regions = ['i','n','r','rnew','rto','st']
     x_axis = df.iloc[:,-2]
     y_axis = df.iloc[:,-1]
     if x_axis.name not in regions or y_axis.dtype == object:
         print('***Error. Did you make sure to set x-axis to a region?')
-        return (maps, legend_labels) #empty list
+        return (maps, breakpoints) #empty list
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
     filepath = this_dir_path + '/in/gis_' + x_axis.name + '.csv'
@@ -876,7 +876,7 @@ def create_maps(df, wdg, cols):
         'y_max': region_boundaries['y'].max(),
         'y_min': region_boundaries['y'].min(),
     }
-    #set breakpoints and breakpoint_strings depending on the binning strategy
+    #set breakpoints depending on the binning strategy
     if wdg['map_bin'].value == 'Auto Equal Num': #an equal number of data ponts in each bin
         map_num_bins = int(wdg['map_num'].value)
         #with full list of values, find uniques with set, and return a sorted list of the uniques
@@ -885,7 +885,6 @@ def create_maps(df, wdg, cols):
         index_step = (len(val_list) - 1)/map_num_bins
         indices = [int((i+1)*index_step) for i in range(map_num_bins - 1)]
         breakpoints = [val_list[i] for i in indices]
-        breakpoint_strings = prettify_numbers(breakpoints)
     elif wdg['map_bin'].value == 'Auto Equal Width': #bins of equal width
         map_num_bins = int(wdg['map_num'].value)
         if wdg['map_min'].value != '' and wdg['map_max'].value != '':
@@ -898,24 +897,19 @@ def create_maps(df, wdg, cols):
             map_min = y_axis.min() + bin_width
             map_max = y_axis.max() - bin_width
             breakpoints = [map_min + bin_width*i for i in range(map_num_bins - 1)]
-        breakpoint_strings = prettify_numbers(breakpoints)
     elif wdg['map_bin'].value == 'Manual':
-        breakpoint_strings = wdg['map_manual'].value.split(',')
         breakpoints = [float(bp) for bp in breakpoint_strings]
-        
-    #gather legend_labels array
-    legend_labels = ['<= ' + breakpoint_strings[0]]
-    legend_labels += [breakpoint_strings[i] + ' - ' + breakpoint_strings[i+1] for i in range(len(breakpoint_strings) - 1)]
-    legend_labels += ['> ' + breakpoint_strings[-1]]
+
+    colors_full = get_map_colors(wdg, breakpoints)
 
     df_maps = df.copy()
     #assign all y-values to bins
     df_maps['bin_index'] = y_axis.apply(get_map_bin_index, args=(breakpoints,))
     #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
     if len(df_maps.columns) == 3:
-        maps.append(create_map(df_maps, ranges, region_boundaries, wdg))
+        maps.append(create_map(df_maps, ranges, region_boundaries, wdg, colors_full))
         print('***Done building map.')
-        return (maps, legend_labels) #single map
+        return (maps, breakpoints) #single map
     #Otherwise we are exploding.
     #find all unique groups of the explode columns.
     df_unique = df_maps.copy()
@@ -924,7 +918,6 @@ def create_maps(df, wdg, cols):
     df_unique.drop_duplicates(inplace=True)
     #Loop through rows of df_unique, filter df_maps based on values in each row,
     #and send filtered dataframe to mapping function
-    colors_full = get_map_colors(wdg['map_palette'].value, wdg['map_palette_2'].value, int(wdg['map_num'].value))
     for i, row in df_unique.iterrows():
         reg_bound = region_boundaries
         df_map = df_maps
@@ -948,7 +941,7 @@ def create_maps(df, wdg, cols):
         title = title[:-2]
         maps.append(create_map(df_map, ranges, reg_bound, wdg, colors_full, title))
     print('***Done building maps.')
-    return (maps, legend_labels) #multiple maps
+    return (maps, breakpoints) #multiple maps
 
 def get_map_bin_index(val, breakpoints):
     '''
@@ -1045,7 +1038,7 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
     return fig_map
 
-def build_map_legend(labels, wdg):
+def build_map_legend(wdg, breakpoints):
     '''
     Return html for map legend, based on supplied labels and global COLORS
 
@@ -1054,11 +1047,25 @@ def build_map_legend(labels, wdg):
     Returns:
         legend_string (string): full html to be used as legend.
     '''
-    colors = get_map_colors(wdg['map_palette'].value, wdg['map_palette_2'].value, int(wdg['map_num'].value))
+
+    if wdg['map_bin'].value == 'Manual':
+        breakpoint_strings = [str(bp) for bp in breakpoints]
+    else:
+        breakpoint_strings = prettify_numbers(breakpoints)
+
+    labels = ['<= ' + breakpoint_strings[0]]
+    labels += [breakpoint_strings[i] + ' - ' + breakpoint_strings[i+1] for i in range(len(breakpoint_strings) - 1)]
+    labels += ['> ' + breakpoint_strings[-1]]
+
+    colors = get_map_colors(wdg, breakpoints)
     legend_string = build_legend(labels, colors)
     return legend_string
 
-def get_map_colors(palette, palette_2, num):
+def get_map_colors(wdg, breakpoints):
+    palette = wdg['map_palette'].value
+    palette_2 = wdg['map_palette_2'].value
+    num = int(wdg['map_num'].value)
+
     if palette_2 == '':
         return get_palette(palette, num)
     else:
@@ -1068,8 +1075,6 @@ def get_map_colors(palette, palette_2, num):
         else:
             #odd number of bins, so the middle bin is white and we split the rest equally between the other palettes
             return list(reversed(get_palette(palette_2, (num-1)/2))) + ['#ffffff'] + get_palette(palette, (num-1)/2)
-
-
 
 def get_palette(palette, num):
     if palette.startswith('all_'):
@@ -1327,8 +1332,8 @@ def update_plots():
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], GL['custom_sorts'])
     if GL['widgets']['render_plots'].value == 'Yes':
         if GL['widgets']['chart_type'].value == 'Map':
-            figs, legend_labels = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
-            legend_text = build_map_legend(legend_labels, GL['widgets'])
+            figs, breakpoints = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
+            legend_text = build_map_legend(GL['widgets'], breakpoints)
         else:
             figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'], GL['custom_colors'])
             legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value, GL['custom_colors'])
