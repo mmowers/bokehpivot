@@ -59,7 +59,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plo
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'line_width', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
-    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2']
+    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
@@ -371,7 +371,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
     wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
     wdg['map_palette_desc'] = bmw.Div(text='See <a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">palette options</a> or all_red, all_blue, all_green, all_gray', css_classes=['map-drop', 'description'])
-    wdg['map_palette_2'] = bmw.TextInput(title='Map Palette 2', value='', css_classes=['wdgkey-map_palette_2', 'map-drop'])
+    wdg['map_palette_2'] = bmw.TextInput(title='Map Palette 2 (Optional)', value='', css_classes=['wdgkey-map_palette_2', 'map-drop'])
+    wdg['map_palette_break'] = bmw.TextInput(title='Dual Palette Breakpoint (Optional)', value='', css_classes=['wdgkey-map_palette_break', 'map-drop'])
     wdg['map_min'] = bmw.TextInput(title='Minimum (Equal Width Only)', value='', css_classes=['wdgkey-map_min', 'map-drop'])
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
@@ -1065,17 +1066,29 @@ def build_map_legend(wdg, breakpoints):
 def get_map_colors(wdg, breakpoints):
     palette = wdg['map_palette'].value
     palette_2 = wdg['map_palette_2'].value
-    num = int(wdg['map_num'].value)
+    palette_break = wdg['map_palette_break'].value
+    num = len(breakpoints) + 1
 
     if palette_2 == '':
         return get_palette(palette, num)
     else:
-        if num % 2 == 0:
-            #even number of bins, so we split num equally between the palettes
-            return list(reversed(get_palette(palette_2, num/2))) + get_palette(palette, num/2)
+        if palette_break == '':
+            if num % 2 == 0:
+                #even number of bins, so we split num equally between the palettes
+                return list(reversed(get_palette(palette_2, num/2))) + get_palette(palette, num/2)
+            else:
+                #odd number of bins, so the middle bin is white and we split the rest equally between the other palettes
+                return list(reversed(get_palette(palette_2, (num-1)/2))) + ['#ffffff'] + get_palette(palette, (num-1)/2)
         else:
-            #odd number of bins, so the middle bin is white and we split the rest equally between the other palettes
-            return list(reversed(get_palette(palette_2, (num-1)/2))) + ['#ffffff'] + get_palette(palette, (num-1)/2)
+            palette_break = float(palette_break)
+            bp_low = [bp for bp in breakpoints if bp < palette_break]
+            num_low = len(bp_low)
+            num_high = num - num_low - 1
+            if palette_break in breakpoints:
+                return list(reversed(get_palette(palette_2, num_low + 1))) + get_palette(palette, num_high)
+            else:
+                return list(reversed(get_palette(palette_2, num_low))) + ['#ffffff'] + get_palette(palette, num_high)
+
 
 def get_palette(palette, num):
     if palette.startswith('all_'):
