@@ -173,6 +173,10 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
         cur_scenarios = []
     else:
         cur_scenarios = result_dfs[result]['scenario'].unique().tolist() #the scenarios that have already been retrieved and stored in result_dfs
+        #remove scenarios that are not ative
+        active_scenarios = [scenarios[i]['name'] for i in topwdg['scenario_filter'].active]
+        result_dfs[result] = result_dfs[result][result_dfs[result]['scenario'].isin(active_scenarios)]
+
     #For each selected scenario, retrieve the data from gdx if we don't already have it,
     #and update result_dfs with the new data.
     result_meta = reeds.results_meta[result]
