@@ -339,13 +339,13 @@ def update_reeds_meta(attr, old, new):
     '''
     When ReEDS meta fields are updated, call update_reeds_wdg with the 'meta' flag
     '''
-    update_reeds_wdg(type='meta')
+    update_reeds_wdg(wdg_type='meta')
 
 def update_reeds_result(attr, old, new):
     '''
     When ReEDS Result field is updated, call update_reeds_wdg with the 'result' flag
     '''
-    update_reeds_wdg(type='result')
+    update_reeds_wdg(wdg_type='result')
 
 def build_reeds_report():
     '''
@@ -359,12 +359,12 @@ def build_reeds_report():
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
     sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base, shell=True, cwd=this_dir_path+r'/reports')
 
-def update_reeds_wdg(type):
+def update_reeds_wdg(wdg_type):
     '''
     When ReEDS result field or meta field are updated, build core widgets accordingly
     
     Args:
-        type (string): 'meta' or 'result'. Indicates the type of widget that was changed.
+        wdg_type (string): 'meta' or 'result'. Indicates the type of widget that was changed.
     '''
     core.GL['widgets'] = core.GL['data_source_wdg'].copy()
     core.GL['widgets'].update(core.GL['variant_wdg'])
@@ -373,7 +373,7 @@ def update_reeds_wdg(type):
             core.GL['wdg_defaults'].pop(key, None)
     if 'result' in core.GL['variant_wdg'] and core.GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
-        if type == 'result':
+        if wdg_type == 'result':
             get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
             preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
