@@ -322,6 +322,7 @@ def update_reeds_data_source(path, init_load, init_config):
     Returns:
         Nothing: Core Globals are updated
     '''
+    GL_REEDS['result_dfs'] = {}
     core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'])
     core.GL['widgets'].update(core.GL['variant_wdg'])
     #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
