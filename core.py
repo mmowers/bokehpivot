@@ -1389,7 +1389,7 @@ def export_config_url():
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
     non_defaults = {}
-    config_string = '{'
+    config_string = "{'name': 'Some Name', 'config': {"
     filter_string = "'filter': {"
     for key in wdg_defaults:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
@@ -1411,13 +1411,13 @@ def export_config_url():
     json_string = json.dumps(non_defaults)
     #url_args = urlp.quote(json_string.encode("utf-8"))
     url_query = '?widgets=' + urlp.quote(json_string)
-    config_string += filter_string + '}}'
+    config_string += filter_string + '}}},'
 
     path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
     with open(path, 'w') as f:
         f.write('URL query string:\n' + url_query + '\n\n')
-        f.write('Preset config:\n' + config_string + '\n\n')
-        f.write("(For ReEDS presets, remove 'result' from the preset config above, as it is redundant)" + '\n')
+        f.write('Report template config:\n' + config_string + '\n\n')
+        f.write("(For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant)" + '\n')
     sp.Popen(path, shell=True)
     
 def download():
