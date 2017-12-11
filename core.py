@@ -853,22 +853,8 @@ def create_maps(df, wdg, cols):
     region_boundaries = pd.read_csv(filepath, sep=',', dtype={'id': object, 'group': object})
     #Remove holes
     region_boundaries = region_boundaries[region_boundaries['hole'] == False]
-    #load hierarchy.csv and join on region_boundaries
-    df_join = pd.read_csv(this_dir_path + '/in/hierarchy.csv', sep=',', dtype=object)
-    #remove columns to left of x_axis.name in df_join
-    for c in df_join.columns.values.tolist():
-        if c == x_axis.name:
-            break
-        df_join.drop(c, axis=1, inplace=True)
-    #remove duplicate rows
-    df_join.drop_duplicates(subset=x_axis.name, inplace=True)
-    #merge df_join into df
-    region_boundaries = pd.merge(left=region_boundaries, right=df_join, left_on='id', right_on=x_axis.name, sort=False)
-    #filter region_boundaries by filter widgets
-    for j, col in enumerate(cols['filterable']):
-        if col in region_boundaries:
-            active = [wdg['filter_'+str(j)].labels[i] for i in wdg['filter_'+str(j)].active]
-            region_boundaries = region_boundaries[region_boundaries[col].isin(active)]
+    #keep only regions that are in df
+    region_boundaries = region_boundaries[region_boundaries['id'].isin(x_axis.unique())]
     #Add x and y columns to region_boundaries and find x and y ranges
     region_boundaries['x'] = region_boundaries['long']*53
     region_boundaries['y'] = region_boundaries['lat']*69
@@ -927,9 +913,7 @@ def create_maps(df, wdg, cols):
         for col in df_unique:
             df_map = df_map[df_map[col] == row[col]]
             title = title + col + '=' + str(row[col]) + ', '
-            #if we are exploding on some region type, then filter region_boundaries to that region
-            if col in df_join.columns.values.tolist():
-                reg_bound = reg_bound[reg_bound[col] == row[col]]
+        reg_bound = reg_bound[reg_bound['id'].isin(df_map[x_axis.name].unique())]
         #Use filtered regions to set map ranges
         ranges = {
             'x_max': reg_bound['x'].max(),

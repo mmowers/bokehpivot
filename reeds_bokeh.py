@@ -250,7 +250,9 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
                 if c == col:
                     break
                 df_join.drop(c, axis=1, inplace=True)
-            #remove duplicate rows
+            #remove duplicate rows. Note that we will have issues when the mapping is
+            #many to many instead of many to one. For example, if the source data regionality is state, texas will be
+            #assigned to just one rto after removing duplicates, even though it is truly part of multiple rtos.
             df_join.drop_duplicates(subset=col, inplace=True)
             #merge df_join into df
             df = pd.merge(left=df, right=df_join, on=col, sort=False)
