@@ -42,7 +42,7 @@ MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/pal
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
-AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave']
+AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave', 'Weighted Ave Ratio']
 ADV_BASES = ['Consecutive', 'Total']
 MAP_FONT_SIZE = 10
 MAP_NUM_BINS = 9
@@ -54,7 +54,7 @@ MAP_LINE_WIDTH = 0.1
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
-WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
+WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
@@ -324,6 +324,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'])
     wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='Sum', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'])
     wdg['y_weight'] = bmw.Select(title='Weighting Factor', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_weight', 'y-drop'])
+    wdg['y_weight_denom'] = bmw.Select(title='Denominator Weighting Factor', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_weight_denom', 'y-drop'])
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'])
@@ -492,6 +493,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             df_plots = df_grouped[wdg['y'].value].mean().reset_index()
         elif wdg['y_agg'].value == 'Weighted Ave' and wdg['y_weight'].value in cols['continuous']:
             df_plots = df_grouped.apply(wavg, wdg['y'].value, wdg['y_weight'].value).reset_index()
+            df_plots.rename(columns={0: wdg['y'].value}, inplace=True)
+        elif wdg['y_agg'].value == 'Weighted Ave Ratio' and wdg['y_weight'].value in cols['continuous'] and wdg['y_weight_denom'].value in cols['continuous']:
+            df_plots = df_grouped.apply(wavg_ratio, wdg['y'].value, wdg['y_weight'].value, wdg['y_weight_denom'].value).reset_index()
             df_plots.rename(columns={0: wdg['y'].value}, inplace=True)
 
     #Do Advanced Operations
@@ -1203,6 +1207,27 @@ def wavg(group, avg_name, weight_name):
     w = group[weight_name]
     try:
         return (d * w).sum() / w.sum()
+    except ZeroDivisionError:
+        return 0
+
+def wavg_ratio(group, avg_name, weight_num, weight_denom):
+    """
+    Helper function for pandas dataframe groupby object with apply function. This returns the
+    weighted average ratio for three specified columns.
+
+    Args:
+        group (pandas dataframe): This has columns required for weighted average
+        avg_name (string): Name of the column for which a weighted average is calculated
+        weight_num (string): Name of column that will be used as weighting factor in the numerator
+        weight_denom (string): Name of column that will be used as weighting factor in the denominator
+    Returns:
+        weighted average ratio (float): avg_name weighted by weight_num divided by avg_name weighted by weight_denom
+    """
+    d = group[avg_name]
+    wn = group[weight_num]
+    wd = group[weight_denom]
+    try:
+        return ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
     except ZeroDivisionError:
         return 0
 

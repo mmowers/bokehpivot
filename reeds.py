@@ -57,6 +57,29 @@ def pre_elec_price_components(dfs, **kw):
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
+def pre_value_factors(dfs, **kw):
+    #start with dfs['gen'], and expand to include all combinations of tech, n, year, m
+    df = dfs['gen']
+    idx_cols = ['tech','n','year','m']
+    full_idx = pd.MultiIndex.from_product([df[col].unique().tolist() for col in idx_cols], names=idx_cols)
+    df = df.set_index(idx_cols).reindex(full_idx).reset_index()
+    #load hours.csv
+    hours = pd.read_csv(this_dir_path + '/in/hours.csv')
+    #merge hours into df
+    df = pd.merge(left=df, right=hours, on='m', sort=False)
+    #convert gen from MW to MWh
+    df['Gen (MWh)'] = df['Gen (MWh)']*df['hours']
+    #remove all but load_pca from dfs['load_marg']
+    df_lm = dfs['load_marg']
+    df_lm = df_lm[df_lm['type'] == 'load_pca'].copy()
+    #apply inflation
+    df_lm['Price ($/MWh)'] = df_lm['Price ($/MWh)'] * inflation_mult
+    #drop 'type' column
+    df_lm.drop('type', axis='columns', inplace=True)
+    #merge load_marg into df
+    df = pd.merge(left=df, right=df_lm, on=['n','m','year'], how='left', sort=False)
+    return df
+
 def pre_value_streams(df, **kw):
     #Separate marginals and quantities into separate columns and add load_marginal ($/MWh) and load (MWh) columns
 
@@ -342,6 +365,19 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
             ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Value Factors',
+        {'sources': [
+            {'name': 'gen', 'file': 'CONVqn.gdx', 'param': 'CONVqmnallm', 'columns': ['tech', 'n', 'year', 'm', 'Gen (MWh)']},
+            {'name': 'load_marg', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_allyrs', 'columns': ['n', 'm', 'type','year', 'Price ($/MWh)']},
+        ],
+        'preprocess': [
+            {'func': pre_value_factors, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Tech Value Factors',{'chart_type':'Line', 'x':'year', 'y':'Price ($/MWh)', 'y_agg':'Weighted Ave Ratio', 'y_weight':'Gen (MWh)', 'y_weight_denom':'hours', 'series':'tech', 'explode':'scenario', 'filter': {}}),
         )),
         }
     ),
