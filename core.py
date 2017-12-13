@@ -806,6 +806,11 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
         if y_bases is None: y_bases = [0]*len(ys)
         centers = [(ys[i] + y_bases[i])/2 for i in range(len(ys))]
         heights = [abs(ys[i] - y_bases[i]) for i in range(len(ys))]
+        if wdg['bar_width'].value == 'i': #this means we are looking for the mapping in the _bar_width file
+            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
+            widths = [df_bar_width.loc[i, 'width'] for i in xs]
+        else:
+            widths = [float(wdg['bar_width'].value)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
         heights_orig = list(heights) #we make a copy so we aren't modifying the list we are iterating on.
         xs_cp = list(xs) #we don't want to modify xs that are passed into function
@@ -816,10 +821,11 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 del xs_cp[i]
                 del centers[i]
                 del heights[i]
+                del widths[i]
                 del y_unstacked[i]
                 del ser[i]
-        source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': xs_cp, 'y_legend': y_unstacked, 'h': heights, 'ser_legend': ser})
-        p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width=float(wdg['bar_width'].value), line_color=None, line_width=None)
+        source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': xs_cp, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
+        p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width='w', line_color=None, line_width=None)
     elif glyph_type == 'Area' and y_unstacked != [0]*len(y_unstacked):
         if y_bases is None: y_bases = [0]*len(ys)
         xs_around = xs + xs[::-1]
