@@ -806,9 +806,10 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
         if y_bases is None: y_bases = [0]*len(ys)
         centers = [(ys[i] + y_bases[i])/2 for i in range(len(ys))]
         heights = [abs(ys[i] - y_bases[i]) for i in range(len(ys))]
-        if wdg['bar_width'].value == 'i': #this means we are looking for the mapping in the _bar_width file
+        if wdg['bar_width'].value == 'w': #this means we are looking for the mapping in the _bar_width file
             df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
-            widths = [df_bar_width.loc[i, 'width'] for i in xs]
+            max_width = df_bar_width['width'].max()
+            widths = [df_bar_width.loc[i, 'width']/max_width for i in xs]
         else:
             widths = [float(wdg['bar_width'].value)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
