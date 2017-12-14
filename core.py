@@ -685,30 +685,31 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
 
     #Build x and y ranges and figure title
     kw = dict()
-
+    chart_type = wdg['chart_type'].value
     #Set x and y ranges. When x is grouped, there is added complication of separating the groups
     xs = df_exploded[x_col].values.tolist()
     ys = df_exploded[wdg['y'].value].values.tolist()
-    if wdg['x_group'].value != 'None':
-        kw['x_range'] = []
-        unique_groups = df_exploded[wdg['x_group'].value].unique().tolist()
-        unique_xs = df_exploded[wdg['x'].value].unique().tolist()
-        for i, ugr in enumerate(unique_groups):
-            for uxs in unique_xs:
-                kw['x_range'].append(str(ugr) + ' ' + str(uxs))
-            #Between groups, add entries that consist of spaces. Increase number of spaces from
-            #one break to the next so that each entry is unique
-            kw['x_range'].append(' ' * (i + 1))
-    elif wdg['x'].value in cols['discrete']:
-        kw['x_range'] = []
-        for x in xs:
-            if x not in kw['x_range']:
-                kw['x_range'].append(x)
-    if wdg['y'].value in cols['discrete']:
-        kw['y_range'] = []
-        for y in ys:
-            if y not in kw['y_range']:
-                kw['y_range'].append(y)
+    if not (chart_type == 'Bar' and wdg['bar_width'].value == 'c'):
+        if wdg['x_group'].value != 'None':
+            kw['x_range'] = []
+            unique_groups = df_exploded[wdg['x_group'].value].unique().tolist()
+            unique_xs = df_exploded[wdg['x'].value].unique().tolist()
+            for i, ugr in enumerate(unique_groups):
+                for uxs in unique_xs:
+                    kw['x_range'].append(str(ugr) + ' ' + str(uxs))
+                #Between groups, add entries that consist of spaces. Increase number of spaces from
+                #one break to the next so that each entry is unique
+                kw['x_range'].append(' ' * (i + 1))
+        elif wdg['x'].value in cols['discrete']:
+            kw['x_range'] = []
+            for x in xs:
+                if x not in kw['x_range']:
+                    kw['x_range'].append(x)
+        if wdg['y'].value in cols['discrete']:
+            kw['y_range'] = []
+            for y in ys:
+                if y not in kw['y_range']:
+                    kw['y_range'].append(y)
 
     #Set figure title
     kw['title'] = wdg['plot_title'].value
@@ -743,13 +744,12 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
 
     #Add glyphs to figure
     c = C_NORM
-    chart_type = wdg['chart_type'].value
     if wdg['series'].value == 'None':
         add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
         if chart_type in STACKEDTYPES: #We are stacking the series
-            xs_full = sorted(df_exploded[x_col].unique().tolist())
+            xs_full = df_exploded[x_col].unique().tolist()
             y_bases_pos = [0]*len(xs_full)
             y_bases_neg = [0]*len(xs_full)
         for i, ser in enumerate(df_exploded[wdg['series'].value].unique().tolist()):
@@ -806,9 +806,25 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
         if y_bases is None: y_bases = [0]*len(ys)
         centers = [(ys[i] + y_bases[i])/2 for i in range(len(ys))]
         heights = [abs(ys[i] - y_bases[i]) for i in range(len(ys))]
+        xs_cp = list(xs) #we don't want to modify xs that are passed into function
+        x_legend = list(xs)
+        if wdg['bar_width'].value == 'w': #this means we are looking for the mapping in the _bar_width file
+            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
+            max_width = df_bar_width['width'].max()
+            widths = [df_bar_width.loc[i, 'width']/max_width for i in xs]
+        elif wdg['bar_width'].value == 'c': #this means we are converting x axis to continuous and have no gaps between bars
+            widths = []
+            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
+            xs_cum = 0
+            for i, xo in enumerate(xs):
+                width = df_bar_width.loc[xo, 'width']
+                widths.append(width)
+                xs_cp[i] = width/2 + xs_cum
+                xs_cum = xs_cum + width
+        else:
+            widths = [float(wdg['bar_width'].value)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
         heights_orig = list(heights) #we make a copy so we aren't modifying the list we are iterating on.
-        xs_cp = list(xs) #we don't want to modify xs that are passed into function
         for i, h in reversed(list(enumerate(heights_orig))):
             #Ok this is getting absurd, but rects with near-zero heights also break the glyphs.
             #See https://github.com/bokeh/bokeh/issues/6583.
@@ -818,13 +834,9 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 del heights[i]
                 del y_unstacked[i]
                 del ser[i]
-        if wdg['bar_width'].value == 'w': #this means we are looking for the mapping in the _bar_width file
-            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
-            max_width = df_bar_width['width'].max()
-            widths = [df_bar_width.loc[i, 'width']/max_width for i in xs_cp]
-        else:
-            widths = [float(wdg['bar_width'].value)]*len(xs_cp)
-        source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': xs_cp, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
+                del widths[i]
+                del x_legend[i]
+        source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': x_legend, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
         p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width='w', line_color=None, line_width=None)
     elif glyph_type == 'Area' and y_unstacked != [0]*len(y_unstacked):
         if y_bases is None: y_bases = [0]*len(ys)
