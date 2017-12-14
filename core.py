@@ -829,13 +829,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
             #Ok this is getting absurd, but rects with near-zero heights also break the glyphs.
             #See https://github.com/bokeh/bokeh/issues/6583.
             if abs(h) <= 1e-13:
-                del xs_cp[i]
-                del centers[i]
-                del heights[i]
-                del y_unstacked[i]
-                del ser[i]
-                del widths[i]
-                del x_legend[i]
+                del xs_cp[i], centers[i], heights[i], y_unstacked[i], ser[i], widths[i], x_legend[i]
         source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': x_legend, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
         p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width='w', line_color=None, line_width=None)
     elif glyph_type == 'Area' and y_unstacked != [0]*len(y_unstacked):
