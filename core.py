@@ -536,9 +536,24 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         df_plots = df_plots[~df_plots[col].isin([col_base])]
         df_plots = df_plots[pd.notnull(df_plots[y_val])]
 
+    #For bar charts with continuous flag, we will sort by cumulative y value. First add cumulative y value
+    bar_height_sort = False
+    if wdg['chart_type'].value == 'Bar' and wdg['bar_width'].value == 'c':
+        bar_height_sort = True
+        #adjust groupby_cols from Aggregation section above, and remove series from group if it is there
+        bar_group_cols = [c for c in groupby_cols if c != wdg['series'].value]
+        #group and sum across series to get the cumulative y for each x
+        df_bar_group = df_plots.groupby(bar_group_cols, sort=False)
+        df_bar = df_bar_group[wdg['y'].value].sum().reset_index()
+        df_bar.rename(columns={wdg['y'].value: 'y_bar_cumulative'}, inplace=True)
+        #multiply by -1 so that we sort from large to small instead of small to large
+        df_bar['y_bar_cumulative'] = df_bar['y_bar_cumulative']*-1
+        df_plots = df_plots.merge(df_bar, how='left', on=bar_group_cols, sort=False)
+
     #Sort Dataframe
     sortby_cols = [wdg['x'].value]
     if wdg['x_group'].value != 'None': sortby_cols = [wdg['x_group'].value] + sortby_cols
+    if bar_height_sort: sortby_cols = ['y_bar_cumulative'] + sortby_cols
     if wdg['series'].value != 'None': sortby_cols = [wdg['series'].value] + sortby_cols
     if wdg['explode'].value != 'None': sortby_cols = [wdg['explode'].value] + sortby_cols
     if wdg['explode_group'].value != 'None': sortby_cols = [wdg['explode_group'].value] + sortby_cols
@@ -554,6 +569,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     for col in custom_sorts:
         if col in sortby_cols:
             df_plots = df_plots.drop(col + '__sort_col', 1)
+    if bar_height_sort:
+        df_plots = df_plots.drop('y_bar_cumulative', 1)
+        sortby_cols.remove('y_bar_cumulative')
 
     #Rearrange column order for csv download
     unsorted_columns = [col for col in df_plots.columns if col not in sortby_cols + [wdg['y'].value]]
