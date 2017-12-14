@@ -811,7 +811,8 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
         if wdg['bar_width'].value == 'w': #this means we are looking for the mapping in the _bar_width file
             df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
             max_width = df_bar_width['width'].max()
-            widths = [df_bar_width.loc[i, 'width']/max_width for i in xs]
+            widths = [df_bar_width.loc[x, 'width']/max_width for x in xs]
+            x_legend = [x_legend[i] + ' (width = ' + str(df_bar_width.loc[x, 'width']) + ')' for i, x in enumerate(xs)]
         elif wdg['bar_width'].value == 'c': #this means we are converting x axis to continuous and have no gaps between bars
             widths = []
             df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
@@ -821,6 +822,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 widths.append(width)
                 xs_cp[i] = width/2 + xs_cum
                 xs_cum = xs_cum + width
+                x_legend[i] = x_legend[i] + ' (width = ' + str(width) + ', ' + str(xs_cum) + ' cumulative)'
         else:
             widths = [float(wdg['bar_width'].value)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
