@@ -381,19 +381,6 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Repeat Tech Value Streams',
-        {'file': 'repeat.gdx',
-        'param': 'tech_val_streams_iter',
-        'columns': ['iter','tech', 'new_exist', 'n', 'm', 'val_stream_type', 'value'],
-        'preprocess': [
-            {'func': pre_tech_value_streams, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'iter','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'0.9', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'iter','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'0.9', 'filter': {'new_exist':['new']}}),
-        )),
-        }
-    ),
     ('Marginal Prices',
         {'file': 'MarginalPrices.gdx',
         'param': 'pmarg_BA_allyrs',
