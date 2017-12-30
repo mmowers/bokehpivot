@@ -536,9 +536,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         df_plots = df_plots[~df_plots[col].isin([col_base])]
         df_plots = df_plots[pd.notnull(df_plots[y_val])]
 
-    #For bar charts with continuous flag, we will sort by cumulative y value. First add cumulative y value
+    #For bar charts with convert flag 'c' or sort flag 's', we will sort by cumulative y value.
     bar_height_sort = False
-    if wdg['chart_type'].value == 'Bar' and wdg['bar_width'].value == 'c':
+    if wdg['chart_type'].value == 'Bar' and (wdg['bar_width'].value == 'c'  or 's' in wdg['bar_width'].value):
         bar_height_sort = True
         #adjust groupby_cols from Aggregation section above, and remove series from group if it is there
         bar_group_cols = [c for c in groupby_cols if c != wdg['series'].value]
@@ -842,7 +842,9 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 xs_cum = xs_cum + width
                 x_legend[i] = x_legend[i] + ' (width = ' + str(width) + ', ' + str(xs_cum) + ' cumulative)'
         else:
-            widths = [float(wdg['bar_width'].value)]*len(xs)
+            #strip off letters, for example, the 's' flag.
+            digits = re.sub("[a-z]", "", wdg['bar_width'].value)
+            widths = [float(digits)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
         heights_orig = list(heights) #we make a copy so we aren't modifying the list we are iterating on.
         for i, h in reversed(list(enumerate(heights_orig))):
