@@ -381,6 +381,19 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('New Tech Value Factors',
+        {'sources': [
+            {'name': 'gen', 'file': 'CONVqn.gdx', 'param': 'CONVqmnallm_new', 'columns': ['tech', 'n', 'year', 'm', 'Gen (MWh)']},
+            {'name': 'load_marg', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_allyrs', 'columns': ['n', 'm', 'type','year', 'Price ($/MWh)']},
+        ],
+        'preprocess': [
+            {'func': pre_value_factors, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Tech Value Factors',{'chart_type':'Line', 'x':'year', 'y':'Price ($/MWh)', 'y_agg':'Weighted Ave Ratio', 'y_weight':'Gen (MWh)', 'y_weight_denom':'hours', 'series':'tech', 'explode':'scenario', 'filter': {}}),
+        )),
+        }
+    ),
     ('Marginal Prices',
         {'file': 'MarginalPrices.gdx',
         'param': 'pmarg_BA_allyrs',
