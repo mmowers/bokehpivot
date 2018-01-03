@@ -368,6 +368,19 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('Tech Value Streams 2',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_2',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': pre_tech_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
     ('Value Factors',
         {'sources': [
             {'name': 'gen', 'file': 'CONVqn.gdx', 'param': 'CONVqmnallm', 'columns': ['tech', 'n', 'year', 'm', 'Gen (MWh)']},
