@@ -40,7 +40,7 @@ LINE_WIDTH = 2
 COLORS = bpa.all_palettes['Spectral'][10]*1000
 MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
-CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
+CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Range', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave', 'Weighted Ave Ratio']
 ADV_BASES = ['Consecutive', 'Total']
@@ -58,7 +58,7 @@ WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'a
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'line_width', 'show_line', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -366,6 +366,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
+    wdg['show_line'] = bmw.Select(title='Show Line (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-show_line', 'adjust-drop'])
     wdg['net_levels'] = bmw.Select(title='Add Net Levels to Stacked', value='Yes', options=['Yes','No'], css_classes=['wdgkey-net_levels', 'adjust-drop'])
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
@@ -492,11 +493,17 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         elif wdg['y_agg'].value == 'Ave':
             df_plots = df_grouped[wdg['y'].value].mean().reset_index()
         elif wdg['y_agg'].value == 'Weighted Ave' and wdg['y_weight'].value in cols['continuous']:
-            df_plots = df_grouped.apply(wavg, wdg['y'].value, wdg['y_weight'].value).reset_index()
-            df_plots.rename(columns={0: wdg['y'].value}, inplace=True)
+            df_plots = df_grouped.apply(wavg, wdg['y'].value, wdg['y_weight'].value, wdg['chart_type'].value).reset_index()
+            #The index of each group's dataframe is added as another column it seems. So we need to remove it:
+            df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
         elif wdg['y_agg'].value == 'Weighted Ave Ratio' and wdg['y_weight'].value in cols['continuous'] and wdg['y_weight_denom'].value in cols['continuous']:
             df_plots = df_grouped.apply(wavg_ratio, wdg['y'].value, wdg['y_weight'].value, wdg['y_weight_denom'].value).reset_index()
             df_plots.rename(columns={0: wdg['y'].value}, inplace=True)
+
+    #Check for range chart
+    range_cols = []
+    if wdg['chart_type'].value == 'Range':
+        range_cols = ['range_min', 'range_max']
 
     #Do Advanced Operations
     op = wdg['adv_op'].value
@@ -574,8 +581,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         sortby_cols.remove('y_bar_cumulative')
 
     #Rearrange column order for csv download
-    unsorted_columns = [col for col in df_plots.columns if col not in sortby_cols + [wdg['y'].value]]
-    df_plots = df_plots[unsorted_columns + sortby_cols + [wdg['y'].value]]
+    sorted_cols = sortby_cols + [wdg['y'].value] + range_cols
+    unsorted_columns = [col for col in df_plots.columns if col not in sorted_cols]
+    df_plots = df_plots[unsorted_columns + sorted_cols]
     print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
     if wdg['render_plots'].value == 'No':
         print('***Ready for download!')
@@ -659,9 +667,13 @@ def set_axis_bounds(df, plots, wdg, cols):
                 #sum negative values across series
                 df_neg = df[df[wdg['y'].value] < 0]
                 df_neg_sum = df_neg.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
-                min_y = df_neg_sum[wdg['y'].value].min() if df_neg_sum[wdg['y'].value].min() < 0 else 0
+                min_y = df_neg_sum[wdg['y'].value].min()
             else:
-                min_y = df[wdg['y'].value].min() if df[wdg['y'].value].min() < 0 else 0
+                if wdg['chart_type'].value == 'Range':
+                    min_y = min(df['range_min'].min(), df[wdg['y'].value].min())
+                else:
+                    min_y = df[wdg['y'].value].min()
+            min_y = min(0, min_y)
             for p in plots:
                 p.y_range.start = min_y
         if wdg['y_max'].value != '':
@@ -672,9 +684,13 @@ def set_axis_bounds(df, plots, wdg, cols):
                 #sum postive values across series
                 df_pos = df[df[wdg['y'].value] > 0]
                 df_pos_sum = df_pos.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
-                max_y = df_pos_sum[wdg['y'].value].max() if df_pos_sum[wdg['y'].value].max() > 0 else 0
+                max_y = df_pos_sum[wdg['y'].value].max()
             else:
-                max_y = df[wdg['y'].value].max() if df[wdg['y'].value].max() > 0 else 0
+                if wdg['chart_type'].value == 'Range':
+                    max_y = max(df['range_max'].max(), df[wdg['y'].value].max())
+                else:
+                    max_y = df[wdg['y'].value].max()
+            max_y = max(0, max_y)
             for p in plots:
                 p.y_range.end = max_y
 
@@ -760,10 +776,18 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
     p.yaxis.major_label_text_font_size = wdg['y_major_label_size'].value + 'pt'
     p.xaxis.major_label_orientation = 'horizontal' if wdg['x_major_label_orientation'].value == '0' else math.radians(float(wdg['x_major_label_orientation'].value))
 
+
     #Add glyphs to figure
     c = C_NORM
     if wdg['series'].value == 'None':
-        add_glyph(chart_type, wdg, p, xs, ys, c)
+        if chart_type == 'Range':
+            y_mins = df_exploded['range_min'].values.tolist()
+            y_maxs = df_exploded['range_max'].values.tolist()
+            add_glyph('Range', wdg, p, xs, y_maxs, c, y_bases=y_mins)
+            if wdg['show_line'].value == 'Yes':
+                add_glyph('Line', wdg, p, xs, ys, c)
+        else:
+            add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
         if chart_type in STACKEDTYPES: #We are stacking the series
@@ -779,7 +803,14 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
             xs_ser = df_series[x_col].values.tolist()
             ys_ser = df_series[wdg['y'].value].values.tolist()
             if chart_type not in STACKEDTYPES: #The series will not be stacked
-                add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
+                if chart_type == 'Range':
+                    y_mins_ser = df_series['range_min'].values.tolist()
+                    y_maxs_ser = df_series['range_max'].values.tolist()
+                    add_glyph('Range', wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser)
+                    if wdg['show_line'].value == 'Yes':
+                        add_glyph('Line', wdg, p, xs_ser, ys_ser, c, series=ser)
+                else:
+                    add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
             else: #We are stacking the series
                 ys_pos = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] > 0 else 0 for i, x in enumerate(xs_full)]
                 ys_neg = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] < 0 else 0 for i, x in enumerate(xs_full)]
@@ -854,7 +885,9 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 del xs_cp[i], centers[i], heights[i], y_unstacked[i], ser[i], widths[i], x_legend[i]
         source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': x_legend, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
         p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width='w', line_color=None, line_width=None)
-    elif glyph_type == 'Area' and y_unstacked != [0]*len(y_unstacked):
+    elif glyph_type in ['Area', 'Range'] and y_unstacked != [0]*len(y_unstacked):
+        if glyph_type == 'Range':
+            alpha = alpha * 0.8
         if y_bases is None: y_bases = [0]*len(ys)
         xs_around = xs + xs[::-1]
         ys_around = y_bases + ys[::-1]
@@ -1225,7 +1258,7 @@ def display_config(wdg, wdg_defaults):
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
-def wavg(group, avg_name, weight_name):
+def wavg(group, avg_name, weight_name, chart_type):
     """
     Helper function for pandas dataframe groupby object with apply function. This returns the
     weighted average for two specified columns.
@@ -1240,9 +1273,14 @@ def wavg(group, avg_name, weight_name):
     d = group[avg_name]
     w = group[weight_name]
     try:
-        return (d * w).sum() / w.sum()
+        weighted_ave = (d * w).sum() / w.sum()
     except ZeroDivisionError:
         return 0
+    if chart_type == 'Range':
+        return pd.DataFrame({avg_name: [weighted_ave], 'range_min': [d.min()], 'range_max': [d.max()]})
+    else:
+        return pd.DataFrame({avg_name: [weighted_ave]})
+
 
 def wavg_ratio(group, avg_name, weight_num, weight_denom):
     """
