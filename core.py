@@ -668,7 +668,10 @@ def set_axis_bounds(df, plots, wdg, cols):
                 min_y = df_neg_sum[wdg['y'].value].min()
             else:
                 if wdg['chart_type'].value == 'Range':
-                    min_y = min(df['range_min'].min(), df[wdg['y'].value].min())
+                    if wdg['show_line'].value == 'Yes':
+                        min_y = min(df['range_min'].min(), df[wdg['y'].value].min())
+                    else:
+                        min_y = df['range_min'].min()
                 else:
                     min_y = df[wdg['y'].value].min()
             min_y = min(0, min_y)
@@ -685,7 +688,10 @@ def set_axis_bounds(df, plots, wdg, cols):
                 max_y = df_pos_sum[wdg['y'].value].max()
             else:
                 if wdg['chart_type'].value == 'Range':
-                    max_y = max(df['range_max'].max(), df[wdg['y'].value].max())
+                    if wdg['show_line'].value == 'Yes':
+                        max_y = max(df['range_max'].max(), df[wdg['y'].value].max())
+                    else:
+                        max_y = df['range_max'].max()
                 else:
                     max_y = df[wdg['y'].value].max()
             max_y = max(0, max_y)
