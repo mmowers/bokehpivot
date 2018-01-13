@@ -488,17 +488,15 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         if wdg['explode'].value != 'None': groupby_cols = [wdg['explode'].value] + groupby_cols
         if wdg['explode_group'].value != 'None': groupby_cols = [wdg['explode_group'].value] + groupby_cols
         df_grouped = df_plots.groupby(groupby_cols, sort=False)
-        if wdg['y_agg'].value == 'Sum':
-            df_plots = df_grouped[wdg['y'].value].sum().reset_index()
-        elif wdg['y_agg'].value == 'Ave':
-            df_plots = df_grouped[wdg['y'].value].mean().reset_index()
-        elif wdg['y_agg'].value == 'Weighted Ave' and wdg['y_weight'].value in cols['continuous']:
-            df_plots = df_grouped.apply(wavg, wdg['y'].value, wdg['y_weight'].value, wdg['chart_type'].value).reset_index()
-            #The index of each group's dataframe is added as another column it seems. So we need to remove it:
-            df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
+        kwargs = {}
+        if wdg['y_agg'].value == 'Weighted Ave' and wdg['y_weight'].value in cols['continuous']:
+            kwargs['y_weight'] = wdg['y_weight'].value
         elif wdg['y_agg'].value == 'Weighted Ave Ratio' and wdg['y_weight'].value in cols['continuous'] and wdg['y_weight_denom'].value in cols['continuous']:
-            df_plots = df_grouped.apply(wavg_ratio, wdg['y'].value, wdg['y_weight'].value, wdg['y_weight_denom'].value).reset_index()
-            df_plots.rename(columns={0: wdg['y'].value}, inplace=True)
+            kwargs['y_weight_numer'] = wdg['y_weight'].value
+            kwargs['y_weight_denom'] = wdg['y_weight_denom'].value
+        df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['chart_type'].value, kwargs).reset_index()
+        #The index of each group's dataframe is added as another column it seems. So we need to remove it:
+        df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
 
     #Check for range chart
     range_cols = []
@@ -1258,50 +1256,42 @@ def display_config(wdg, wdg_defaults):
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
-def wavg(group, avg_name, weight_name, chart_type):
+def apply_aggregation(group, agg_method, y_col, chart_type, kw):
     """
-    Helper function for pandas dataframe groupby object with apply function. This returns the
-    weighted average for two specified columns.
+    Helper function for pandas dataframe groupby object with apply function.
 
     Args:
+        agg_method (string): The aggregation method to apply
         group (pandas dataframe): This has columns required for weighted average
-        avg_name (string): Name of the column for which a weighted average is calculated
-        weight_name (string): Name of column that will be used as weighting factors.
+        y_col (string): Name of the column for which an aggregation is calculated
+        chart_type (string): The type of chart to be built. If this is a Range chart, then we need to add the range_min and range_max data.
+        kw (dict): Keyword arguments
+            y_weight (string): Name of column that will be used as weighting factor for Weighted Ave
+            y_weight_numer (string): Name of column that will be used as weighting factor for numerator of Weighted Ave Ratio
+            y_weight_denom (string): Name of column that will be used as weighting factor for denominator of Weighted Ave Ratio
     Returns:
         weighted average (float): The weighted average using the two specified columns
     """
-    d = group[avg_name]
-    w = group[weight_name]
+    d = group[y_col]
+    agg_result = None
     try:
-        weighted_ave = (d * w).sum() / w.sum()
+        if agg_method == 'Sum':
+            agg_result = d.sum()
+        elif agg_method == 'Ave':
+            agg_result = d.mean()
+        elif agg_method == 'Weighted Ave' and 'y_weight' in kw:
+            w = group[kw['y_weight']]
+            agg_result = (d * w).sum() / w.sum()
+        elif wdg['y_agg'].value == 'Weighted Ave Ratio' and 'y_weight_numer' in kw and 'y_weight_denom' in kw:
+            wn = group[kw['y_weight_numer']]
+            wd = group[kw['y_weight_denom']]
+            agg_result = ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
     except ZeroDivisionError:
         return 0
     if chart_type == 'Range':
-        return pd.DataFrame({avg_name: [weighted_ave], 'range_min': [d.min()], 'range_max': [d.max()]})
+        return pd.DataFrame({y_col: [agg_result], 'range_min': [d.min()], 'range_max': [d.max()]})
     else:
-        return pd.DataFrame({avg_name: [weighted_ave]})
-
-
-def wavg_ratio(group, avg_name, weight_num, weight_denom):
-    """
-    Helper function for pandas dataframe groupby object with apply function. This returns the
-    weighted average ratio for three specified columns.
-
-    Args:
-        group (pandas dataframe): This has columns required for weighted average
-        avg_name (string): Name of the column for which a weighted average is calculated
-        weight_num (string): Name of column that will be used as weighting factor in the numerator
-        weight_denom (string): Name of column that will be used as weighting factor in the denominator
-    Returns:
-        weighted average ratio (float): avg_name weighted by weight_num divided by avg_name weighted by weight_denom
-    """
-    d = group[avg_name]
-    wn = group[weight_num]
-    wd = group[weight_denom]
-    try:
-        return ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
-    except ZeroDivisionError:
-        return 0
+        return pd.DataFrame({y_col: [agg_result]})
 
 def op_with_base(group, op_type, col, col_base, y_val):
     """
