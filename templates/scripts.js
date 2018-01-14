@@ -5,7 +5,7 @@ $(document).ready(function(){
     $('body').on('click', '.data-dropdown', function(){
         $('.data-drop').toggle();
     });
-    $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label, .wdgkey-chart_type label', function(){
+    $('body').on('click', '.wdgkey-runs label, .wdgkey-result label, .wdgkey-presets label', function(){
         $(this).next().toggle();
     });
     $('body').on('click', '.scenario-filter-dropdown', function(){
@@ -13,6 +13,9 @@ $(document).ready(function(){
     });
     $('body').on('click', '.report-dropdown', function(){
         $('.report-drop').toggle();
+    });
+    $('body').on('click', '.chart-dropdown', function(){
+        $('.chart-drop').toggle();
     });
     $('body').on('click', '.x-dropdown', function(){
         $('.x-drop').toggle();
@@ -76,7 +79,7 @@ document.onkeydown = function(e) {
     $('.wdgkey-runs input').hide();
     $('.wdgkey-result select').hide();
     $('.wdgkey-presets select').hide();
-    $('.wdgkey-chart_type select').hide();
+    $('.chart-drop').hide();
     $('.wdgkey-scenario_filter').hide();
     $('.x-drop').hide();
     $('.y-drop').hide();

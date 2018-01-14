@@ -40,7 +40,7 @@ LINE_WIDTH = 2
 COLORS = bpa.all_palettes['Spectral'][10]*1000
 MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
-CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Range', 'Map']
+CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave', 'Weighted Ave Ratio']
 ADV_BASES = ['Consecutive', 'Total']
@@ -54,7 +54,7 @@ MAP_LINE_WIDTH = 0.1
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
-WDG_NON_COL = ['chart_type', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
+WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'plot_title', 'plot_title_size',
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
@@ -316,7 +316,9 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     #Add widgets
     print('***Build main widgets...')
     wdg = collections.OrderedDict()
-    wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type'])
+    wdg['chart_type_dropdown'] = bmw.Div(text='Chart', css_classes=['chart-dropdown'])
+    wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'chart-drop'])
+    wdg['range'] = bmw.Select(title='Add Ranges (Line only)', value='No', options=['No', 'Within Series'], css_classes=['wdgkey-range', 'chart-drop'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
@@ -494,13 +496,13 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         elif wdg['y_agg'].value == 'Weighted Ave Ratio' and wdg['y_weight'].value in cols['continuous'] and wdg['y_weight_denom'].value in cols['continuous']:
             kwargs['y_weight_numer'] = wdg['y_weight'].value
             kwargs['y_weight_denom'] = wdg['y_weight_denom'].value
-        df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['chart_type'].value, kwargs).reset_index()
+        df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['range'].value, kwargs).reset_index()
         #The index of each group's dataframe is added as another column it seems. So we need to remove it:
         df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
 
     #Check for range chart
     range_cols = []
-    if wdg['chart_type'].value == 'Range':
+    if wdg['range'].value == 'Within Series':
         range_cols = ['range_min', 'range_max']
 
     #Do Advanced Operations
@@ -667,7 +669,7 @@ def set_axis_bounds(df, plots, wdg, cols):
                 df_neg_sum = df_neg.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
                 min_y = df_neg_sum[wdg['y'].value].min()
             else:
-                if wdg['chart_type'].value == 'Range':
+                if wdg['range'].value == 'Within Series':
                     if wdg['show_line'].value == 'Yes':
                         min_y = min(df['range_min'].min(), df[wdg['y'].value].min())
                     else:
@@ -687,7 +689,7 @@ def set_axis_bounds(df, plots, wdg, cols):
                 df_pos_sum = df_pos.groupby(groupby_cols, sort=False)[wdg['y'].value].sum().reset_index()
                 max_y = df_pos_sum[wdg['y'].value].max()
             else:
-                if wdg['chart_type'].value == 'Range':
+                if wdg['range'].value == 'Within Series':
                     if wdg['show_line'].value == 'Yes':
                         max_y = max(df['range_max'].max(), df[wdg['y'].value].max())
                     else:
@@ -784,13 +786,11 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
     #Add glyphs to figure
     c = C_NORM
     if wdg['series'].value == 'None':
-        if chart_type == 'Range':
+        if wdg['range'].value == 'Within Series':
             y_mins = df_exploded['range_min'].values.tolist()
             y_maxs = df_exploded['range_max'].values.tolist()
             add_glyph('Range', wdg, p, xs, y_maxs, c, y_bases=y_mins)
-            if wdg['show_line'].value == 'Yes':
-                add_glyph('Line', wdg, p, xs, ys, c)
-        else:
+        if wdg['show_line'].value == 'Yes':
             add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
@@ -807,13 +807,11 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
             xs_ser = df_series[x_col].values.tolist()
             ys_ser = df_series[wdg['y'].value].values.tolist()
             if chart_type not in STACKEDTYPES: #The series will not be stacked
-                if chart_type == 'Range':
+                if wdg['range'].value == 'Within Series':
                     y_mins_ser = df_series['range_min'].values.tolist()
                     y_maxs_ser = df_series['range_max'].values.tolist()
                     add_glyph('Range', wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser)
-                    if wdg['show_line'].value == 'Yes':
-                        add_glyph('Line', wdg, p, xs_ser, ys_ser, c, series=ser)
-                else:
+                if wdg['show_line'].value == 'Yes':
                     add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
             else: #We are stacking the series
                 ys_pos = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] > 0 else 0 for i, x in enumerate(xs_full)]
@@ -1262,7 +1260,7 @@ def display_config(wdg, wdg_defaults):
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
-def apply_aggregation(group, agg_method, y_col, chart_type, kw):
+def apply_aggregation(group, agg_method, y_col, wdg_range, kw):
     """
     Helper function for pandas dataframe groupby object with apply function.
 
@@ -1294,7 +1292,7 @@ def apply_aggregation(group, agg_method, y_col, chart_type, kw):
             agg_result = ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
     except ZeroDivisionError:
         return 0
-    if chart_type == 'Range':
+    if wdg_range == 'Within Series':
         return pd.DataFrame({y_col: [agg_result], 'range_min': [d.min()], 'range_max': [d.max()]})
     else:
         return pd.DataFrame({y_col: [agg_result]})

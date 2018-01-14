@@ -36,9 +36,9 @@ body {
 .wdgkey-data label{
     display: none !important;
 }
+.chart-drop,
 .meta-drop,
 .report-drop,
-.bk-widget.wdgkey-chart_type select,
 .x-drop,
 .y-drop,
 .series-drop,
@@ -59,6 +59,7 @@ body {
     color: purple;
     display: none;
 }
+.chart-dropdown,
 .data-dropdown,
 .meta-dropdown,
 .report-dropdown,
@@ -80,7 +81,6 @@ body {
     margin-top: 20px;
     text-decoration: underline;
 }
-.wdgkey-chart_type label,
 .wdgkey-result label,
 .wdgkey-presets label{
     font-weight: bold;
