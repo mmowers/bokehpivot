@@ -50,6 +50,7 @@ MAP_WIDTH = 500
 MAP_OPACITY = 1
 MAP_LINE_WIDTH = 0.1
 RANGE_OPACITY_MULT = 0.3
+RANGE_GLYPH_MAP = {'Line': 'Area', 'Dot': 'Bar'}
 
 #List of widgets that use columns as their selectors
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
@@ -59,7 +60,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'show_line', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'line_width', 'range_show_glyphs', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -319,7 +320,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg = collections.OrderedDict()
     wdg['chart_type_dropdown'] = bmw.Div(text='Chart', css_classes=['chart-dropdown'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'chart-drop'])
-    wdg['range'] = bmw.Select(title='Add Ranges (Line only)', value='No', options=['No', 'Within Series'], css_classes=['wdgkey-range', 'chart-drop'])
+    wdg['range'] = bmw.Select(title='Add Ranges (Line and Dot only)', value='No', options=['No', 'Within Series'], css_classes=['wdgkey-range', 'chart-drop'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
@@ -369,7 +370,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
-    wdg['show_line'] = bmw.Select(title='Show Line (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-show_line', 'adjust-drop'])
+    wdg['range_show_glyphs'] = bmw.Select(title='Show Line/Dot (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-range_show_glyphs', 'adjust-drop'])
     wdg['net_levels'] = bmw.Select(title='Add Net Levels to Stacked', value='Yes', options=['Yes','No'], css_classes=['wdgkey-net_levels', 'adjust-drop'])
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
@@ -671,7 +672,7 @@ def set_axis_bounds(df, plots, wdg, cols):
                 min_y = df_neg_sum[wdg['y'].value].min()
             else:
                 if wdg['range'].value == 'Within Series':
-                    if wdg['show_line'].value == 'Yes':
+                    if wdg['range_show_glyphs'].value == 'Yes':
                         min_y = min(df['range_min'].min(), df[wdg['y'].value].min())
                     else:
                         min_y = df['range_min'].min()
@@ -691,7 +692,7 @@ def set_axis_bounds(df, plots, wdg, cols):
                 max_y = df_pos_sum[wdg['y'].value].max()
             else:
                 if wdg['range'].value == 'Within Series':
-                    if wdg['show_line'].value == 'Yes':
+                    if wdg['range_show_glyphs'].value == 'Yes':
                         max_y = max(df['range_max'].max(), df[wdg['y'].value].max())
                     else:
                         max_y = df['range_max'].max()
@@ -790,8 +791,8 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
         if wdg['range'].value == 'Within Series':
             y_mins = df_exploded['range_min'].values.tolist()
             y_maxs = df_exploded['range_max'].values.tolist()
-            add_glyph('Area', wdg, p, xs, y_maxs, c, y_bases=y_mins, opacity_mult=RANGE_OPACITY_MULT)
-        if wdg['show_line'].value == 'Yes':
+            add_glyph(RANGE_GLYPH_MAP[chart_type], wdg, p, xs, y_maxs, c, y_bases=y_mins, opacity_mult=RANGE_OPACITY_MULT)
+        if wdg['range_show_glyphs'].value == 'Yes':
             add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
@@ -811,8 +812,8 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
                 if wdg['range'].value == 'Within Series':
                     y_mins_ser = df_series['range_min'].values.tolist()
                     y_maxs_ser = df_series['range_max'].values.tolist()
-                    add_glyph('Area', wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser, opacity_mult=RANGE_OPACITY_MULT)
-                if wdg['show_line'].value == 'Yes':
+                    add_glyph(RANGE_GLYPH_MAP[chart_type], wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser, opacity_mult=RANGE_OPACITY_MULT)
+                if wdg['range_show_glyphs'].value == 'Yes':
                     add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
             else: #We are stacking the series
                 ys_pos = [ys_ser[xs_ser.index(x)] if x in xs_ser and ys_ser[xs_ser.index(x)] > 0 else 0 for i, x in enumerate(xs_full)]
