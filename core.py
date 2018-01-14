@@ -49,6 +49,7 @@ MAP_NUM_BINS = 9
 MAP_WIDTH = 500
 MAP_OPACITY = 1
 MAP_LINE_WIDTH = 0.1
+RANGE_OPACITY_MULT = 0.3
 
 #List of widgets that use columns as their selectors
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
@@ -789,7 +790,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
         if wdg['range'].value == 'Within Series':
             y_mins = df_exploded['range_min'].values.tolist()
             y_maxs = df_exploded['range_max'].values.tolist()
-            add_glyph('Range', wdg, p, xs, y_maxs, c, y_bases=y_mins)
+            add_glyph('Area', wdg, p, xs, y_maxs, c, y_bases=y_mins, opacity_mult=RANGE_OPACITY_MULT)
         if wdg['show_line'].value == 'Yes':
             add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
@@ -810,7 +811,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
                 if wdg['range'].value == 'Within Series':
                     y_mins_ser = df_series['range_min'].values.tolist()
                     y_maxs_ser = df_series['range_max'].values.tolist()
-                    add_glyph('Range', wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser)
+                    add_glyph('Area', wdg, p, xs_ser, y_maxs_ser, c, y_bases=y_mins_ser, series=ser, opacity_mult=RANGE_OPACITY_MULT)
                 if wdg['show_line'].value == 'Yes':
                     add_glyph(chart_type, wdg, p, xs_ser, ys_ser, c, series=ser)
             else: #We are stacking the series
@@ -827,7 +828,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
             add_glyph('Dot', wdg, p, xs_full, ys_net, 'black', series='Net Level')
     return p
 
-def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
+def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_mult=1):
     '''
     Add a glyph to a Bokeh figure, depending on the chosen chart type.
 
@@ -844,7 +845,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
     Returns:
         Nothing.
     '''
-    alpha = float(wdg['opacity'].value)
+    alpha = float(wdg['opacity'].value)*opacity_mult
     y_unstacked = list(ys) if y_bases is None else [ys[i] - y_bases[i] for i in range(len(ys))]
     ser = ['None']*len(xs) if series is None else [series]*len(xs)
     if glyph_type == 'Dot':
@@ -887,9 +888,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None):
                 del xs_cp[i], centers[i], heights[i], y_unstacked[i], ser[i], widths[i], x_legend[i]
         source = bms.ColumnDataSource({'x': xs_cp, 'y': centers, 'x_legend': x_legend, 'y_legend': y_unstacked, 'h': heights, 'w': widths, 'ser_legend': ser})
         p.rect('x', 'y', source=source, height='h', color=c, fill_alpha=alpha, width='w', line_color=None, line_width=None)
-    elif glyph_type in ['Area', 'Range'] and y_unstacked != [0]*len(y_unstacked):
-        if glyph_type == 'Range':
-            alpha = alpha * 0.8
+    elif glyph_type =='Area' and y_unstacked != [0]*len(y_unstacked):
         if y_bases is None: y_bases = [0]*len(ys)
         xs_around = xs + xs[::-1]
         ys_around = y_bases + ys[::-1]
