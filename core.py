@@ -320,7 +320,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg = collections.OrderedDict()
     wdg['chart_type_dropdown'] = bmw.Div(text='Chart', css_classes=['chart-dropdown'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'chart-drop'])
-    wdg['range'] = bmw.Select(title='Add Ranges (Line and Dot only)', value='No', options=['No', 'Within Series'], css_classes=['wdgkey-range', 'chart-drop'])
+    wdg['range'] = bmw.Select(title='Add Ranges (Line and Dot only)', value='No', options=['No', 'Within Series', 'Between Series'], css_classes=['wdgkey-range', 'chart-drop'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
@@ -796,10 +796,18 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
             add_glyph(chart_type, wdg, p, xs, ys, c)
     else:
         full_series = df_plots[wdg['series'].value].unique().tolist() #for colors only
+        xs_full = df_exploded[x_col].unique().tolist()
         if chart_type in STACKEDTYPES: #We are stacking the series
-            xs_full = df_exploded[x_col].unique().tolist()
             y_bases_pos = [0]*len(xs_full)
             y_bases_neg = [0]*len(xs_full)
+        elif wdg['range'].value == 'Between Series':
+            y_mins = []
+            y_maxs = []
+            for x_unique in xs_full:
+                y_group = [ys[i] for i, x in enumerate(xs) if x == x_unique]
+                y_mins.append(min(y_group))
+                y_maxs.append(max(y_group))
+            add_glyph(RANGE_GLYPH_MAP[chart_type], wdg, p, xs_full, y_maxs, c, y_bases=y_mins, opacity_mult=RANGE_OPACITY_MULT)
         for i, ser in enumerate(df_exploded[wdg['series'].value].unique().tolist()):
             if custom_colors and wdg['series'].value in custom_colors and ser in custom_colors[wdg['series'].value]:
                 c = custom_colors[wdg['series'].value][ser]
