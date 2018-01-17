@@ -1301,7 +1301,7 @@ def apply_aggregation(group, agg_method, y_col, wdg_range, kw):
         elif agg_method == 'Weighted Ave' and 'y_weight' in kw:
             w = group[kw['y_weight']]
             agg_result = (d * w).sum() / w.sum()
-        elif wdg['y_agg'].value == 'Weighted Ave Ratio' and 'y_weight_numer' in kw and 'y_weight_denom' in kw:
+        elif agg_method == 'Weighted Ave Ratio' and 'y_weight_numer' in kw and 'y_weight_denom' in kw:
             wn = group[kw['y_weight_numer']]
             wd = group[kw['y_weight_denom']]
             agg_result = ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
