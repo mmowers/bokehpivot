@@ -19,6 +19,11 @@ def scale_column_filtered(df, **kw):
     df.loc[cond, kw['change_column']] = df.loc[cond, kw['change_column']] * kw['scale_factor']
     return df
 
+def sum_over_cols(df, **kw):
+    df.drop(kw['sum_over_cols'], axis='columns', inplace=True)
+    df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
+    return df
+
 def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
     cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
@@ -269,6 +274,20 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Gen by m (GW)',
+        {'file': 'CONVqn.gdx',
+        'param': 'CONVqmnallm',
+        'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
+        'index': ['tech', 'year', 'm'],
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'year', 'm'], 'sum_over_cols': ['n']}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars Final',{'x':'m','y':'Generation (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+    ('Gen by m full (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
         'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
