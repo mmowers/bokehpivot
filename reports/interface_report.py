@@ -6,8 +6,6 @@ import importlib
 report = importlib.import_module(sys.argv[1])
 
 path = sys.argv[2]
-if len(sys.argv) > 3:
-  base = sys.argv[3]
-  rb.reeds_static(path, report.static_presets, base, 'both')
-else:
-  rb.reeds_static(path, report.static_presets, report_format='both')
+base = sys.argv[3]
+html_num = sys.argv[4]
+rb.reeds_static(path, report.static_presets, base=base, report_format='both', html_num=html_num)

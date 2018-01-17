@@ -107,9 +107,7 @@ def initialize():
 
 def static_report(data_source, static_presets, report_format='both', html_num='one'):
     '''
-    Build static HTML and excel report based on specified presets. The HTML report will have
-    separate sections for each preset, and the excel report will have the data for each preset in separate
-    sheets.
+    Build static HTML and excel reports based on specified presets.
     Args:
         data_source (string): Path to data for which a report will be made
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
@@ -140,13 +138,19 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
             excel_meta.append(ds)
         pd.Series(excel_meta).to_excel(excel_report, 'meta', index=False, header=False)
     if report_format in ['html', 'both']:
-        static_plots = []
+        with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
+            template_string=template_file.read()
+        template = ji.Template(template_string)
+        resources = br.Resources()
         header = '<h3>Build date/time:</h3><p>' + time + '</p>'
         header += '<h3>Data Source(s):</h3><ul>'
         for ds in data_sources:
             header += '<li>' + ds + '</li>'
         header += '</ul>'
-        static_plots.append(bl.row(bmw.Div(text=header)))
+        header_row = bl.row(bmw.Div(text=header))
+        if html_num == 'one':
+            static_plots = []
+            static_plots.append(header_row)
     #for each preset, set the widgets in preset_wdg(). Gather plots into separate sections of the html report,
     #and gather data into separate sheets of excel report
     sec_i = 1
@@ -157,9 +161,20 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
         preset_wdg(preset)
         if report_format in ['html', 'both']:
             title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
-            static_plots.append(bl.row(title))
             legend = bmw.Div(text=GL['widgets']['legend'].text)
-            static_plots.append(bl.row(GL['plots'].children + [legend]))
+            title_row = bl.row(title)
+            content_row = bl.row(GL['plots'].children + [legend])
+            if html_num == 'one':
+                static_plots.append(title_row)
+                static_plots.append(content_row)
+            elif html_num == 'multiple':
+                html = be.file_html([header_row, title_row, content_row], resources=resources, template=template)
+                html_file_name = str(sec_i) + '_' + name
+                html_file_name = re.sub(r'[\\/:"*?<>|]', '-', html_file_name) #replace disallowed file name characters with dash
+                html_path = report_dir + html_file_name + '.html'
+                with open(html_path, 'w') as f:
+                    f.write(html)
+                sp.Popen(html_path, shell=True)
         if report_format in ['excel', 'both']:
             excel_sheet_name = str(sec_i) + '_' + name
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
@@ -169,11 +184,7 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
     if report_format in ['excel', 'both']:
         excel_report.save()
         sp.Popen(excel_report_path, shell=True)
-    if report_format in ['html', 'both']:
-        with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
-            template_string=template_file.read()
-        template = ji.Template(template_string)
-        resources = br.Resources()
+    if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
         html_path = report_dir +'report.html'
         with open(html_path, 'w') as f:

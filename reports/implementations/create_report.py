@@ -21,7 +21,7 @@ path = r'\\nrelqnap01d\ReEDS\FY17-JEDI-MRM-jedi\runs\2017-08-22 runs'
 base = 'Base'
 static_presets = standard_compare_report.static_presets
 
-rb.reeds_static(path, static_presets, base, 'both')
+rb.reeds_static(path, static_presets, base=base, report_format='both', html_num='one')
 '''
 Notes on the function call:
     - core.static_report() may be called instead of reeds_bokeh.reeds_static(),

@@ -19,7 +19,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, static_presets, base=None, report_format='both'):
+def reeds_static(data_source, static_presets, base=None, report_format='both', html_num='one'):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -32,6 +32,7 @@ def reeds_static(data_source, static_presets, base=None, report_format='both'):
             'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
         base (string): Identifier for base scenario, if making comparison charts
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
+        html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -59,7 +60,7 @@ def reeds_static(data_source, static_presets, base=None, report_format='both'):
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_format)
+    core.static_report(data_source, core_presets, report_format=report_format, html_num=html_num)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
@@ -133,6 +134,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         topwdg['report_options'] = bmw.Select(title='Report', value=options[0], options=options, css_classes=['report-drop'])
         topwdg['report_base'] = bmw.Select(title='Base Case', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
+        topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
 
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults
@@ -145,6 +147,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         if key.startswith('meta_'):
             topwdg[key].on_change('value', update_reeds_meta)
     topwdg['report_build'].on_click(build_reeds_report)
+    topwdg['report_build_separate'].on_click(build_reeds_report_separate)
     topwdg['result'].on_change('value', update_reeds_result)
     
     print('***Done fetching ReEDS scenarios.')
@@ -356,9 +359,11 @@ def update_reeds_result(attr, old, new):
     '''
     update_reeds_wdg(wdg_type='result')
 
-def build_reeds_report():
+def build_reeds_report(html_num='one'):
     '''
     Build the chosen ReEDS report. Note that Base Case is irrelevant for certain reports, but necessary for others.
+    Args:
+        html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     '''
     base = '"' + core.GL['widgets']['report_base'].value + '"'
     report = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
@@ -366,7 +371,13 @@ def build_reeds_report():
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
-    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base, shell=True, cwd=this_dir_path+r'/reports')
+    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
+
+def build_reeds_report_separate():
+    '''
+    Build the chosen ReEDS report with separate html files for each section of the report.
+    '''
+    build_reeds_report(html_num='multiple')
 
 def update_reeds_wdg(wdg_type):
     '''
