@@ -657,6 +657,13 @@ def set_axis_bounds(df, plots, wdg, cols):
                 max_x = max_x + float(wdg['bar_width'].value)/2
             for p in plots:
                 p.x_range.end = max_x
+    elif wdg['chart_type'].value == 'Bar' and wdg['bar_width'].value == 'c':
+        if wdg['x_min'].value != '':
+            for p in plots:
+                p.x_range.start = float(wdg['x_min'].value)
+        if wdg['x_max'].value != '':
+            for p in plots:
+                p.x_range.end = float(wdg['x_max'].value)
     if wdg['y'].value in cols['continuous']:
         #find grouped cols for stacked manipulations
         col_names = df.columns.values.tolist()
