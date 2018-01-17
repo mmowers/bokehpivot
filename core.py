@@ -105,7 +105,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_format='both'):
+def static_report(data_source, static_presets, report_format='both', html_num='one'):
     '''
     Build static HTML and excel report based on specified presets. The HTML report will have
     separate sections for each preset, and the excel report will have the data for each preset in separate
@@ -116,6 +116,7 @@ def static_report(data_source, static_presets, report_format='both'):
             'name': name of preset
             'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
+        html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -128,39 +129,43 @@ def static_report(data_source, static_presets, report_format='both'):
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
     report_dir = this_dir_path + '/out/static_'+ time + '/'
     os.makedirs(report_dir)
-    excel_report_path = report_dir +'report.xlsx'
-    excel_report = pd.ExcelWriter(excel_report_path)
-    excel_meta = []
-    excel_meta.append('Build date/time: ' + time)
-    excel_meta.append('Data Source(s):')
     data_sources = data_source.split('|')
-    for ds in data_sources:
-        excel_meta.append(ds)
-    pd.Series(excel_meta).to_excel(excel_report, 'meta', index=False, header=False)
-    sheet_i = 1
-    static_plots = []
-    header = '<h3>Build date/time:</h3><p>' + time + '</p>'
-    header += '<h3>Data Source(s):</h3><ul>'
-    for ds in data_sources:
-        header += '<li>' + ds + '</li>'
-    header += '</ul>'
-    static_plots.append(bl.row(bmw.Div(text=header)))
+    if report_format in ['excel', 'both']:
+        excel_report_path = report_dir +'report.xlsx'
+        excel_report = pd.ExcelWriter(excel_report_path)
+        excel_meta = []
+        excel_meta.append('Build date/time: ' + time)
+        excel_meta.append('Data Source(s):')
+        for ds in data_sources:
+            excel_meta.append(ds)
+        pd.Series(excel_meta).to_excel(excel_report, 'meta', index=False, header=False)
+    if report_format in ['html', 'both']:
+        static_plots = []
+        header = '<h3>Build date/time:</h3><p>' + time + '</p>'
+        header += '<h3>Data Source(s):</h3><ul>'
+        for ds in data_sources:
+            header += '<li>' + ds + '</li>'
+        header += '</ul>'
+        static_plots.append(bl.row(bmw.Div(text=header)))
     #for each preset, set the widgets in preset_wdg(). Gather plots into separate sections of the html report,
     #and gather data into separate sheets of excel report
+    sec_i = 1
     for static_preset in static_presets:
         name = static_preset['name']
         print('***Building report section: ' + name + '...')
         preset = static_preset['config']
         preset_wdg(preset)
-        title = bmw.Div(text='<h2>' + str(sheet_i) + '. ' + name + '</h2>')
-        static_plots.append(bl.row(title))
-        legend = bmw.Div(text=GL['widgets']['legend'].text)
-        static_plots.append(bl.row(GL['plots'].children + [legend]))
-        excel_sheet_name = str(sheet_i) + '_' + name
-        excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
-        excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
-        sheet_i += 1
-        GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+        if report_format in ['html', 'both']:
+            title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
+            static_plots.append(bl.row(title))
+            legend = bmw.Div(text=GL['widgets']['legend'].text)
+            static_plots.append(bl.row(GL['plots'].children + [legend]))
+        if report_format in ['excel', 'both']:
+            excel_sheet_name = str(sec_i) + '_' + name
+            excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
+            excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
+            GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+        sec_i += 1
     if report_format in ['excel', 'both']:
         excel_report.save()
         sp.Popen(excel_report_path, shell=True)
