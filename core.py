@@ -126,7 +126,9 @@ def static_report(data_source, static_presets, report_format='both'):
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    excel_report_path = this_dir_path + '/out/static_report_'+ time +'.xlsx'
+    report_dir = this_dir_path + '/out/static_'+ time + '/'
+    os.makedirs(report_dir)
+    excel_report_path = report_dir +'report.xlsx'
     excel_report = pd.ExcelWriter(excel_report_path)
     excel_meta = []
     excel_meta.append('Build date/time: ' + time)
@@ -168,7 +170,7 @@ def static_report(data_source, static_presets, report_format='both'):
         template = ji.Template(template_string)
         resources = br.Resources()
         html = be.file_html(static_plots, resources=resources, template=template)
-        html_path = this_dir_path + '/out/static_report_'+ time +'.html'
+        html_path = report_dir +'report.html'
         with open(html_path, 'w') as f:
             f.write(html)
         sp.Popen(html_path, shell=True)
