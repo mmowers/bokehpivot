@@ -1324,7 +1324,7 @@ def apply_aggregation(group, agg_method, y_col, wdg_range, kw):
             wd = group[kw['y_weight_denom']]
             agg_result = ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
     except ZeroDivisionError:
-        return 0
+        return pd.DataFrame({y_col: [None]})
     if wdg_range == 'Within Series':
         return pd.DataFrame({y_col: [agg_result], 'range_min': [d.min()], 'range_max': [d.max()]})
     else:
