@@ -105,7 +105,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_format='both', html_num='one'):
+def static_report(data_source, static_presets, report_name='', report_format='both', html_num='one'):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
@@ -113,6 +113,7 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name': name of preset
             'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
+        report_name (string): The name of the report
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     Returns:
@@ -125,11 +126,11 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    report_dir = this_dir_path + '/out/static_'+ time + '/'
+    report_dir = this_dir_path + '/out/report-' + report_name + '-' + time + '/'
     os.makedirs(report_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
-        excel_report_path = report_dir +'report.xlsx'
+        excel_report_path = report_dir + 'report-' + report_name + '.xlsx'
         excel_report = pd.ExcelWriter(excel_report_path)
         excel_meta = []
         excel_meta.append('Build date/time: ' + time)
@@ -186,7 +187,7 @@ def static_report(data_source, static_presets, report_format='both', html_num='o
         sp.Popen(excel_report_path, shell=True)
     if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
-        html_path = report_dir +'report.html'
+        html_path = report_dir + 'report-' + report_name + '.html'
         with open(html_path, 'w') as f:
             f.write(html)
         sp.Popen(html_path, shell=True)

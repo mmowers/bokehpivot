@@ -19,7 +19,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, static_presets, base=None, report_format='both', html_num='one'):
+def reeds_static(data_source, static_presets, base=None, report_name='', report_format='both', html_num='one'):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -31,6 +31,7 @@ def reeds_static(data_source, static_presets, base=None, report_format='both', h
             'modify': Preset modifications, either 'base_only' or 'diff'.
             'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
         base (string): Identifier for base scenario, if making comparison charts
+        report_name (string): The name of the report
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     Returns:
@@ -60,7 +61,7 @@ def reeds_static(data_source, static_presets, base=None, report_format='both', h
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_format=report_format, html_num=html_num)
+    core.static_report(data_source, core_presets, report_name=report_name, report_format=report_format, html_num=html_num)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
