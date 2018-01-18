@@ -431,7 +431,7 @@ results_meta = collections.OrderedDict((
     ),
     ('New Tech Value Factors',
         {'sources': [
-            {'name': 'gen', 'file': 'CONVqn.gdx', 'param': 'CONVqmnallm_new', 'columns': ['tech', 'n', 'year', 'm', 'Gen (MWh)']},
+            {'name': 'gen', 'file': 'valuestreams.gdx', 'param': 'gross_gen_new', 'columns': ['tech', 'n', 'year', 'm', 'Gen (MWh)']},
             {'name': 'load_marg', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_allyrs', 'columns': ['n', 'm', 'type','year', 'Price ($/MWh)']},
         ],
         'preprocess': [
