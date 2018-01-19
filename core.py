@@ -544,20 +544,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             df_plots['tempgroup'] = 1
             df_grouped = df_plots.groupby('tempgroup', sort=False)
         #Now do operations with the groups:
-        if op == 'Difference':
-            if col_base == 'Consecutive':
-                df_plots[y_val] = df_grouped[y_val].diff()
-            elif col_base == 'Total':
-                df_plots[y_val] = df_plots[y_val] - df_grouped[y_val].transform('sum')
-            else:
-                df_plots = df_grouped.apply(op_with_base, 'diff', col, col_base, y_val).reset_index(drop=True)
-        elif op == 'Ratio':
-            if col_base == 'Consecutive':
-                df_plots[y_val] = df_grouped[y_val].transform(ratio_consecutive)
-            elif col_base == 'Total':
-                df_plots[y_val] = df_plots[y_val] / df_grouped[y_val].transform('sum')
-            else:
-                df_plots = df_grouped.apply(op_with_base, 'ratio', col, col_base, y_val).reset_index(drop=True)
+        df_plots = df_grouped.apply(op_with_base, op, col, col_base, y_val).reset_index(drop=True)
         #Finally, clean up df_plots, dropping unnecessary columns, rows with the base value, and any rows with NAs for y_vals
         if 'tempgroup' in df_plots:
             df_plots.drop(['tempgroup'], axis='columns', inplace=True)
@@ -1331,48 +1318,42 @@ def apply_aggregation(group, agg_method, y_col, wdg_range, kw):
     else:
         return pd.DataFrame({y_col: [agg_result]})
 
-def op_with_base(group, op_type, col, col_base, y_val):
+def op_with_base(group, op, col, col_base, y_val):
     """
     Helper function for pandas dataframe groupby object with apply function. This returns a pandas
     dataframe with an operation applied to one of the columns.
 
     Args:
         group (pandas dataframe): This has columns required for performing the operation
-        op_type (string): The type of operation: 'diff', 'ratio'
+        op (string): The type of operation: 'diff', 'ratio'
         col (string): The column across which the operation is happening
         col_base (string): The value of col to be used as the base for the operation
         y_val (string): Name of column that will be modified according to the operation.
     Returns:
         group_out (pandas dataframe): A like-indexed dataframe with the specified operations.
     """
-    df_base = group[group[col]==col_base]
-    if df_base.empty:
-        y_base = 0
-    else:
-        y_base = df_base[y_val].iloc[0]
     group_out = group.copy()
-    if op_type == 'diff':
-        group_out[y_val] = group[y_val] - y_base
-    elif op_type == 'ratio':
-        group_out[y_val] = group[y_val] / y_base if y_base else 0
+    if col_base == 'Consecutive':
+        if op == 'Difference':
+            group_out[y_val] = group[y_val] - group[y_val].shift()
+        elif op == 'Ratio':
+            group_out[y_val] = group[y_val] / group[y_val].shift()
+    elif col_base == 'Total':
+        if op == 'Difference':
+            group_out[y_val] = group[y_val] - group[y_val].sum()
+        elif op == 'Ratio':
+            group_out[y_val] = group[y_val] / group[y_val].sum()
+    else:
+        df_base = group[group[col]==col_base]
+        if df_base.empty:
+            y_base = 0
+        else:
+            y_base = df_base[y_val].iloc[0]
+        if op == 'Difference':
+            group_out[y_val] = group[y_val] - y_base
+        elif op == 'Ratio':
+            group_out[y_val] = group[y_val] / y_base if y_base else 0
     return group_out
-
-def ratio_consecutive(group):
-    """
-    Helper function for pandas series groupby object with transform function.
-    This returns a series of ratios between consecutive elements of the input series.
-
-    Args:
-        group (pandas series): The input series
-    Returns:
-        out_series (pandas series): A like-indexed series of ratios between consecutive elements of the input series.
-    """
-    group_list = group.tolist()
-    out_list = [0]
-    #prevent divide by zero error and set the ratio to 0:
-    out_list += [group_list[i+1]/group_list[i] if group_list[i] else 0 for i in range(len(group_list) - 1)]
-    out_series = pd.Series(out_list, index=group.index)
-    return out_series
 
 def prettify_numbers(number_list):
     str_list = []
