@@ -7,6 +7,7 @@ import os
 import re
 import math
 import json
+import numpy as np
 import pandas as pd
 import collections
 import bokeh.io as bio
@@ -545,6 +546,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             df_grouped = df_plots.groupby('tempgroup', sort=False)
         #Now do operations with the groups:
         df_plots = df_grouped.apply(op_with_base, op, col, col_base, y_val).reset_index(drop=True)
+        df_plots = df_plots.replace([np.inf, -np.inf], np.nan)
         #Finally, clean up df_plots, dropping unnecessary columns, rows with the base value, and any rows with NAs for y_vals
         if 'tempgroup' in df_plots:
             df_plots.drop(['tempgroup'], axis='columns', inplace=True)
@@ -1325,9 +1327,9 @@ def op_with_base(group, op, col, col_base, y_val):
 
     Args:
         group (pandas dataframe): This has columns required for performing the operation
-        op (string): The type of operation: 'diff', 'ratio'
+        op (string): The type of operation: 'Difference', 'Ratio'
         col (string): The column across which the operation is happening
-        col_base (string): The value of col to be used as the base for the operation
+        col_base (string): The value of col to be used as the base for the operation, or "Consecutive" or "Total"
         y_val (string): Name of column that will be modified according to the operation.
     Returns:
         group_out (pandas dataframe): A like-indexed dataframe with the specified operations.
