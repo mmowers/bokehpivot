@@ -532,7 +532,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     col_base = wdg['adv_col_base'].value
     y_val = wdg['y'].value
     y_agg = wdg['y_agg'].value
-    if op != 'None' and col != 'None' and col in df_plots and col_base != 'None' and y_agg != 'None' and y_val in cols['continuous']:
+    if op != 'None' and col != 'None' and col in df_plots and col_base != 'None' and y_agg != 'None' and y_val in cols['continuous'] and wdg['range'].value == 'No':
         if col in cols['continuous'] and col_base not in ADV_BASES:
             col_base = float(col_base)
         #groupby all columns that are not the operating column and y axis column so we can do operations on y-axis across the operating column
