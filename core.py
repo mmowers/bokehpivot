@@ -4,6 +4,7 @@ Pivot chart maker core functionality and csv, gdx applications
 '''
 from __future__ import division
 import os
+import shutil
 import re
 import math
 import json
@@ -129,6 +130,10 @@ def static_report(data_source, static_presets, report_name='', report_format='bo
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
     report_dir = this_dir_path + '/out/report-' + report_name + '-' + time + '/'
     os.makedirs(report_dir)
+    #copy report file to report_dir
+    if report_name != '':
+        template_path = this_dir_path + '/reports/templates/' + report_name + '.py'
+        shutil.copy2(template_path, report_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
         excel_report_path = report_dir + 'report-' + report_name + '.xlsx'
