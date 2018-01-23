@@ -133,9 +133,6 @@ def pre_tech_value_streams(df, **kw):
     #Now do the merge.
     df = pd.merge(left=df, right=df_quant, how='outer', on=merge_index, sort=False)
     df.rename(columns={'value_x': '$', 'value_y': 'MWh'}, inplace=True)
-    if not kw['include_m']:
-        df.drop('m', axis='columns', inplace=True)
-        df =  df.groupby(['tech', 'new_exist', 'year', 'n', 'val_stream_type'], sort=False, as_index =False).sum()
     df['$/MWh'] = df['$']/df['MWh']
     df['$'] = df['$']/1e9
     df.rename(columns={'$':'Bil $'}, inplace=True)
@@ -382,7 +379,8 @@ results_meta = collections.OrderedDict((
         'param': 'tech_val_streams',
         'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
         'preprocess': [
-            {'func': pre_tech_value_streams, 'args': {'include_m':False}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
@@ -390,12 +388,26 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Value Streams m',
+    ('Tech Value Streams n',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams',
         'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
         'preprocess': [
-            {'func': pre_tech_value_streams, 'args': {'include_m':True}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'n', 'val_stream_type'], 'sum_over_cols': ['m']}},
+            {'func': pre_tech_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Tech Value Streams n,m',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
@@ -408,7 +420,21 @@ results_meta = collections.OrderedDict((
         'param': 'tech_val_streams_2',
         'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
         'preprocess': [
-            {'func': pre_tech_value_streams, 'args': {'include_m':False}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': pre_tech_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Tech Value Streams 2 n,m',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_2',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
