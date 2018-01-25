@@ -418,7 +418,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download'] = bmw.Button(label='Download csv of View', button_type='success', css_classes=['download-drop'])
     wdg['download_html'] = bmw.Button(label='Download html of View', button_type='success', css_classes=['download-drop'])
     wdg['download_all'] = bmw.Button(label='Download csv of Source', button_type='success', css_classes=['download-drop'])
-    wdg['config_url'] = bmw.Button(label='Export URL/Config', button_type='success', css_classes=['download-drop'])
+    wdg['config_url'] = bmw.Button(label='Export URL', button_type='success', css_classes=['download-drop'])
+    wdg['config_report'] = bmw.Button(label='Export Report Config', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
     wdg['display_config'] = bmw.Div(text='', css_classes=['display-config'])
@@ -437,6 +438,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_all'].on_click(download_all)
     wdg['adv_col'].on_change('value', update_adv_col)
     wdg['config_url'].on_click(export_config_url)
+    wdg['config_report'].on_click(export_config_report)
     for name in WDG_COL:
         wdg[name].on_change('value', update_wdg_col)
     for name in WDG_NON_COL:
@@ -1485,11 +1487,29 @@ def export_config_url():
     wdg = GL['widgets']
     wdg_defaults = GL['wdg_defaults']
     non_defaults = {}
+    for key in wdg_defaults:
+        if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+            non_defaults[key] = wdg[key].active
+        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
+            non_defaults[key] = wdg[key].value
+    json_string = json.dumps(non_defaults)
+    url_query = '?widgets=' + urlp.quote(json_string)
+    path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
+    with open(path, 'w') as f:
+        f.write('Paste this after "/bokehpivot" in the URL:\n' + url_query + '\n\n')
+    sp.Popen(path, shell=True)
+
+def export_config_report():
+    '''
+    Export report configuration to python file
+    '''
+    wdg = GL['widgets']
+    wdg_defaults = GL['wdg_defaults']
+    non_defaults = {}
     config_string = "{'name': 'Some Name', 'config': {"
     filter_string = "'filter': {"
     for key in wdg_defaults:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
-            non_defaults[key] = wdg[key].active
             if key.startswith('filter_'):
                 title = wdg['heading_'+key].text
                 labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
@@ -1498,24 +1518,18 @@ def export_config_url():
                 labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
                 config_string += "'" + key + "':[" + ",".join(labels) + "], "
         elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key]:
-            non_defaults[key] = wdg[key].value
             if key != 'data':
                 raw_flag = ''
                 if isinstance(wdg[key], bmw.inputs.TextInput):
                     raw_flag = 'r'
                 config_string += "'" + key + "':" + raw_flag + "'" + str(wdg[key].value) + "', "
-    json_string = json.dumps(non_defaults)
-    #url_args = urlp.quote(json_string.encode("utf-8"))
-    url_query = '?widgets=' + urlp.quote(json_string)
     config_string += filter_string + '}}},'
-
-    path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
+    path = this_dir_path + '/reports/templates/custom_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.py'
     with open(path, 'w') as f:
-        f.write('URL query string:\n' + url_query + '\n\n')
-        f.write('Report template config:\n' + config_string + '\n\n')
-        f.write("(For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant)" + '\n')
+        f.write('static_presets = [\n' + config_string + '\n]\n')
+        f.write("#For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant" + '\n')
     sp.Popen(path, shell=True)
-    
+
 def download():
     '''
     Download a csv file of the currently viewed data to the downloads/ directory,
