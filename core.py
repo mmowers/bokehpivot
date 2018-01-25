@@ -181,7 +181,6 @@ def static_report(data_source, static_presets, report_name='', report_format='bo
                 html_path = report_dir + html_file_name + '.html'
                 with open(html_path, 'w') as f:
                     f.write(html)
-                sp.Popen(html_path, shell=True)
         if report_format in ['excel', 'both']:
             excel_sheet_name = str(sec_i) + '_' + name
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
