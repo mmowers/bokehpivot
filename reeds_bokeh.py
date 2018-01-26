@@ -10,6 +10,7 @@ import bokeh.models.widgets as bmw
 import gdx2py
 import reeds
 import core
+import datetime
 import subprocess as sp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -170,6 +171,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
     '''
     result = topwdg['result'].value
     print('***Fetching ' + str(result) + ' for selected scenarios...')
+    startTime = datetime.datetime.now()
     #A result has been selected, so either we retrieve it from result_dfs,
     #which is a dict with one dataframe for each result, or we make a new key in the result_dfs
     if result not in result_dfs:
@@ -226,7 +228,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
         idx_cols = ['scenario'] + result_meta['index']
         full_idx = pd.MultiIndex.from_product([df[col].unique().tolist() for col in idx_cols], names=idx_cols)
         result_dfs[result] = df.set_index(idx_cols).reindex(full_idx).reset_index()
-    print('***Done fetching ' + str(result) + '.')
+    print('***Done fetching ' + str(result) + ': ' + str(datetime.datetime.now() - startTime))
 
 def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     '''
@@ -244,6 +246,7 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     '''
     print('***Apply joins, maps, ordering to ReEDS data...')
+    startTime = datetime.datetime.now()
     df = result_dfs[topwdg['result'].value].copy()
     #apply joins
     for col in df.columns.values.tolist():
@@ -305,7 +308,7 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     #fill NA depending on column type
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
     df[cols['continuous']] = df[cols['continuous']].fillna(0)
-    print('***Done with joins, maps, ordering.')
+    print('***Done with joins, maps, ordering: ' + str(datetime.datetime.now() - startTime))
     return (df, cols)
 
 def build_reeds_presets_wdg(preset_options):

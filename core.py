@@ -495,6 +495,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         df_plots (pandas dataframe): df_source after having been filtered, scaled, aggregated, and sorted.
     '''
     print('***Filtering, Scaling, Aggregating, Adv Operations, Sorting...')
+    startTime = datetime.datetime.now()
     df_plots = df_source.copy()
 
     #Apply filters
@@ -600,7 +601,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     sorted_cols = sortby_cols + [wdg['y'].value] + range_cols
     unsorted_columns = [col for col in df_plots.columns if col not in sorted_cols]
     df_plots = df_plots[unsorted_columns + sorted_cols]
-    print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting.')
+    print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting: '+ str(datetime.datetime.now() - startTime))
     if wdg['render_plots'].value == 'No':
         print('***Ready for download!')
     return df_plots
