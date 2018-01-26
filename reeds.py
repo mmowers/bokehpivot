@@ -138,6 +138,44 @@ def pre_tech_value_streams(df, **kw):
     df.rename(columns={'$':'Bil $'}, inplace=True)
     return df
 
+def pre_revenue_streams(dfs, **kw):
+    #This function will add revenue streams for a hypothetical block generation tech for comparison to the real tech
+    #start with dfs['val_streams']
+    df_val_streams = dfs['val_streams']
+    #remove rps value stream
+    df_val_streams = df_val_streams[~df_val_streams['val_stream_type'].isin(['rps'])]
+    #remove existing and delete new_exist column
+    df_val_streams = df_val_streams[df_val_streams['new_exist'].isin(['new'])]
+    df_val_streams.drop('new_exist', axis='columns', inplace=True)
+    #sum over timeslices and call pre_tech_value_streams
+    df_val_streams = sum_over_cols(df_val_streams, sum_over_cols='m', group_cols=['tech', 'n', 'year', 'val_stream_type'])
+    df_val_streams = pre_tech_value_streams(df_val_streams)
+    #Add column for real vs hypothetical
+    df_val_streams['hypo_type'] = 'real'
+    #Now create the hypothetical block generation tech with adjusted load_pca and res_marg streams
+    #copy df_val_streams into df_block and change type to block
+    df_block = df_val_streams.copy()
+    df_block['hypo_type'] = 'block'
+    #remove 'oper_res' and 'other' categories from df_block because these value streams are not considered for the hypothetical block gen tech.
+    df_block = df_block[~df_block['val_stream_type'].isin(['oper_res','other'])]
+    #Read in dfs['prices'], the average annual prices in $/MWh
+    df_price = dfs['prices']
+    #remove all but load_pca and res_marg
+    df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])] 
+    #rename type to val_stream_type
+    df_price.rename(columns={'type':'val_stream_type'}, inplace=True)
+    #adjust for inflation
+    df_price['price'] = df_price['price'] * inflation_mult
+    #Merge df_price into df_block
+    df_block = pd.merge(left=df_block, right=df_price, on=['n','year', 'val_stream_type'], how='left', sort=False)
+    #Calculate block gen revenue for load_pca and res_marg by multiplying MWh by prices. This assumes that hypothetical block generator is in same n as the real generator
+    df_block_cond = df_block['val_stream_type'].isin(['load_pca','res_marg'])
+    df_block.loc[df_block_cond, '$/MWh'] = df_block.loc[df_block_cond, 'price']
+    df_block.loc[df_block_cond, 'Bil $'] = df_block.loc[df_block_cond, 'MWh'] * df_block.loc[df_block_cond, 'price']/1e9
+    #concatenate df_block with df_val_streams
+    df = pd.concat([df_val_streams, df_block], ignore_index=True)
+    return df
+
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
@@ -439,6 +477,21 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
             ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Revenue Streams',
+        {'sources': [
+            {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_2', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value']},
+            {'name': 'prices', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n', 'type','year', 'price']},
+        ],
+        'preprocess': [
+            {'func': pre_revenue_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'val_stream_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
+            ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
+            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'real', 'filter': {'val_stream_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
         )),
         }
     ),
