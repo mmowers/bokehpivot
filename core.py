@@ -1524,7 +1524,7 @@ def export_config_report():
                     raw_flag = 'r'
                 config_string += "'" + key + "':" + raw_flag + "'" + str(wdg[key].value) + "', "
     config_string += filter_string + '}}},'
-    path = this_dir_path + '/reports/templates/custom_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.py'
+    path = this_dir_path + '/out/report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.py'
     with open(path, 'w') as f:
         f.write('static_presets = [\n' + config_string + '\n]\n')
         f.write("#For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant" + '\n')
