@@ -374,18 +374,18 @@ def build_reeds_report(html_num='one'):
     if core.GL['widgets']['report_options'].value == 'custom':
         path = core.GL['widgets']['report_custom'].value
         path = path.replace('"', '')
-        report_dir = os.path.dirname(path)
+        report_path = os.path.dirname(path)
         report_name = os.path.basename(path)[:-3]
     else:
-        report_dir = this_dir_path+'/reports/templates'
+        report_path = this_dir_path+'/reports/templates'
         report_name = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
-    report_dir = '"' + report_dir + '"'
+    report_path = '"' + report_path + '"'
     report_name = '"' + report_name + '"'
     scenario_filter = core.GL['widgets']['scenario_filter']
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
-    sp.call('start cmd /K python interface_report.py '+ report_dir + ' ' + report_name +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
+    sp.call('start cmd /K python interface_report.py '+ report_path + ' ' + report_name +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
 
 def build_reeds_report_separate():
     '''
