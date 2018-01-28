@@ -20,7 +20,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, static_presets, base=None, report_name='', report_format='both', html_num='one'):
+def reeds_static(data_source, static_presets, base=None, report_path='', report_name='', report_format='both', html_num='one'):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -62,7 +62,7 @@ def reeds_static(data_source, static_presets, base=None, report_name='', report_
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_name=report_name, report_format=report_format, html_num=html_num)
+    core.static_report(data_source, core_presets, report_path=report_path, report_name=report_name, report_format=report_format, html_num=html_num)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
@@ -131,9 +131,11 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         topwdg['scenario_filter'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-scenario_filter'])
         #Add code to build report
         options = [o for o in os.listdir(this_dir_path+'/reports/templates') if o.endswith(".py")]
+        options = ['custom'] + options
         scenario_names = [i['name'] for i in scenarios]
         topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
         topwdg['report_options'] = bmw.Select(title='Report', value=options[0], options=options, css_classes=['report-drop'])
+        topwdg['report_custom'] = bmw.TextInput(title='If custom, enter path to file', value='', css_classes=['report-drop'])
         topwdg['report_base'] = bmw.Select(title='Base Case', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
         topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
@@ -151,7 +153,6 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     topwdg['report_build'].on_click(build_reeds_report)
     topwdg['report_build_separate'].on_click(build_reeds_report_separate)
     topwdg['result'].on_change('value', update_reeds_result)
-    
     print('***Done fetching ReEDS scenarios.')
     return (topwdg, scenarios)
 
@@ -370,12 +371,21 @@ def build_reeds_report(html_num='one'):
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     '''
     base = '"' + core.GL['widgets']['report_base'].value + '"'
-    report = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
+    if core.GL['widgets']['report_options'].value == 'custom':
+        path = core.GL['widgets']['report_custom'].value
+        path = path.replace('"', '')
+        report_dir = os.path.dirname(path)
+        report_name = os.path.basename(path)[:-3]
+    else:
+        report_dir = this_dir_path+'/reports/templates'
+        report_name = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
+    report_dir = '"' + report_dir + '"'
+    report_name = '"' + report_name + '"'
     scenario_filter = core.GL['widgets']['scenario_filter']
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
-    sp.call('start cmd /K python interface_report.py '+ report +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
+    sp.call('start cmd /K python interface_report.py '+ report_dir + ' ' + report_name +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
 
 def build_reeds_report_separate():
     '''

@@ -107,7 +107,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_name='', report_format='both', html_num='one'):
+def static_report(data_source, static_presets, report_path='', report_name='', report_format='both', html_num='one'):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
@@ -132,7 +132,7 @@ def static_report(data_source, static_presets, report_name='', report_format='bo
     os.makedirs(report_dir)
     #copy report file to report_dir
     if report_name != '':
-        template_path = this_dir_path + '/reports/templates/' + report_name + '.py'
+        template_path = report_path + '/' + report_name + '.py'
         shutil.copy2(template_path, report_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
