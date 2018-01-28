@@ -128,7 +128,7 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
     time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    report_dir = this_dir_path + '/out/report-' + report_name + '-' + time + '/'
+    report_dir = this_dir_path + '/out/report-' + time + '/'
     os.makedirs(report_dir)
     #copy report file to report_dir
     if report_name != '':
@@ -136,7 +136,7 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
         shutil.copy2(template_path, report_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
-        excel_report_path = report_dir + 'report-' + report_name + '.xlsx'
+        excel_report_path = report_dir + 'report.xlsx'
         excel_report = pd.ExcelWriter(excel_report_path)
         excel_meta = []
         excel_meta.append('Build date/time: ' + time)
@@ -192,7 +192,7 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
         sp.Popen(excel_report_path, shell=True)
     if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
-        html_path = report_dir + 'report-' + report_name + '.html'
+        html_path = report_dir + 'report.html'
         with open(html_path, 'w') as f:
             f.write(html)
         sp.Popen(html_path, shell=True)
