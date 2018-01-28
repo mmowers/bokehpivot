@@ -20,7 +20,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, static_presets, base=None, report_path='', report_name='', report_format='both', html_num='one'):
+def reeds_static(data_source, base, static_presets, report_name, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -62,7 +62,7 @@ def reeds_static(data_source, static_presets, base=None, report_path='', report_
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_path=report_path, report_name=report_name, report_format=report_format, html_num=html_num)
+    core.static_report(data_source, core_presets, report_name, report_path, report_format, html_num, output_dir, auto_open)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
@@ -379,13 +379,19 @@ def build_reeds_report(html_num='one'):
     else:
         report_path = this_dir_path+'/reports/templates'
         report_name = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
+    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    output_dir = '"' + this_dir_path + '/out/report-' + time + '"'
     report_path = '"' + report_path + '"'
     report_name = '"' + report_name + '"'
     scenario_filter = core.GL['widgets']['scenario_filter']
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
     scenarios_string = '"' + '|'.join(scenario_paths) + '"'
-    sp.call('start cmd /K python interface_report.py '+ report_path + ' ' + report_name +' ' + scenarios_string + ' ' + base + ' ' + html_num, shell=True, cwd=this_dir_path+r'/reports')
+    if html_num == 'one':
+        auto_open = '"yes"'
+    else:
+        auto_open = '"no"'
+    sp.call('start cmd /K python interface_report.py '+ scenarios_string + ' ' + base + ' ' + report_name +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True, cwd=this_dir_path+r'/reports')
 
 def build_reeds_report_separate():
     '''

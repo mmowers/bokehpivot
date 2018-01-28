@@ -107,7 +107,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_path='', report_name='', report_format='both', html_num='one'):
+def static_report(data_source, static_presets, report_name, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
@@ -127,16 +127,16 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
     GL['plots'] = bl.column([])
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
-    time = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")
-    report_dir = this_dir_path + '/out/report-' + time + '/'
-    os.makedirs(report_dir)
-    #copy report file to report_dir
+    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    output_dir = output_dir + '/'
+    os.makedirs(output_dir)
+    #copy report file to output_dir
     if report_name != '':
         template_path = report_path + '/' + report_name + '.py'
-        shutil.copy2(template_path, report_dir)
+        shutil.copy2(template_path, output_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
-        excel_report_path = report_dir + 'report.xlsx'
+        excel_report_path = output_dir + 'report.xlsx'
         excel_report = pd.ExcelWriter(excel_report_path)
         excel_meta = []
         excel_meta.append('Build date/time: ' + time)
@@ -178,9 +178,11 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
                 html = be.file_html([header_row, title_row, content_row], resources=resources, template=template)
                 html_file_name = str(sec_i) + '_' + name
                 html_file_name = re.sub(r'[\\/:"*?<>|]', '-', html_file_name) #replace disallowed file name characters with dash
-                html_path = report_dir + html_file_name + '.html'
+                html_path = output_dir + html_file_name + '.html'
                 with open(html_path, 'w') as f:
                     f.write(html)
+                if auto_open == 'yes':
+                    sp.Popen(html_path, shell=True)
         if report_format in ['excel', 'both']:
             excel_sheet_name = str(sec_i) + '_' + name
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
@@ -189,13 +191,15 @@ def static_report(data_source, static_presets, report_path='', report_name='', r
         sec_i += 1
     if report_format in ['excel', 'both']:
         excel_report.save()
-        sp.Popen(excel_report_path, shell=True)
+        if auto_open == 'yes':
+            sp.Popen(excel_report_path, shell=True)
     if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
-        html_path = report_dir + 'report.html'
+        html_path = output_dir + 'report.html'
         with open(html_path, 'w') as f:
             f.write(html)
-        sp.Popen(html_path, shell=True)
+        if auto_open == 'yes':
+            sp.Popen(html_path, shell=True)
     print('***Done building report')
 
 def preset_wdg(preset):
