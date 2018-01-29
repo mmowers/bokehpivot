@@ -8,6 +8,7 @@ import shutil
 import re
 import math
 import json
+import getpass
 import numpy as np
 import pandas as pd
 import collections
@@ -74,6 +75,10 @@ GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None,
 
 #os globals
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
+username = getpass.getuser()
+user_out_path = this_dir_path + '/out/' + username
+if not os.path.exists(user_out_path):
+    os.makedirs(user_out_path)
 
 def initialize():
     '''
@@ -1499,7 +1504,7 @@ def export_config_url():
             non_defaults[key] = wdg[key].value
     json_string = json.dumps(non_defaults)
     url_query = '?widgets=' + urlp.quote(json_string)
-    path = this_dir_path + '/out/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
+    path = user_out_path + '/url_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.txt'
     with open(path, 'w') as f:
         f.write('Paste this after "/bokehpivot" in the URL:\n' + url_query + '\n\n')
     sp.Popen(path, shell=True)
@@ -1529,7 +1534,7 @@ def export_config_report():
                     raw_flag = 'r'
                 config_string += "'" + key + "':" + raw_flag + "'" + str(wdg[key].value) + "', "
     config_string += filter_string + '}}},'
-    path = this_dir_path + '/out/report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.py'
+    path = user_out_path + '/report_'+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.py'
     with open(path, 'w') as f:
         f.write('static_presets = [\n' + config_string + '\n]\n')
         f.write("#For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant" + '\n')
@@ -1541,7 +1546,7 @@ def download():
     with the current timestamp.
     '''
     print('***Downloading View...')
-    path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = user_out_path + '/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
     sp.Popen(path, shell=True)
@@ -1552,7 +1557,7 @@ def download_html():
     with the current timestamp.
     '''
     print('***Downloading View...')
-    html_path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
+    html_path = user_out_path + '/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.html'
     static_plots = []
     legend = bmw.Div(text=GL['widgets']['legend'].text)
     plots = GL['plots'].children
@@ -1575,7 +1580,7 @@ def download_all():
     with the current timestamp.
     '''
     print('***Downloading full source...')
-    path = this_dir_path + '/out/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
+    path = user_out_path + '/out '+ datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")+'.csv'
     GL['df_source'].to_csv(path, index=False)
     print('***Done downloading full source to ' + path)
     sp.Popen(path, shell=True)
