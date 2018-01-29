@@ -8,6 +8,6 @@ static_presets = [
     {'name': 'Final Gen by timeslice (GW)', 'result': 'Gen by m (GW)', 'preset': 'Stacked Bars Final'},
     {'name': 'CO2 Emissions (MMton)', 'result': 'Emissions, Fuel, Prices', 'preset': 'CO2 Emissions (MMton)'},
     {'name': 'Elec Price (2015$/MWh)', 'result': 'Elec Price (2015$/MWh)', 'preset': 'National Scenario'},
-    {'name': '2017-End System Cost (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': '2017-end Stacked Bars'},
+    {'name': 'System Cost (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': 'Stacked Bars'},
 ]
 

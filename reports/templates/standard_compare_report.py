@@ -13,7 +13,7 @@ static_presets = [
     {'name': 'CO2 Emissions Diff (MMton)', 'result': 'Emissions, Fuel, Prices', 'preset': 'CO2 Emissions (MMton)', 'modify': 'diff'},
     {'name': 'Elec Price (2015$/MWh)', 'result': 'Elec Price (2015$/MWh)', 'preset': 'National'},
     {'name': 'Elec Price Diff (2015$/MWh)', 'result': 'Elec Price (2015$/MWh)', 'preset': 'National', 'modify': 'diff'},
-    {'name': 'System Cost (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': '2017-end Stacked Bars'},
-    {'name': 'System Cost Diff (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': '2017-end Stacked Bars', 'modify': 'diff'},
+    {'name': 'System Cost (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': 'Stacked Bars'},
+    {'name': 'System Cost Diff (Bil 2015$)', 'result': 'Sys Cost (Bil 2015$)', 'preset': 'Stacked Bars', 'modify': 'diff'},
 ]
 

@@ -304,6 +304,7 @@ results_meta = collections.OrderedDict((
             {'func': discount_costs, 'args': {}},
         ],
         'presets': collections.OrderedDict((
+            ('Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar'}),
             ('2017-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2017}}}),
         )),
         }
