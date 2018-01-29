@@ -120,9 +120,12 @@ def static_report(data_source, static_presets, report_name, report_path, report_
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name': name of preset
             'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
-        report_name (string): The name of the report
+        report_name (string): The name of the report file, without .py at the end .
+        report_path (string): The path to the report file directory.
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
+        output_dir (string): the directory into which the resulting reports will be saved.
+        auto_open (string): either "yes" to automatically open report files, or "no"
     Returns:
         Nothing: HTML and Excel files are created
     '''

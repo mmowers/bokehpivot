@@ -7,19 +7,19 @@ Currently, ReEDS results and csvs are supported.
 A more simplified version of this app has been contributed as an example to the main Bokeh repo:
 https://github.com/bokeh/bokeh/tree/master/examples/app/pivot
 
-There are two different ways to use this app: On Orion (easiest way), and locally. See the following sections for details on each:
+There are two different ways to use this app: On Scorpio or Orion (easiest way), and locally. See the following sections for details on each:
 
-## Running on Orion (easiest)
-1. Simply double click the *Launch Super Pivot.bat* file on your desktop on Orion. This will launch the bokeh server in a terminal window and a browser window for the results
+## Running on Scorpio/Orion (easiest)
+1. Simply double click the *Launch Common Bokeh Pivot.bat* file on your desktop. This will launch the bokeh server in a terminal window and a browser window for the results
     * If you're curious, you can open the .bat file in a text editor. The contents will look like:
       ```
-      bokeh serve D:\CommonGitRepos\Bokeh\bokehpivot --show --allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port> --port <port> 
+      bokeh serve \\nrelqnap01d/ReEDS/bokehpivot --show --allow-websocket-origin 1wp11rdori02.nrel.gov:<port> --allow-websocket-origin localhost:<port> --port <port>
       ```
-    * Here is a breakdown of the contents of *Launch Super Pivot.bat*:
+    * Here is a breakdown of the contents of *Launch Common Bokeh Pivot.bat*:
         * `bokeh serve`: Launch bokeh server. See http://bokeh.pydata.org/en/latest/docs/user_guide/server.html for more info.
-        * `D:\CommonGitRepos\Bokeh\bokehpivot`: Path to bokeh app that we are running. Note that this app will be updated frequently. If you want to manage your own copies on Orion, simply copy this app and enter the new path in the .bat file instead.
-        * `--port <port>`: Jonathan has assigned you a unique port on Orion to run your bokeh server. We can't all use the same port number because each port can only be used once.
-        * `--allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port>`: The first allows requests that are external to Orion (but on the NREL network) to access this bokeh server. The Second allows internal requests to localhost.
+        * `\\nrelqnap01d/ReEDS/bokehpivot`: Path to common bokehpivot app. Note that this app will be updated frequently. If you want to launch from your own bokehpivot repo, simply enter that path in the .bat file instead.
+        * `--port <port>`: Jonathan has assigned you a unique port on Scorpio/Orion to run your bokeh server. We can't all use the same port number because each port can only be used once.
+        * `--allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port>`: The first address allows requests that are external to Scorpio/Orion (but on the NREL network) to access the bokeh server that you have launched. The Second allows internal requests to localhost, which is the default request when you run the .bat file.
 1. Go to the *Loading ReEDS data* section below.
 1. When done, simply close the terminal window that is running the server.
 
@@ -53,7 +53,7 @@ There are two different ways to use this app: On Orion (easiest way), and locall
     This will launch the bokeh server and a browser window to view the app.
     * Note that we simply used the same command to start the bokeh server process on Orion:
       ```
-      bokeh serve D:\CommonGitRepos\Bokeh\bokehpivot
+      bokeh serve \\nrelqnap01d\ReEDS\bokehpivot
       ```
 1. Go to the *Loading ReEDS data* section below
 
@@ -63,15 +63,16 @@ After starting up the app in a browser window, you must enter a path in the *Dat
 * *ReEDS Run(s)*: Here are the options:
     * Enter a path to a ReEDS run folder (inside which there is a *gdxfiles/* folder). This works using shared drives too. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs\\someRun*.
     * Enter a path to a folder containing ReEDS run folders. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs*.
+    * Enter any number of the two path types above, each separated by a | (pipe) symbol
     * [CURRENTLY NOT AVAILABLE]: Enter a path to a csv file that contains a list of runs (see *csv/scenario_template.csv* for an example.)
-    * After that, see the *ReEDS Widgets* and *Core Pivot Functionality* sections below.
+    * After entering one of the above, see the *ReEDS Widgets* and *Core Pivot Functionality* sections below.
 
 ## ReEDS Widgets
 * **Meta**: Click the *Meta* section to expand, and see the files used for some default *maps* (to rename and aggregate ReEDS categories), *styles* (to reorder categories and style them), and *merges* (to join more columns, e.g. to add regional aggregations). If you'd like to update any of these files, simply edit the file (only if you're working locally), or point to a new file.
 * **Filter Scenarios**: A list of scenarios will be fetched after entering a path in *Runs*. Use the *Filter Scenarios* section to reduce the scenarios from which the app will fetch ReEDS gdx output data. Note that this filter does not have an effect after the data has already been fetched. To do further filtering of scenarios when building/updating figures, use the "scenario" filter in the "Filters" dropdown (described below).
-* **Build Report**: Build HTML/Excel reports based on a preset list of configurations (stored in the *reports\\templates\\* folder). Select the report to build and the base case to use, if necessary. Click the button to initiate a separate process that builds the HTML/Excel report. Note that Filter Scenarios may be used to limit the scenarios in the report. See the *Creating/Building Reports* section below for more info.
+* **Build Report**: Build an HTML/Excel report based on a python file with a list of bokehpivot configurations. A select widget allows any of the reports in the *reports\\templates\\* folder to be chosen, or the path to a custom report may be entered in a text widget (for example, one that is exported using the *Export Report Config* button described below). If the report references a base case, this may be chosen with a select widget. Click the *Build Report* button to create one html file and excel file with results for that report, or click *Build Separate Reports* to split each report configuration into its own html file. In either case, a separate and independent process is initiated each time one of these buttons is clicked. Note that *Filter Scenarios* may be used to limit the scenarios included in the report.
 * **Result**: Select a result from the *Result* select box. It may take a few seconds to fetch the data, depending on the number of scenarios being analyzed. After the result data is fetched, the following widgets will appear
-* **Presets**: You may select a preset result from the *Preset* select box. For example, for *Generation*, *Stacked Generation* is a preset result.
+* **Presets**: You may select a preset result from the *Preset* select box, and a set of widgets will be automatically set for you. For example, for *Generation*, *Stacked Generation* is a preset result. Note that after selecting a preset, you may make further modifications to the widgets.
 * See the *Core Pivot Functionality* section below for the rest of the available widgets.
 
 ## Core Pivot Functionality
@@ -79,7 +80,7 @@ After starting up the app in a browser window, you must enter a path in the *Dat
 * **X-axis (required)**: Select a column to use as x-axis
 * **Group X By**: Select a column to group the x-axis (if both x-axis and grouping columns are discrete).
 * **Y-axis (required)**: Select a column to use as y-axis
-* **Y-Axis Aggregation**: Select *Sum*, *Average*, or *Weighted Average*. *Weighted Average* requires another field, the *Weighting Factor*. For electricity price, for example, select *load* as the *Weighting Factor*.
+* **Y-Axis Aggregation**: Select *Sum*, *Average*, or *Weighted Ave*, or *Weighted Ave Ratio*. *Weighted Ave* requires another field, the *Weighting Factor*, and *Weighted Ave Ratio*, a ratio of weighted averages, requires both *Weighting Factor* (for the numerator of the ratio) and *Denominator Weighting Factor*. For electricity price, for example, select *load* as the *Weighting Factor*.
 * **Series**: Pick a column to split the data into separate, color-coded series. If Chart Type (see Plot Adjustments
 below) is Area or Bar, series will automatically be stacked. If Chart Type is Line or Dot, the series will not be stacked.
 * **Series Legend**: Click on this to see the color and name of each series
@@ -96,12 +97,7 @@ and/or resize your browser screen to make a nice 2d array of charts.
 * **Plot Adjustments**: Make additional figure modifications: Size, x-axis/y-axis limits and scale, etc.
 * **Map Adjustments**: By default, data is binned using the *Auto Equal Num* method, which tries to split the data evenly between bins. But bins can also be specified as having equal width, or they can be set fully manually, using comma separated breakpoints. The two auto binning methods can also accept a number of bins and min/max values. Finally, stylistic adjustments to the maps may be made. Different coloring palettes may be used from https://bokeh.pydata.org/en/latest/docs/reference/palettes.html as long as the number of bins is allowed in that palette.
 * **Auto/Manual Update**: Setting *Auto Update* to *Disable* will disallow plots and data to be updated automatically while widgets are altered. The *Manual Update* button can be used to manually update plots and data. Setting *Render plots* to *No* will disallow rendering of figures. This is useful if, for instance, rendering plots is taking a very long time, and you simply want to download the data for a given widget config.
-* **Download/Export**: Download any data you're viewing with the *Download csv of View* button, or download all data for a given source/result with the *Download csv of Source* button. It will be downloaded into a timestamped file in the *out\\* folder. Note that if you're accessing a bokeh server on Orion, this folder is in *D:\\CommonGitRepos\\Bokeh\\bokehpivot*. *Export URL/Config* will save any non-default widget configuration as a URL query string (starting with "?") and as a report section configuration dict, in a text file for later use/sharing. At a later time, you will be able to load the same view by simply appending the URL query string to your bokehpivot URL (with your bokeh server running). If the URL is from Orion, you may access the URL from any computer connected to the NREL network (while the bokeh server on Orion is still running).
-
-## Building reports
-HTML and Excel reports can be built with a list of desired widget configurations.  See examples in the *reports\\templates\\* folder. There are two methods for building reports:
-* The easiest method is to build a report directly from the bokehpivot interface using the *Build Report* ReEDS widget mentioned above.
-* Another method is to edit and run *create_report.py* within *reports\\implementations\\*. Follow instructions in this file. Configurations may come from report templates within the *reports\\templates\\* folder, and custom configurations and ReEDS presets may be added directly to this file as well. See *reports\\implementations\\example_reeds_custom_report.py* for examples of custom configurations that can be added directly to *create_report.py*.
+* **Download/Export**: Download any data you're viewing with the *Download csv of View* and *Download html of View* buttons, or download all data for a given source/result with the *Download csv of Source* button. It will be downloaded into a timestamped file in the *bokehpivot\\out\\* folder, under your username. *Export URL* will save any non-default widget configuration as a URL query string (starting with "?") and create a text file. At a later time, you will be able to load the same view by simply appending the URL query string to your bokehpivot URL (with your bokeh server running). If the URL is from Scorpio/Orion, you may access the URL from any computer connected to the NREL network (while the bokeh server on Scorpio/Orion is still running). *Export Report Config* will save config as a report section configuration dict in a python file, which can then be loaded as a custom file in the *Build Report* section above.
 
 ## Creating report templates:
 Report templates are in the *reports\\templates\\* folder. Each of these files consists of a list of configurations. Every configuration has these keys:
@@ -124,8 +120,7 @@ Report templates are in the *reports\\templates\\* folder. Each of these files c
 1. If a page refresh doesn't work, then restart the bokeh server. If you have time, you can send Matt a screenshot of the error in the terminal window, if there is one.
 
 ## Modifying App Code
-* On local, modify the code at will. If the modifications would be useful for other team members, please push the changes back to origin.
-* On Orion, please create a copy of D:\\CommonGitRepos\\Bokeh\\bokehpivot and make modifications to that copy so that you don't effect others who are working off the common repo.
+* Clone the repo with `git clone https://github.nrel.gov/ReEDS/bokehpivot.git`, and modify the code at will. If the modifications would be useful for other team members, please push the changes back to origin.
 
 ## Additional Resources
 This tool uses bokeh, built on python:

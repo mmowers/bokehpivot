@@ -25,16 +25,19 @@ def reeds_static(data_source, base, static_presets, report_name, report_path, re
     Build static html and excel reports based on specified ReEDS presets
     Args:
         data_source (string): Path to ReEDS runs that will be included in report
+        base (string): Identifier for base scenario, if making comparison charts
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name' (required): Displayed name of the result 
             'result': ReEDS result name in reeds.py.
             'preset': ReEDS result preset as defined in reeds.py
             'modify': Preset modifications, either 'base_only' or 'diff'.
             'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
-        base (string): Identifier for base scenario, if making comparison charts
-        report_name (string): The name of the report
+        report_name (string): The name of the report file, without .py at the end .
+        report_path (string): The path to the report file directory.
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
+        output_dir (string): the directory into which the resulting reports will be saved.
+        auto_open (string): either "yes" to automatically open report files, or "no"
     Returns:
         Nothing: HTML and Excel files are created
     '''
