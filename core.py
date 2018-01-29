@@ -187,7 +187,7 @@ def static_report(data_source, static_presets, report_name, report_path, report_
                 with open(html_path, 'w') as f:
                     f.write(html)
                 if auto_open == 'yes':
-                    sp.Popen(html_path, shell=True)
+                    sp.Popen(os.path.abspath(html_path), shell=True)
         if report_format in ['excel', 'both']:
             excel_sheet_name = str(sec_i) + '_' + name
             excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
@@ -197,14 +197,14 @@ def static_report(data_source, static_presets, report_name, report_path, report_
     if report_format in ['excel', 'both']:
         excel_report.save()
         if auto_open == 'yes':
-            sp.Popen(excel_report_path, shell=True)
+            sp.Popen(os.path.abspath(excel_report_path), shell=True)
     if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
         html_path = output_dir + 'report.html'
         with open(html_path, 'w') as f:
             f.write(html)
         if auto_open == 'yes':
-            sp.Popen(html_path, shell=True)
+            sp.Popen(os.path.abspath(html_path), shell=True)
     print('***Done building report')
 
 def preset_wdg(preset):
