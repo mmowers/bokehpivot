@@ -27,6 +27,7 @@ body {
     width: auto !important;
     height: auto !important;
     display: inline-block !important;
+    flex-shrink: 1 !important;
 }
 .bk-plot-layout{
     display: inline-block !important;
