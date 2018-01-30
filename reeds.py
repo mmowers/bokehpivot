@@ -161,7 +161,7 @@ def pre_revenue_streams(dfs, **kw):
     #Read in dfs['prices'], the average annual prices in $/MWh
     df_price = dfs['prices']
     #remove all but load_pca and res_marg
-    df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])] 
+    df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])].copy() #copy() is used to prevent SettingWithCopyWarning
     #rename type to val_stream_type
     df_price.rename(columns={'type':'val_stream_type'}, inplace=True)
     #adjust for inflation
