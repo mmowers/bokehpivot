@@ -230,7 +230,7 @@ def preset_wdg(preset):
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
-    wdg_resets = [i for i in wdg_defaults if i not in wdg_variant.keys()+['x', 'data', 'render_plots']]
+    wdg_resets = [i for i in wdg_defaults if i not in wdg_variant.keys()+['x', 'data', 'render_plots', 'auto_update']]
     #reset widgets if they are not default
     for key in wdg_resets:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
