@@ -389,7 +389,7 @@ def build_reeds_report(html_num='one'):
         auto_open = '"yes"'
     else:
         auto_open = '"no"'
-    sp.call('start cmd /K python ' + this_dir_path + '/reports/interface_report.py ' + scenarios_string + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+    sp.call('start cmd /K python "' + this_dir_path + '/reports/interface_report.py" ' + scenarios_string + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 
 def build_reeds_report_separate():
     '''
