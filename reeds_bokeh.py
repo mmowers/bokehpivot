@@ -20,7 +20,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, base, static_presets, report_name, report_path, report_format, html_num, output_dir, auto_open):
+def reeds_static(data_source, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -32,8 +32,7 @@ def reeds_static(data_source, base, static_presets, report_name, report_path, re
             'preset': ReEDS result preset as defined in reeds.py
             'modify': Preset modifications, either 'base_only' or 'diff'.
             'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
-        report_name (string): The name of the report file, without .py at the end .
-        report_path (string): The path to the report file directory.
+        report_path (string): The path to the report file.
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
         output_dir (string): the directory into which the resulting reports will be saved.
@@ -65,7 +64,7 @@ def reeds_static(data_source, base, static_presets, report_name, report_path, re
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_name, report_path, report_format, html_num, output_dir, auto_open)
+    core.static_report(data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
     '''
@@ -375,17 +374,13 @@ def build_reeds_report(html_num='one'):
     '''
     base = '"' + core.GL['widgets']['report_base'].value + '"'
     if core.GL['widgets']['report_options'].value == 'custom':
-        path = core.GL['widgets']['report_custom'].value
-        path = path.replace('"', '')
-        report_path = os.path.dirname(path)
-        report_name = os.path.basename(path)[:-3]
+        report_path = core.GL['widgets']['report_custom'].value
+        report_path = report_path.replace('"', '')
     else:
-        report_path = this_dir_path+'/reports/templates'
-        report_name = '"' + core.GL['widgets']['report_options'].value[:-3] + '"'
+        report_path = this_dir_path + '/reports/templates/' + core.GL['widgets']['report_options'].value
+    report_path = '"' + report_path + '"'
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = '"' + core.user_out_path + '/report-' + time + '"'
-    report_path = '"' + report_path + '"'
-    report_name = '"' + report_name + '"'
     scenario_filter = core.GL['widgets']['scenario_filter']
     scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
     scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
@@ -394,7 +389,7 @@ def build_reeds_report(html_num='one'):
         auto_open = '"yes"'
     else:
         auto_open = '"no"'
-    sp.call('start cmd /K python ' + this_dir_path + '/reports/interface_report.py ' + scenarios_string + ' ' + base + ' ' + report_name +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+    sp.call('start cmd /K python ' + this_dir_path + '/reports/interface_report.py ' + scenarios_string + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 
 def build_reeds_report_separate():
     '''

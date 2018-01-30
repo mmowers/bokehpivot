@@ -112,7 +112,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_name, report_path, report_format, html_num, output_dir, auto_open):
+def static_report(data_source, static_presets, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
@@ -120,8 +120,7 @@ def static_report(data_source, static_presets, report_name, report_path, report_
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name': name of preset
             'config': a dict of widget configurations, where keys are keys of GL['widgets'] and values are values of those widgets. See preset_wdg()
-        report_name (string): The name of the report file, without .py at the end .
-        report_path (string): The path to the report file directory.
+        report_path (string): The path to the report file.
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
         output_dir (string): the directory into which the resulting reports will be saved.
@@ -139,9 +138,8 @@ def static_report(data_source, static_presets, report_name, report_path, report_
     output_dir = output_dir + '/'
     os.makedirs(output_dir)
     #copy report file to output_dir
-    if report_name != '':
-        template_path = report_path + '/' + report_name + '.py'
-        shutil.copy2(template_path, output_dir)
+    if report_path != '':
+        shutil.copy2(report_path, output_dir)
     data_sources = data_source.split('|')
     if report_format in ['excel', 'both']:
         excel_report_path = output_dir + 'report.xlsx'
