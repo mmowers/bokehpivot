@@ -517,6 +517,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             active = [float(i) for i in active]
         df_plots = df_plots[df_plots[col].isin(active)]
 
+    if df_plots.empty:
+        return df_plots
+
     #Scale Axes
     if wdg['x_scale'].value != '' and wdg['x'].value in cols['continuous']:
         df_plots[wdg['x'].value] = df_plots[wdg['x'].value] * float(wdg['x_scale'].value)
