@@ -1506,7 +1506,7 @@ def download_url(dir_path='', auto_open=True):
     for key in wdg_defaults:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
             non_defaults[key] = wdg[key].active
-        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key] and key not in ['auto_update','presets']:
+        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key] and key not in ['auto_update','presets','report_options','report_base']:
             non_defaults[key] = wdg[key].value
     json_string = json.dumps(non_defaults)
     url_query = '?widgets=' + urlp.quote(json_string)
@@ -1529,7 +1529,7 @@ def download_report(dir_path='', auto_open=True):
     config_string = "{'name': 'Some Name', 'config': {"
     filter_string = "'filter': {"
     for key in wdg_defaults:
-        if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
+        if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key] and key not in ['scenario_filter']:
             if key.startswith('filter_'):
                 title = wdg['heading_'+key].text
                 labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
@@ -1537,7 +1537,7 @@ def download_report(dir_path='', auto_open=True):
             else:
                 labels = ["'" + wdg[key].labels[i] + "'" for i in wdg[key].active]
                 config_string += "'" + key + "':[" + ",".join(labels) + "], "
-        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key] and key not in ['data','auto_update','presets']:
+        elif isinstance(wdg[key], bmw.inputs.InputWidget) and wdg[key].value != wdg_defaults[key] and key not in ['data','auto_update','presets','report_options','report_base']:
             raw_flag = ''
             if isinstance(wdg[key], bmw.inputs.TextInput):
                 raw_flag = 'r'
