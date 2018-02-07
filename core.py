@@ -1518,7 +1518,7 @@ def download_url(dir_path='', auto_open=True):
     with open(path, 'w') as f:
         f.write('Paste this after "/bokehpivot" in the URL:\n' + url_query + '\n\n')
     if auto_open:
-        sp.Popen(path, shell=True)
+        sp.Popen(os.path.abspath(path), shell=True)
 
 def download_report(dir_path='', auto_open=True):
     '''
@@ -1552,7 +1552,7 @@ def download_report(dir_path='', auto_open=True):
         f.write('static_presets = [\n' + config_string + '\n]\n')
         f.write("#For ReEDS presets, use the 'config' dict and remove 'result', as it is redundant" + '\n')
     if auto_open:
-        sp.Popen(path, shell=True)
+        sp.Popen(os.path.abspath(path), shell=True)
 
 def download_csv(dir_path='', auto_open=True):
     '''
@@ -1567,7 +1567,7 @@ def download_csv(dir_path='', auto_open=True):
     GL['df_plots'].to_csv(path, index=False)
     print('***Done downloading View to ' + path)
     if auto_open:
-        sp.Popen(path, shell=True)
+        sp.Popen(os.path.abspath(path), shell=True)
 
 def download_html(dir_path='', auto_open=True):
     '''
@@ -1592,7 +1592,7 @@ def download_html(dir_path='', auto_open=True):
     with open(html_path, 'w') as f:
         f.write(html)
     if auto_open:
-        sp.Popen(html_path, shell=True)
+        sp.Popen(os.path.abspath(html_path), shell=True)
     GL['plots'].children = plots
     print('***Done downloading View to ' + html_path)
 
@@ -1620,4 +1620,4 @@ def download_source(dir_path='', auto_open=True):
     GL['df_source'].to_csv(path, index=False)
     print('***Done downloading full source to ' + path)
     if auto_open:
-        sp.Popen(path, shell=True)
+        sp.Popen(os.path.abspath(path), shell=True)
