@@ -260,6 +260,7 @@ def preset_wdg(preset):
                         if preset_filter == 'last':
                             new_active = [len(wdg_fil.labels) - 1]
                     elif isinstance(preset_filter, dict):
+                        new_active = list(range(len(wdg_fil.labels)))
                         if 'start' in preset_filter:
                             start = wdg_fil.labels.index(str(preset_filter['start']))
                             if 'end' in preset_filter:
@@ -267,6 +268,8 @@ def preset_wdg(preset):
                             else:
                                 end = len(wdg_fil.labels) - 1
                             new_active = list(range(start,end+1))
+                        if 'exclude' in preset_filter:
+                            new_active = [n for n in new_active if wdg_fil.labels[n] not in preset_filter['exclude']]
                     else: #we are using a list of labels
                         new_active = []
                         for lab in preset_filter:
