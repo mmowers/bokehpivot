@@ -62,6 +62,11 @@ def pre_elec_price_components(dfs, **kw):
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
+def pre_marginal_capacity_value(dfs, **kw):
+    dfs['new_cap']['Capacity (GW)'] = dfs['new_cap']['Capacity (GW)'] / 1000
+    df = pd.merge(left=dfs['cv_mar'], right=dfs['new_cap'], on=['tech','n','year'], how='left', sort=False)
+    return df
+
 def pre_value_factors(dfs, **kw):
     #start with dfs['gen'], and expand to include all combinations of tech, n, year, m
     df = dfs['gen']
@@ -481,6 +486,33 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('Tech Value Streams 3',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_3',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': pre_tech_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Tech Value Streams 3 n,m',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_3',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'preprocess': [
+            {'func': pre_tech_value_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
     ('Revenue Streams',
         {'sources': [
             {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_2', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value']},
@@ -560,6 +592,19 @@ results_meta = collections.OrderedDict((
             ('Stacked Value Add By Tech',{'x':'year','y':'value', 'series':'jedi_tech', 'explode':'scenario', 'explode_group':'jedi_scenario', 'chart_type':'Bar', 'filter': {'metric':['value_add']}}),
             ('Value Add By Tech',{'x':'year','y':'value', 'series':'scenario', 'explode':'jedi_tech', 'explode_group':'jedi_scenario', 'chart_type':'Line', 'filter': {'metric':['value_add']}}),
             ('Average Onsite Jobs Map 2017-end',{'chart_type':'Map', 'x':'st', 'y':'value', 'explode':'scenario', 'explode_group':'jedi_scenario', 'y_scale':'29412', 'filter': {'metric':['jobs'], 'directness':['Onsite'], 'year': {'start':2017},}}), #y_scale, 29412 = 1000000(jobs per mil jobs) / 34(total years), so we end up with avarage jobs
+        )),
+        }
+    ),
+    ('Marginal Capacity Value',
+        {'sources': [
+            {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'Capacity (GW)']},
+            {'name': 'cv_mar', 'file': 'Reporting.gdx', 'param': 'CVmar_annual_average', 'columns': ['tech', 'n', 'year', 'Capacity Value']},
+        ],
+        'preprocess': [
+            {'func': pre_marginal_capacity_value, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Marginal Capacity Value',{'chart_type':'Line', 'x':'year', 'y':'Capacity Value', 'y_agg':'Weighted Ave', 'y_weight':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'filter': {}}),
         )),
         }
     ),
