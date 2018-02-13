@@ -1,6 +1,6 @@
 raw,display
-water,Other
-varom,O&M Cost
+water,Water Cost
+varom,Var O&M Cost
 trans,Trans Cost
 surplus,Curtailment
 rps,RPS Value
@@ -10,5 +10,5 @@ oper_res,Ancillary Value
 load_pca,Energy Value
 incent,Incentives
 fuel,Fuel Cost
-fixom,O&M Cost
+fixom,Fix O&M Cost
 capital,Capital Cost

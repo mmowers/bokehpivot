@@ -1,12 +1,14 @@
-order
-Capital Cost
-O&M Cost
-Fuel Cost
-Trans Cost
-Energy Value
-Capacity Value
-Ancillary Value
-RPS Value
-Incentives
-Curtailment
-Other
+order,color
+Capital Cost,#1f77b4
+Fix O&M Cost,#ff7f0e
+Var O&M Cost,#2ca02c
+Fuel Cost,#d62728
+Trans Cost,#9467bd
+Water Cost,#8c564b
+Energy Value,#e377c2
+Capacity Value,#7f7f7f
+Ancillary Value,#bcbd22
+RPS Value,#17becf
+Incentives,#aec7e8
+Curtailment,#ffbb78
+Other,#98df8a
