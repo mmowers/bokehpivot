@@ -292,15 +292,18 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
             custom_sorts[col] = df_style['order'].tolist()
             if 'color' in df_style:
                 custom_colors[col] = dict(zip(df_style['order'],df_style['color']))
+
+    #convert columns to specified type
     cols = {}
     cols['all'] = df.columns.values.tolist()
     for c in cols['all']:
-        if c in reeds.columns_meta:
+        if c in reeds.columns_meta and 'type' in reeds.columns_meta[c]:
             if reeds.columns_meta[c]['type'] is 'number':
                 df[c] = pd.to_numeric(df[c], errors='coerce')
             elif reeds.columns_meta[c]['type'] is 'string':
                 df[c] = df[c].astype(str)
 
+    #categorize columns
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
     cols['y-axis'] = [x for x in cols['continuous'] if x not in reeds.columns_meta or reeds.columns_meta[x]['y-allow']]
