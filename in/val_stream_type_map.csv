@@ -1,0 +1,14 @@
+raw,display
+water,Other
+varom,O&M Cost
+trans,Trans Cost
+surplus,Curtailment
+rps,RPS Value
+res_marg,Capacity Value
+other,Other
+oper_res,Ancillary Value
+load_pca,Energy Value
+incent,Incentives
+fuel,Fuel Cost
+fixom,O&M Cost
+capital,Capital Cost

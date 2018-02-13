@@ -836,4 +836,8 @@ columns_meta = {
         'map': this_dir_path + '/in/cost_cat_map.csv',
         'style': this_dir_path + '/in/cost_cat_style.csv',
     },
+    'val_stream_type':{
+        'map': this_dir_path + '/in/val_stream_type_map.csv',
+        'style': this_dir_path + '/in/val_stream_type_style.csv',
+    },
 }
