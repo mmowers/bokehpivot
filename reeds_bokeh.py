@@ -283,15 +283,15 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
         custom_colors.pop(col, None)
         if 'meta_style_'+col in topwdg and topwdg['meta_style_'+col].value != '':
             df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''), dtype=object)
-            #find values that aren't styled and set default color (hot pink) and order (at end) for these
-            df_style_list = df_style['order'].tolist()
-            for val in df[col].unique().tolist():
-                if val not in df_style_list:
-                    df_style = df_style.append(pd.DataFrame({'order':[val], 'color':['#ff69b4']}))
-            #add to custom_sorts with new order
             custom_sorts[col] = df_style['order'].tolist()
             if 'color' in df_style:
                 custom_colors[col] = dict(zip(df_style['order'],df_style['color']))
+            #find values that aren't styled and set default color (hot pink) and order (at end) for these
+            for val in df[col].unique().tolist():
+                if val not in custom_sorts[col]:
+                    custom_sorts[col] = custom_sorts[col] + [val]
+                    if 'color' in df_style:
+                        custom_colors[col][val] = '#ff69b4'
 
     #convert columns to specified type
     cols = {}
