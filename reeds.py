@@ -194,6 +194,25 @@ def pre_revenue_streams(dfs, **kw):
     df = pd.concat([df_val_streams, df_block], ignore_index=True)
     return df
 
+def pre_profitability_index(df, **kw):
+    #This preprocess calculates a profitability index column, defined as system value / cost
+    costs = ['water','varom','trans','incent','fuel','fixom','capital']
+    #leaving out rps in system_vals because we are implementing forcing functions
+    system_vals = ['load_pca','res_marg','oper_res','other','surplus']
+    df = df[df['tech_val_type'].isin(costs + system_vals)].copy()
+    df['cost_val'] = 'val'
+    df_costs = df['tech_val_type'].isin(costs)
+    df.loc[df_costs, 'cost_val'] = 'cost'
+    #costs are negative so we must multiply by -1
+    df.loc[df_costs, 'value'] = df.loc[df_costs, 'value'] * -1
+    df.drop(['tech_val_type'], axis='columns', inplace=True)
+    #add up all costs and values
+    df =  df.groupby(['tech', 'new_exist', 'year', 'n','cost_val'], sort=False, as_index =False).sum()
+    #now turn cost and val into separate columns
+    df = df.pivot_table(index=['tech', 'new_exist', 'year', 'n'], columns='cost_val', values='value').reset_index()
+    df['index'] = df['val'] / df['cost']
+    return df
+
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
@@ -609,6 +628,19 @@ results_meta = collections.OrderedDict((
             ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
             ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
             ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
+        )),
+        }
+    ),
+    ('Profitability Index',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_3',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'n', 'tech_val_type'], 'sum_over_cols': ['m']}},
+            {'func': pre_profitability_index, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Index by tech', {'chart_type':'Line', 'x':'year', 'y':'index', 'y_agg':'Weighted Ave', 'y_weight':'cost', 'series':'scenario', 'explode':'tech', 'filter': {}}),
         )),
         }
     ),
