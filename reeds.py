@@ -125,22 +125,21 @@ def pre_value_streams(df, **kw):
     df['Bil $'] = df['quantity']*df['marginal']/1e9
     return df
 
-
 def pre_tech_value_streams(df, **kw):
     #Get quantity into a separate column, then add $/MWh column.
     #First, separate quantities into their own dataframe.
-    df_quant = df[df['val_stream_type']=='quantity'].copy()
-    df_quant.drop('val_stream_type', axis='columns', inplace=True)
-    df = df[df['val_stream_type']!='quantity'].copy()
+    df_quant = df[df['tech_val_type']=='quantity'].copy()
+    df_quant.drop('tech_val_type', axis='columns', inplace=True)
+    df = df[df['tech_val_type']!='quantity'].copy()
     #apply inflation to all values/costs.
     df['value'] = df['value'] * inflation_mult
-    val_stream_types = df['val_stream_type'].unique().tolist()
-    merge_index = [i for i in df.columns if i not in ['val_stream_type', 'value']]
+    tech_val_types = df['tech_val_type'].unique().tolist()
+    merge_index = [i for i in df.columns if i not in ['tech_val_type', 'value']]
     #before merging with quantity, make sure we have values for all val stream types wherever we have costs.
     #Without this we won't get the right weighted averages later.
-    df = df.pivot_table(index=merge_index, columns='val_stream_type', values='value').reset_index()
+    df = df.pivot_table(index=merge_index, columns='tech_val_type', values='value').reset_index()
     df.columns.name = None
-    df = pd.melt(df, id_vars=merge_index, value_vars=val_stream_types, var_name='val_stream_type', value_name= 'value')
+    df = pd.melt(df, id_vars=merge_index, value_vars=tech_val_types, var_name='tech_val_type', value_name= 'value')
     df['value'] = df['value'].fillna(0)
     #Now do the merge.
     df = pd.merge(left=df, right=df_quant, how='outer', on=merge_index, sort=False)
@@ -155,12 +154,12 @@ def pre_revenue_streams(dfs, **kw):
     #start with dfs['val_streams']
     df_val_streams = dfs['val_streams']
     #remove rps value stream
-    df_val_streams = df_val_streams[~df_val_streams['val_stream_type'].isin(['rps'])]
+    df_val_streams = df_val_streams[~df_val_streams['tech_val_type'].isin(['rps'])]
     #remove existing and delete new_exist column
     df_val_streams = df_val_streams[df_val_streams['new_exist'].isin(['new'])]
     df_val_streams.drop('new_exist', axis='columns', inplace=True)
     #sum over timeslices and call pre_tech_value_streams
-    df_val_streams = sum_over_cols(df_val_streams, sum_over_cols='m', group_cols=['tech', 'n', 'year', 'val_stream_type'])
+    df_val_streams = sum_over_cols(df_val_streams, sum_over_cols='m', group_cols=['tech', 'n', 'year', 'tech_val_type'])
     df_val_streams = pre_tech_value_streams(df_val_streams)
     #Add column for real vs hypothetical
     df_val_streams['hypo_type'] = 'real'
@@ -169,19 +168,19 @@ def pre_revenue_streams(dfs, **kw):
     df_block = df_val_streams.copy()
     df_block['hypo_type'] = 'block'
     #remove 'oper_res' and 'other' categories from df_block because these value streams are not considered for the hypothetical block gen tech.
-    df_block = df_block[~df_block['val_stream_type'].isin(['oper_res','other'])]
+    df_block = df_block[~df_block['tech_val_type'].isin(['oper_res','other'])]
     #Read in dfs['prices'], the average annual prices in $/MWh
     df_price = dfs['prices']
     #remove all but load_pca and res_marg
     df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])].copy() #copy() is used to prevent SettingWithCopyWarning
-    #rename type to val_stream_type
-    df_price.rename(columns={'type':'val_stream_type'}, inplace=True)
+    #rename type to tech_val_type
+    df_price.rename(columns={'type':'tech_val_type'}, inplace=True)
     #adjust for inflation
     df_price['price'] = df_price['price'] * inflation_mult
     #Merge df_price into df_block
-    df_block = pd.merge(left=df_block, right=df_price, on=['n','year', 'val_stream_type'], how='left', sort=False)
+    df_block = pd.merge(left=df_block, right=df_price, on=['n','year', 'tech_val_type'], how='left', sort=False)
     #Calculate block gen revenue for load_pca and res_marg by multiplying MWh by prices. This assumes that hypothetical block generator is in same n as the real generator
-    df_block_cond = df_block['val_stream_type'].isin(['load_pca','res_marg'])
+    df_block_cond = df_block['tech_val_type'].isin(['load_pca','res_marg'])
     df_block.loc[df_block_cond, '$/MWh'] = df_block.loc[df_block_cond, 'price']
     df_block.loc[df_block_cond, 'Bil $'] = df_block.loc[df_block_cond, 'MWh'] * df_block.loc[df_block_cond, 'price']/1e9
     #concatenate df_block with df_val_streams
@@ -260,9 +259,9 @@ columns_meta = {
         'map': this_dir_path + '/in/cost_cat_map.csv',
         'style': this_dir_path + '/in/cost_cat_style.csv',
     },
-    'val_stream_type':{
-        'map': this_dir_path + '/in/val_stream_type_map.csv',
-        'style': this_dir_path + '/in/val_stream_type_style.csv',
+    'tech_val_type':{
+        'map': this_dir_path + '/in/tech_val_type_map.csv',
+        'style': this_dir_path + '/in/tech_val_type_style.csv',
     },
 }
 
@@ -499,110 +498,110 @@ results_meta = collections.OrderedDict((
     ('Tech Value Streams',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'tech_val_type'], 'sum_over_cols': ['m', 'n']}},
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams n',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'n', 'val_stream_type'], 'sum_over_cols': ['m']}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'n', 'tech_val_type'], 'sum_over_cols': ['m']}},
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams n,m',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams 2',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams_2',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'tech_val_type'], 'sum_over_cols': ['m', 'n']}},
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams 2 n,m',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams_2',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams 3',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams_3',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'val_stream_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'tech_val_type'], 'sum_over_cols': ['m', 'n']}},
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Tech Value Streams 3 n,m',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams_3',
-        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value'],
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
         'preprocess': [
             {'func': pre_tech_value_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
-            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'val_stream_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+            ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
     ('Revenue Streams',
         {'sources': [
-            {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_3', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value']},
+            {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_3', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value']},
             {'name': 'prices', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n', 'type','year', 'price']},
         ],
         'preprocess': [
             {'func': pre_revenue_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'val_stream_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
-            ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
-            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'real', 'filter': {'val_stream_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
+            ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
+            ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
+            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'real', 'filter': {'tech_val_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
         )),
         }
     ),
