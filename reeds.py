@@ -1,5 +1,12 @@
 '''
 ReEDS results metadata and preprocess functions.
+
+When adding a new ReEDS result and associated presets, this should be the only file you need to modify.
+
+There are three sections:
+1. Preprocess functions: Only needed for a result if the gdx data needs to be manipulated
+2. Columns metatdata: This allows column values from a result to be mapped to display categories, joined with other columns, and styled
+3. Results metadata: This is where all result configuration happens
 '''
 from __future__ import division
 import os
@@ -9,7 +16,7 @@ import collections
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 inflation_mult = 1.2547221 #2004$ to 2015$
 
-#Preprocess functions for results_meta
+#1. Preprocess functions for results_meta
 def scale_column(df, **kw):
     df[kw['column']] = df[kw['column']] * kw['scale_factor']
     return df
@@ -189,12 +196,83 @@ def add_huc_reg(df, **kw):
     df = df.drop('huc_pca_ratio', 1)
     return df
 
-#preprocess functions for columns_meta
-def tolowercase(ser):
-    out = ser.str.lower()
-    return out
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
 
-#Results metadata
+#2. Columns metadata. These are columns that are referenced in the Results section below.
+#This is where joins, maps, and styles are applied for the columns.
+#For 'style', colors are in hex, but descriptions are given (see http://www.color-hex.com/color-names.html).
+columns_meta = {
+    'tech':{
+        'type': 'string',
+        'map': this_dir_path + '/in/tech_map.csv',
+        'style': this_dir_path + '/in/tech_style.csv',
+    },
+    'jedi_tech':{
+        'type': 'string',
+        'style': this_dir_path + '/in/jedi_tech_style.csv',
+    },
+    'directness':{
+        'type': 'string',
+        'map': this_dir_path + '/in/jedi_directness_map.csv',
+        'style': this_dir_path + '/in/jedi_directness_style.csv',
+    },
+    'i':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy.csv',
+    },
+    'n':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy.csv',
+    },
+    'state_plus_dc':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy_st_plus_dc.csv',
+    },
+    'huc_2':{
+        'type': 'string',
+        'join': this_dir_path + '/in/huc_join.csv',
+    },
+    'huc_4':{
+        'type': 'string',
+        'join': this_dir_path + '/in/huc_join.csv',
+    },
+    'huc_6':{
+        'type': 'string',
+        'join': this_dir_path + '/in/huc_join.csv',
+    },
+    'huc_8':{
+        'type': 'string',
+        'join': this_dir_path + '/in/huc_join.csv',
+    },
+    'year':{
+        'type': 'number',
+        'filterable': True,
+        'seriesable': True,
+        'y-allow': False,
+    },
+    'm':{
+        'type': 'string',
+        'style': this_dir_path + '/in/m_style.csv',
+    },
+    'cost_cat':{
+        'type': 'string',
+        'map': this_dir_path + '/in/cost_cat_map.csv',
+        'style': this_dir_path + '/in/cost_cat_style.csv',
+    },
+    'val_stream_type':{
+        'map': this_dir_path + '/in/val_stream_type_map.csv',
+        'style': this_dir_path + '/in/val_stream_type_style.csv',
+    },
+}
+
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+
+#3. Results metadata. This is where all ReEDS results are defined. Parameters are read from gdx files, and
+#are converted into pandas dataframes for pivoting. Preprocess functions may be used to perform additional manipulation.
+#Note that multiple parameters may be read in for the same result (search below for 'sources')
+#Presets may also be defined.
 results_meta = collections.OrderedDict((
     ('Capacity (GW)',
         {'file': 'CONVqn.gdx',
@@ -775,69 +853,3 @@ results_meta = collections.OrderedDict((
         }
     ),
 ))
-
-#Columns metadata.
-#For 'style', colors are in hex, but descriptions are given (see http://www.color-hex.com/color-names.html).
-columns_meta = {
-    'tech':{
-        'type': 'string',
-        'map': this_dir_path + '/in/tech_map.csv',
-        'style': this_dir_path + '/in/tech_style.csv',
-    },
-    'jedi_tech':{
-        'type': 'string',
-        'style': this_dir_path + '/in/jedi_tech_style.csv',
-    },
-    'directness':{
-        'type': 'string',
-        'map': this_dir_path + '/in/jedi_directness_map.csv',
-        'style': this_dir_path + '/in/jedi_directness_style.csv',
-    },
-    'i':{
-        'type': 'string',
-        'join': this_dir_path + '/in/hierarchy.csv',
-    },
-    'n':{
-        'type': 'string',
-        'join': this_dir_path + '/in/hierarchy.csv',
-    },
-    'state_plus_dc':{
-        'type': 'string',
-        'join': this_dir_path + '/in/hierarchy_st_plus_dc.csv',
-    },
-    'huc_2':{
-        'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
-    },
-    'huc_4':{
-        'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
-    },
-    'huc_6':{
-        'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
-    },
-    'huc_8':{
-        'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
-    },
-    'year':{
-        'type': 'number',
-        'filterable': True,
-        'seriesable': True,
-        'y-allow': False,
-    },
-    'm':{
-        'type': 'string',
-        'style': this_dir_path + '/in/m_style.csv',
-    },
-    'cost_cat':{
-        'type': 'string',
-        'map': this_dir_path + '/in/cost_cat_map.csv',
-        'style': this_dir_path + '/in/cost_cat_style.csv',
-    },
-    'val_stream_type':{
-        'map': this_dir_path + '/in/val_stream_type_map.csv',
-        'style': this_dir_path + '/in/val_stream_type_style.csv',
-    },
-}
