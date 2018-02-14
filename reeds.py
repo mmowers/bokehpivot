@@ -593,7 +593,7 @@ results_meta = collections.OrderedDict((
     ),
     ('Revenue Streams',
         {'sources': [
-            {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_2', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value']},
+            {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_3', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'val_stream_type', 'value']},
             {'name': 'prices', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n', 'type','year', 'price']},
         ],
         'preprocess': [
