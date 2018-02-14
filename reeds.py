@@ -599,9 +599,9 @@ results_meta = collections.OrderedDict((
             {'func': pre_revenue_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
+            ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
             ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
-            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'real', 'filter': {'tech_val_type': ['load_pca', 'res_marg', 'oper_res', 'other']}}),
+            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
         )),
         }
     ),
