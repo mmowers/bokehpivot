@@ -1428,7 +1428,7 @@ def update_data_source(init_load=False, init_config={}):
     path = path.replace('"', '')
     if path == '':
         pass
-    elif path.lower().endswith('.csv'):
+    elif path.lower().endswith('.csv') and not path.lower().endswith('reeds_scenarios.csv'):
         GL['df_source'], GL['columns'] = get_df_csv(path)
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
     elif path.lower().endswith('.gdx'):

@@ -66,7 +66,7 @@ def reeds_static(data_source, base, static_presets, report_path, report_format, 
         core_presets.append({'name': static_preset['name'], 'config': config})
     core.static_report(data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open)
 
-def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
+def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custom_colors):
     '''
     From data source path, fetch paths to scenarios and return dict of widgets for
     meta files, scenarios, and results
@@ -77,6 +77,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
         wdg_config (dict): Initial configuration for widgets.
         wdg_defaults (dict): Keys are widget names and values are the default values of the widgets.
         custom_sorts (dict): Keys are column names. Values are lists of values in the desired sort order.
+        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 
     Returns:
         topwdg (ordered dict): Dictionary of bokeh.model.widgets.
@@ -105,12 +106,16 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts):
             custom_sorts['scenario'] = []
             abs_path = str(os.path.abspath(runs_path))
             df_scen = pd.read_csv(abs_path)
+            if 'color' in df_scen:
+                custom_colors['scenario'] = {}
             for i_scen, scen in df_scen.iterrows():
                 if os.path.isdir(scen['path']):
                     abs_path_scen = os.path.abspath(scen['path'])
                     if os.path.isfile(abs_path_scen+'/gdxfiles/CONVqn.gdx'):
                         custom_sorts['scenario'].append(scen['name'])
                         scenarios.append({'name': scen['name'], 'path': abs_path_scen})
+                        if 'color' in df_scen:
+                            custom_colors['scenario'][scen['name']] = scen['color']
         #Else if the path is pointing to a directory, check if the directory is a run folder
         #containing gdxfiles/ and use this as the lone scenario. Otherwise, it must contain
         #run folders, so gather all of those scenarios.
@@ -278,7 +283,8 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
             df[col] = df[col].map(map_dict)
 
     #apply custom styling
-    for col in df.columns.values.tolist():
+    non_scen_col = [c for c in df.columns.values.tolist() if c != 'scenario']
+    for col in non_scen_col:
         custom_sorts.pop(col, None)
         custom_colors.pop(col, None)
         if 'meta_style_'+col in topwdg and topwdg['meta_style_'+col].value != '':
@@ -345,7 +351,7 @@ def update_reeds_data_source(path, init_load, init_config):
         Nothing: Core Globals are updated
     '''
     GL_REEDS['result_dfs'] = {}
-    core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'])
+    core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'], core.GL['custom_colors'])
     core.GL['widgets'].update(core.GL['variant_wdg'])
     #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
     if init_load and core.GL['variant_wdg']['result'].value is not 'None':

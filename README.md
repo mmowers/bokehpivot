@@ -64,7 +64,7 @@ After starting up the app in a browser window, you must enter a path in the *Dat
     * Enter a path to a ReEDS run folder (inside which there is a *gdxfiles/* folder). This works using shared drives too. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs\\someRun*.
     * Enter a path to a folder containing ReEDS run folders. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs*.
     * Enter any number of the two path types above, each separated by a | (pipe) symbol
-    * [CURRENTLY NOT AVAILABLE]: Enter a path to a csv file that contains a list of runs (see *csv/scenario_template.csv* for an example.)
+    * Enter a path to a csv file that contains a list of runs (see *in/reeds_scenarios.csv* for an example). Note that the file name must end with *reeds_scenarios.csv*. Using this method allows scenarios to be ordered as desired and colors to be specified as well.
     * After entering one of the above, see the *ReEDS Widgets* and *Core Pivot Functionality* sections below.
 
 ## ReEDS Widgets
