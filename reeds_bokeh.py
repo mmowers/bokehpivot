@@ -20,11 +20,12 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 
-def reeds_static(data_source, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
+def reeds_static(data_source, scenario_filter, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
         data_source (string): Path to ReEDS runs that will be included in report
+        scenario_filter (string): either 'all' or a string of indices of chosen scenarios in scenario filter
         base (string): Identifier for base scenario, if making comparison charts
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name' (required): Displayed name of the result 
@@ -64,7 +65,12 @@ def reeds_static(data_source, base, static_presets, report_path, report_format, 
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
-    core.static_report(data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open)
+    #Now add variant wdg configurations:
+    variant_wdg_config = []
+    if scenario_filter != 'all':
+        scenarios = map(int, scenario_filter.split(','))
+        variant_wdg_config.append({'name':'scenario_filter', 'val': scenarios, 'type': 'active'})
+    core.static_report(data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custom_colors):
     '''
@@ -390,15 +396,14 @@ def build_reeds_report(html_num='one'):
     report_path = '"' + report_path + '"'
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = '"' + core.user_out_path + '/report-' + time + '"'
-    scenario_filter = core.GL['widgets']['scenario_filter']
-    scenario_names = [l for i, l in enumerate(scenario_filter.labels) if i in scenario_filter.active]
-    scenario_paths = [i['path'] for i in GL_REEDS['scenarios'] if i['name'] in scenario_names]
-    scenarios_string = '"' + '|'.join(scenario_paths) + '"'
+    data_source = '"' + core.GL['widgets']['data'].value + '"'
+    scenario_filter_str = ','.join(str(e) for e in core.GL['widgets']['scenario_filter'].active)
+    scenario_filter_str = '"' + scenario_filter_str + '"'
     if html_num == 'one':
         auto_open = '"yes"'
     else:
         auto_open = '"no"'
-    sp.call('start python "' + this_dir_path + '/reports/interface_report.py" ' + scenarios_string + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+    sp.call('start python "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 
 def build_reeds_report_separate():
     '''

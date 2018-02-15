@@ -113,7 +113,7 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_path, report_format, html_num, output_dir, auto_open):
+def static_report(data_source, static_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config=[]):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
@@ -126,6 +126,7 @@ def static_report(data_source, static_presets, report_path, report_format, html_
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
         output_dir (string): the directory into which the resulting reports will be saved.
         auto_open (string): either "yes" to automatically open report files, or "no"
+        variant_wdg_config (list of dicts): After data source is set, this allows us to set any other variant_wdg values.
     Returns:
         Nothing: HTML and Excel files are created
     '''
@@ -135,6 +136,10 @@ def static_report(data_source, static_presets, report_path, report_format, html_
     GL['plots'] = bl.column([])
     #Update data source widget with input value
     GL['data_source_wdg']['data'].value = data_source
+    #update any variant_wdg
+    for vwc in variant_wdg_config:
+        if vwc['type'] == 'active':
+            GL['widgets'][vwc['name']].active = vwc['val']
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = output_dir + '/'
     os.makedirs(output_dir)
