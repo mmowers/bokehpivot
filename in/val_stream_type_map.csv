@@ -1,0 +1,7 @@
+raw,display
+consumption,Consumption
+load_pca,Energy Demand
+oper_res,Operating Reserves
+oper_res3,OperRes3
+res_marg,Reserve Margin
+rpsconstraint,RPS

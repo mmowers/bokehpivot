@@ -289,6 +289,10 @@ columns_meta = {
         'map': this_dir_path + '/in/tech_val_type_map.csv',
         'style': this_dir_path + '/in/tech_val_type_style.csv',
     },
+    'val_stream_type':{
+        'map': this_dir_path + '/in/val_stream_type_map.csv',
+        'style': this_dir_path + '/in/val_stream_type_style.csv',
+    },
 }
 
 #---------------------------------------------------------------------------------------------------------
@@ -516,8 +520,8 @@ results_meta = collections.OrderedDict((
             ('$/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'val_stream_type','explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75',}),
             ('Marginal Prices', {'x':'year','y':'marginal','y_agg':'Weighted Ave', 'y_weight':'quantity','explode':'val_stream_type','series': 'scenario', 'chart_type':'Line', 'sync_axes':'No',}),
             ('Final $/MWh by type by timeslice, custreg', {'chart_type':'Bar', 'x':'custreg', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'series':'val_stream_type', 'explode':'scenario', 'explode_group':'m', 'filter': {'year':'last', }}),
-            ('Final State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['load'], 'year':'last', }}),
-            ('Final State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['load'], 'year':'last', }}),
+            ('Final State map Load ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'filter': {'val_stream_type':['Energy Demand'], 'year':'last', }}),
+            ('Final State map by timeslice ($/MWh)', {'chart_type':'Map', 'x':'st', 'y':'$/MWh', 'y_agg':'Weighted Ave', 'y_weight':'MWh', 'explode':'scenario', 'explode_group':'m', 'filter': {'val_stream_type':['Energy Demand'], 'year':'last', }}),
         )),
         }
     ),
