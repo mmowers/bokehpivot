@@ -10,5 +10,6 @@ Capacity Value,#7f7f7f
 Ancillary Value,#bcbd22
 RPS Value,#17becf
 Incentives,#aec7e8
-Curtailment,#ffbb78
-Other,#98df8a
+Growth Penalty,#ffbb78
+Curtailment,#98df8a
+Other,#ff9896
