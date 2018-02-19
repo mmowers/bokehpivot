@@ -158,6 +158,8 @@ def pre_tech_value_streams(df, **kw):
 
 def pre_revenue_streams(dfs, **kw):
     #This function will add revenue streams for a hypothetical block generation tech for comparison to the real tech
+    #The hypothetical block gen tech has the same costs except no trans costs, and only has load_pca and res_marg value streams.
+    #Load_pca and res_marg value streams are calculated by applying average annual prices of load_pca and res_marg 
     #start with dfs['val_streams']
     df_val_streams = dfs['val_streams']
     #remove rps value stream
@@ -174,8 +176,8 @@ def pre_revenue_streams(dfs, **kw):
     #copy df_val_streams into df_block and change type to block
     df_block = df_val_streams.copy()
     df_block['hypo_type'] = 'block'
-    #remove 'oper_res' and 'other' categories from df_block because these value streams are not considered for the hypothetical block gen tech.
-    df_block = df_block[~df_block['tech_val_type'].isin(['oper_res','other'])]
+    #remove 'oper_res', 'trans', 'other' categories from df_block because these value streams are not considered for the hypothetical block gen tech.
+    df_block = df_block[~df_block['tech_val_type'].isin(['oper_res', 'trans', 'other'])]
     #Read in dfs['prices'], the average annual prices in $/MWh
     df_price = dfs['prices']
     #remove all but load_pca and res_marg
@@ -186,7 +188,8 @@ def pre_revenue_streams(dfs, **kw):
     df_price['price'] = df_price['price'] * inflation_mult
     #Merge df_price into df_block
     df_block = pd.merge(left=df_block, right=df_price, on=['n','year', 'tech_val_type'], how='left', sort=False)
-    #Calculate block gen revenue for load_pca and res_marg by multiplying MWh by prices. This assumes that hypothetical block generator is in same n as the real generator
+    #Calculate block gen revenue for load_pca and res_marg by multiplying MWh by average prices.
+    #This assumes that hypothetical block generator is in same n as the real generator
     df_block_cond = df_block['tech_val_type'].isin(['load_pca','res_marg'])
     df_block.loc[df_block_cond, '$/MWh'] = df_block.loc[df_block_cond, 'price']
     df_block.loc[df_block_cond, 'Bil $'] = df_block.loc[df_block_cond, 'MWh'] * df_block.loc[df_block_cond, 'price']/1e9
@@ -631,7 +634,7 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
             ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
-            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
+            ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Trans Cost']}}),
         )),
         }
     ),
