@@ -826,6 +826,7 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
     #Create figure with the ranges, titles, and tools, and adjust formatting and labels
     p = bp.figure(plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), tools=TOOLS, **kw)
     p.toolbar.active_drag = TOOLS[0]
+    p.toolbar.active_scroll = TOOLS[1]
     p.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     p.xaxis.axis_label = wdg['x_title'].value
     p.yaxis.axis_label = wdg['y_title'].value
