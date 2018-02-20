@@ -64,7 +64,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'range_show_glyphs', 'net_levels', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -416,6 +416,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
     wdg['range_show_glyphs'] = bmw.Select(title='Show Line/Dot (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-range_show_glyphs', 'adjust-drop'])
     wdg['net_levels'] = bmw.Select(title='Add Net Levels to Stacked', value='Yes', options=['Yes','No'], css_classes=['wdgkey-net_levels', 'adjust-drop'])
+    wdg['bokeh_tools'] = bmw.Select(title='Show Bokeh Tools', value='Yes', options=['Yes','No'], css_classes=['wdgkey-bokeh_tools', 'adjust-drop'])
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
@@ -833,7 +834,9 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
     p.xaxis.major_label_text_font_size = wdg['x_major_label_size'].value + 'pt'
     p.yaxis.major_label_text_font_size = wdg['y_major_label_size'].value + 'pt'
     p.xaxis.major_label_orientation = 'horizontal' if wdg['x_major_label_orientation'].value == '0' else math.radians(float(wdg['x_major_label_orientation'].value))
-
+    if wdg['bokeh_tools'].value == 'No':
+        p.toolbar.logo = None
+        p.toolbar_location = None
 
     #Add glyphs to figure
     c = C_NORM
