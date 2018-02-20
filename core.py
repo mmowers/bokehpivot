@@ -28,6 +28,9 @@ import subprocess as sp
 import jinja2 as ji
 import reeds_bokeh as rb
 
+#Debug mode
+debug = False
+
 #Defaults to configure:
 PLOT_WIDTH = 300
 PLOT_HEIGHT = 300

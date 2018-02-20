@@ -403,7 +403,10 @@ def build_reeds_report(html_num='one'):
         auto_open = '"yes"'
     else:
         auto_open = '"no"'
-    sp.call('start python "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+    start_str = 'start python'
+    if core.debug:
+        start_str = 'start cmd /K python'
+    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 
 def build_reeds_report_separate():
     '''
