@@ -152,6 +152,10 @@ def pre_tech_value_streams(df, **kw):
     df.columns.name = None
     df = pd.melt(df, id_vars=merge_index, value_vars=tech_val_types, var_name='tech_val_type', value_name= 'value')
     df['value'] = df['value'].fillna(0)
+    #If we are calculating total, sum the desired tech_val_types and remove the others
+    if 'opt' in kw and kw['opt'] == 'tot':
+        df = df[df['tech_val_type'].isin(['load_pca','res_marg','oper_res'])]
+        df = sum_over_cols(df, sum_over_cols='tech_val_type', group_cols=merge_index)
     #Now do the merge.
     df = pd.merge(left=df, right=df_quant, how='outer', on=merge_index, sort=False)
     df.rename(columns={'value_x': '$', 'value_y': 'MWh'}, inplace=True)
@@ -624,6 +628,20 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('New $/MWh by type over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
             ('Bil $ by type over time', {'x':'year','y':'Bil $','series':'tech_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Tech Value Streams Tot',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_3',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'tech_val_type'], 'sum_over_cols': ['m', 'n']}},
+            {'func': pre_tech_value_streams, 'args': {'opt':'tot'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New $/MWh over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'scenario', 'explode': 'tech', 'chart_type':'Line', 'filter': {'new_exist':['new']}}),
+            ('Bil $ over time', {'x':'year','y':'Bil $','series':'scenario', 'explode': 'tech', 'chart_type':'Line', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
