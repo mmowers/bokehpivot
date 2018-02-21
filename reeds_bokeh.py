@@ -396,7 +396,7 @@ def build_reeds_report(html_num='one'):
     report_path = '"' + report_path + '"'
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = '"' + core.user_out_path + '/report-' + time + '"'
-    data_source = '"' + core.GL['widgets']['data'].value + '"'
+    data_source = '"' + core.GL['widgets']['data'].value.replace('"', '') + '"'
     scenario_filter_str = ','.join(str(e) for e in core.GL['widgets']['scenario_filter'].active)
     scenario_filter_str = '"' + scenario_filter_str + '"'
     if html_num == 'one':
