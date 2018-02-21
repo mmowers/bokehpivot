@@ -74,9 +74,13 @@ def pre_marginal_capacity_value(dfs, **kw):
     df = pd.merge(left=dfs['cv_mar'], right=dfs['new_cap'], on=['tech','n','year'], how='left', sort=False)
     return df
 
-def pre_marginal_curtailment(df, **kw):
+def pre_marginal_curtailment_filter(df, **kw):
     df = df[df['type'].isin(['surpmar','new-generation'])]
-    df = df.pivot_table(index=['n','m','year','rtech'], columns='type', values='value').reset_index()
+    return df
+
+def pre_marginal_curtailment(df, **kw):
+    index_cols = [i for i in df.columns.values.tolist() if i not in ['type','value']]
+    df = df.pivot_table(index=index_cols, columns='type', values='value').reset_index()
     df.rename(columns={'surpmar': 'surplus', 'new-generation': 'gen'}, inplace=True)
     df['surpmar'] = df['surplus'] / df['gen']
     return df
@@ -732,6 +736,20 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Marginal Curtailment',
+        {'file': "Reporting.gdx",
+        'param': 'VRREOut',
+        'columns': ["n","m","year","rtech","type","value"],
+        'preprocess': [
+            {'func': pre_marginal_curtailment_filter, 'args': {}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['n', 'year', 'rtech', 'type'], 'sum_over_cols': ['m']}},
+            {'func': pre_marginal_curtailment, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Marginal Curtailment by tech', {'chart_type':'Line', 'x':'year', 'y':'surpmar', 'y_agg':'Weighted Ave', 'y_weight':'gen', 'series':'scenario', 'explode':'rtech', 'filter': {}}),
+        )),
+        }
+    ),
+    ('Marginal Curtailment m',
         {'file': "Reporting.gdx",
         'param': 'VRREOut',
         'columns': ["n","m","year","rtech","type","value"],
