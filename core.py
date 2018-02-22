@@ -1142,6 +1142,11 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         tools=TOOLS
     )
     fig_map.title.text_font_size = wdg['map_font_size'].value + 'pt'
+    fig_map.toolbar.active_drag = TOOLS[0]
+    fig_map.toolbar.active_scroll = TOOLS[1]
+    if wdg['bokeh_tools'].value == 'No':
+        fig_map.toolbar.logo = None
+        fig_map.toolbar_location = None
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
     return fig_map
