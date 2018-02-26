@@ -22,8 +22,6 @@ wind-ofs,Wind
 wind-ofm,Wind
 wind-ofd,Wind
 csp,CSP
-csp-ns,CSP
-csp-ws,CSP
 upv,PV (AC)
 dupv,PV (AC)
 distpv,Distributed PV (AC)
