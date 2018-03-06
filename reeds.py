@@ -181,28 +181,39 @@ def pre_revenue_streams(dfs, **kw):
     #Add column for real vs hypothetical
     df_val_streams['hypo_type'] = 'real'
     #Now create the hypothetical block generation tech with adjusted load_pca and res_marg streams
-    #copy df_val_streams into df_block and change type to block
+    #copy df_val_streams into df_block and change type to block. Also copy into df_block_load_dist,
+    #the load-distributed block
     df_block = df_val_streams.copy()
+    df_block_load_dist = df_val_streams.copy()
     df_block['hypo_type'] = 'block'
+    df_block_load_dist['hypo_type'] = 'block_load_dist'
     #remove 'oper_res', 'trans', 'other' categories from df_block because these value streams are not considered for the hypothetical block gen tech.
     df_block = df_block[~df_block['tech_val_type'].isin(['oper_res', 'trans', 'other'])]
+    df_block_load_dist = df_block_load_dist[~df_block_load_dist['tech_val_type'].isin(['oper_res', 'trans', 'other'])]
     #Read in dfs['prices'], the average annual prices in $/MWh
     df_price = dfs['prices']
+    df_price_load_dist = dfs['prices_nat']
     #remove all but load_pca and res_marg
     df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])].copy() #copy() is used to prevent SettingWithCopyWarning
+    df_price_load_dist = df_price_load_dist[df_price_load_dist['type'].isin(['load_pca','res_marg'])].copy() #copy() is used to prevent SettingWithCopyWarning
     #rename type to tech_val_type
     df_price.rename(columns={'type':'tech_val_type'}, inplace=True)
+    df_price_load_dist.rename(columns={'type':'tech_val_type'}, inplace=True)
     #adjust for inflation
     df_price['price'] = df_price['price'] * inflation_mult
+    df_price_load_dist['price'] = df_price_load_dist['price'] * inflation_mult
     #Merge df_price into df_block
     df_block = pd.merge(left=df_block, right=df_price, on=['n','year', 'tech_val_type'], how='left', sort=False)
+    df_block_load_dist = pd.merge(left=df_block_load_dist, right=df_price_load_dist, on=['year', 'tech_val_type'], how='left', sort=False)
+    df_blocks = pd.concat([df_block, df_block_load_dist], ignore_index=True)
     #Calculate block gen revenue for load_pca and res_marg by multiplying MWh by average prices.
-    #This assumes that hypothetical block generator is in same n as the real generator
-    df_block_cond = df_block['tech_val_type'].isin(['load_pca','res_marg'])
-    df_block.loc[df_block_cond, '$/MWh'] = df_block.loc[df_block_cond, 'price']
-    df_block.loc[df_block_cond, 'Bil $'] = df_block.loc[df_block_cond, 'MWh'] * df_block.loc[df_block_cond, 'price']/1e9
+    #df_block assumes that hypothetical block generator is in same n as the real generator.
+    #df_block_load_dist assumes that hypothetical block generator is load-distributed.
+    df_block_cond = df_blocks['tech_val_type'].isin(['load_pca','res_marg'])
+    df_blocks.loc[df_block_cond, '$/MWh'] = df_blocks.loc[df_block_cond, 'price']
+    df_blocks.loc[df_block_cond, 'Bil $'] = df_blocks.loc[df_block_cond, 'MWh'] * df_blocks.loc[df_block_cond, 'price']/1e9
     #concatenate df_block with df_val_streams
-    df = pd.concat([df_val_streams, df_block], ignore_index=True)
+    df = pd.concat([df_val_streams, df_blocks], ignore_index=True)
     return df
 
 def pre_profitability_index(df, **kw):
@@ -649,6 +660,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_3', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value']},
             {'name': 'prices', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n', 'type','year', 'price']},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year', 'price']},
         ],
         'preprocess': [
             {'func': pre_revenue_streams, 'args': {}},
@@ -657,6 +669,7 @@ results_meta = collections.OrderedDict((
             ('$/MWh total revenue', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'hypo_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Line', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Other']}}),
             ('Wind $/MWh', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'tech_val_type', 'explode': 'hypo_type', 'explode_group': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'tech':['Wind']}}),
             ('Value factor', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Trans Cost']}}),
+            ('Value factor load dist', {'x':'year','y':'Bil $','series':'tech', 'explode': 'scenario', 'explode_group': 'hypo_type', 'chart_type':'Line', 'adv_op':'Ratio','adv_col':'hypo_type','adv_col_base':'block_load_dist', 'filter': {'tech_val_type': ['Energy Value', 'Capacity Value', 'Ancillary Value', 'Trans Cost']}}),
         )),
         }
     ),
