@@ -221,18 +221,24 @@ def pre_profitability_index(df, **kw):
     costs = ['water','varom','trans','incent','fuel','fixom','capital']
     #leaving out rps in system_vals because we are implementing forcing functions
     system_vals = ['load_pca','res_marg','oper_res','other','surplus']
-    df = df[df['tech_val_type'].isin(costs + system_vals)].copy()
-    df['cost_val'] = 'val'
+    df = df[df['tech_val_type'].isin(costs + system_vals + ['quantity'])].copy()
+    df['agg_cat'] = 'energy'
+    df.loc[df['tech_val_type'].isin(system_vals), 'agg_cat'] = 'val'
     df_costs = df['tech_val_type'].isin(costs)
-    df.loc[df_costs, 'cost_val'] = 'cost'
+    df.loc[df_costs, 'agg_cat'] = 'cost'
     #costs are negative so we must multiply by -1
     df.loc[df_costs, 'value'] = df.loc[df_costs, 'value'] * -1
     df.drop(['tech_val_type'], axis='columns', inplace=True)
     #add up all costs and values
-    df =  df.groupby(['tech', 'new_exist', 'year', 'n','cost_val'], sort=False, as_index =False).sum()
-    #now turn cost and val into separate columns
-    df = df.pivot_table(index=['tech', 'new_exist', 'year', 'n'], columns='cost_val', values='value').reset_index()
-    df['index'] = df['val'] / df['cost']
+    df =  df.groupby(['tech', 'new_exist', 'year', 'n','agg_cat'], sort=False, as_index =False).sum()
+    #now turn cost, val, and energy into separate columns
+    df = df.pivot_table(index=['tech', 'new_exist', 'year', 'n'], columns='agg_cat', values='value').reset_index()
+    df['cost'] = df['cost'] * inflation_mult
+    df['val'] = df['val'] * inflation_mult
+    df['profit_index'] = df['val'] / df['cost']
+    df['LCOV'] = df['cost'] / df['val']
+    df['LCOE'] = df['cost'] / df['energy']
+    df['LCOV/LCOE'] = df['LCOV'] / df['LCOE']
     return df
 
 def add_huc_reg(df, **kw):
@@ -673,7 +679,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Profitability Index',
+    ('System Profitability Index',
         {'file': 'valuestreams.gdx',
         'param': 'tech_val_streams_3',
         'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value'],
@@ -682,7 +688,10 @@ results_meta = collections.OrderedDict((
             {'func': pre_profitability_index, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Index by tech', {'chart_type':'Line', 'x':'year', 'y':'index', 'y_agg':'Weighted Ave', 'y_weight':'cost', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+            ('Profit Index by tech', {'chart_type':'Line', 'x':'year', 'y':'profit_index', 'y_agg':'Weighted Ave', 'y_weight':'cost', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+            ('LCOV by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOV', 'y_agg':'Weighted Ave', 'y_weight':'val', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+            ('LCOE by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOE', 'y_agg':'Weighted Ave', 'y_weight':'energy', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+            ('LCOV/LCOE by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOV/LCOE', 'y_agg':'Weighted Ave', 'y_weight':'LCOE', 'series':'scenario', 'explode':'tech', 'filter': {}}),
         )),
         }
     ),
