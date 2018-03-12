@@ -209,17 +209,25 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
-                    data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + src['file'], src['param'])
-                    df_src = pd.DataFrame(data)
-                    df_src.columns = src['columns']
+                    if src['file'].endswith('.gdx'):
+                        filepath = scenarios[i]['path'] + '\\gdxfiles\\' + src['file']
+                        data = gdx2py.par2list(filepath, src['param'])
+                        df_src = pd.DataFrame(data)
+                        df_src.columns = src['columns']
+                    elif src['file'].endswith('.csv'):
+                        df_src = pd.read_csv(filepath)
                     df_src = df_to_lowercase(df_src)
                     df_scen_result[src['name']] = df_src
             else:
                 #else we have only one parameter as a data source
-                data = gdx2py.par2list(scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file'], result_meta['param'])
-                df_scen_result = pd.DataFrame(data)
+                filepath = scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file']
+                if result_meta['file'].endswith('.gdx'):
+                    data = gdx2py.par2list(filepath, result_meta['param'])
+                    df_scen_result = pd.DataFrame(data)
+                    df_scen_result.columns = result_meta['columns']
+                elif result_meta['file'].endswith('.csv'):
+                    df_scen_result = pd.read_csv(filepath)
                 df_scen_result = df_to_lowercase(df_scen_result)
-                df_scen_result.columns = result_meta['columns']
             #preprocess and return one dataframe
             if 'preprocess' in result_meta:
                 for preprocess in result_meta['preprocess']:
