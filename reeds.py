@@ -15,6 +15,7 @@ import collections
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 inflation_mult = 1.2547221 #2004$ to 2015$
+CRF_reeds = 0.0832902994316595
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -673,6 +674,17 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('New $/MWh over time', {'x':'year','y':'$/MWh','y_agg':'Weighted Ave', 'y_weight':'MWh','series':'scenario', 'explode': 'tech', 'chart_type':'Line', 'filter': {'new_exist':['new']}}),
             ('Bil $ over time', {'x':'year','y':'Bil $','series':'scenario', 'explode': 'tech', 'chart_type':'Line', 'filter': {'new_exist':['new']}}),
+        )),
+        }
+    ),
+    ('Tech Value Streams mps n',
+        {'file': 'valuestreams.csv',
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
+            {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {}}),
         )),
         }
     ),
