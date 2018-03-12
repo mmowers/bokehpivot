@@ -241,6 +241,20 @@ def pre_profitability_index(df, **kw):
     df['LCOV/LCOE'] = df['LCOV'] / df['LCOE']
     return df
 
+def pre_stacked_profitability(df, **kw):
+    #Sum all costs so that we can calculate value / total cost for each value stream
+    #remove quantity
+    df = df[df['tech_val_type'] != 'quantity'].copy()
+    #adjust by inflation and express as billion $
+    df['Bil $'] = df['Bil $'] * inflation_mult / 1e9
+    #label all costs the same so they can be grouped
+    costs = ['water','varom','trans','incent','fuel','fixom','capital']
+    df.loc[df['tech_val_type'].isin(costs),'tech_val_type'] = 'cost'
+    df.loc[df['tech_val_type'] == 'cost','Bil $'] *= -1
+    #sum costs
+    df =  df.groupby(['tech', 'new_exist', 'year', 'n','tech_val_type'], sort=False, as_index =False).sum()
+    return df
+
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
@@ -692,6 +706,19 @@ results_meta = collections.OrderedDict((
             ('LCOV by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOV', 'y_agg':'Weighted Ave', 'y_weight':'val', 'series':'scenario', 'explode':'tech', 'filter': {}}),
             ('LCOE by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOE', 'y_agg':'Weighted Ave', 'y_weight':'energy', 'series':'scenario', 'explode':'tech', 'filter': {}}),
             ('LCOV/LCOE by tech', {'chart_type':'Line', 'x':'year', 'y':'LCOV/LCOE', 'y_agg':'Weighted Ave', 'y_weight':'LCOE', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+        )),
+        }
+    ),
+    ('Stacked System Profitability Index',
+        {'file': 'valuestreams.gdx',
+        'param': 'tech_val_streams_3',
+        'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'Bil $'],
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_exist', 'year', 'n', 'tech_val_type'], 'sum_over_cols': ['m']}},
+            {'func': pre_stacked_profitability, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars', {'chart_type':'Bar', 'x':'year', 'y':'Bil $', 'series':'tech_val_type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'tech_val_type', 'adv_col_base':'Cost', 'bar_width':r'1.75', 'filter': {'new_exist':['new']}}),
         )),
         }
     ),
