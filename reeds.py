@@ -256,6 +256,17 @@ def pre_stacked_profitability(df, **kw):
     df =  df.groupby(['tech', 'new_exist', 'year', 'n','tech_val_type'], sort=False, as_index =False).sum()
     return df
 
+def pre_stacked_profitability_potential(df, **kw):
+    #Sum all costs so that we can calculate value / total cost for each value stream
+    #remove quantity
+    #label all costs the same so they can be grouped
+    costs = ['fix cost','var cost','trans cost','gp']
+    df.loc[df['type'].isin(costs),'type'] = 'cost'
+    df.loc[df['type'] == 'cost','value_per_unit'] *= -1
+    #sum costs
+    df =  df.groupby(['tech', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
+    return df
+
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
@@ -677,17 +688,6 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Value Streams mps n',
-        {'file': 'valuestreams.csv',
-        'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
-            {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
-        ],
-        'presets': collections.OrderedDict((
-            ('Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {}}),
-        )),
-        }
-    ),
     ('Revenue Streams',
         {'sources': [
             {'name': 'val_streams', 'file': 'valuestreams.gdx', 'param': 'tech_val_streams_3', 'columns': ['tech', 'new_exist', 'year', 'n', 'm', 'tech_val_type', 'value']},
@@ -757,6 +757,38 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Tech Value Factors',{'chart_type':'Line', 'x':'year', 'y':'Price ($/MWh)', 'y_agg':'Weighted Ave Ratio', 'y_weight':'Gen (MWh)', 'y_weight_denom':'hours', 'series':'tech', 'explode':'scenario', 'filter': {}}),
+        )),
+        }
+    ),
+    ('Tech Val Streams mps chosen',
+        {'file': 'valuestreams_chosen.csv',
+        'preprocess': [
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
+            {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {}}),
+        )),
+        }
+    ),
+    ('Tech Val Streams potential',
+        {'file': 'valuestreams_potential.csv',
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'value_per_unit'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('$/MW by type final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+        )),
+        }
+    ),
+    ('Stacked profitability potential',
+        {'file': 'valuestreams_potential.csv',
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'value_per_unit'}},
+            {'func': pre_stacked_profitability_potential, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked profitability final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
