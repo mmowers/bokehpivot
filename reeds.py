@@ -260,7 +260,7 @@ def pre_stacked_profitability_potential(df, **kw):
     #Sum all costs so that we can calculate value / total cost for each value stream
     #remove quantity
     #label all costs the same so they can be grouped
-    costs = ['fix cost','var cost','trans cost','gp']
+    costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','value_per_unit'] *= -1
     #sum costs
@@ -777,7 +777,7 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'value_per_unit'}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MW by type final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('$/MW by type final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
@@ -788,7 +788,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_stacked_profitability_potential, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked profitability final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('Stacked profitability final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
