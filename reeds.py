@@ -780,6 +780,7 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('$/MW by type final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('$/MW by type final p60', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
