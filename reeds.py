@@ -763,11 +763,13 @@ results_meta = collections.OrderedDict((
     ('Tech Val Streams mps chosen',
         {'file': 'valuestreams_chosen.csv',
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_old', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
             {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
         ],
         'presets': collections.OrderedDict((
-            ('Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {}}),
+            ('New Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['new']}}),
+            ('Old Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['old']}}),
+            ('Mixed Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['mixed']}}),
         )),
         }
     ),
