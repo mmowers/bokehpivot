@@ -262,7 +262,7 @@ def pre_stacked_profitability_potential(df, **kw):
     #label all costs the same so they can be grouped
     costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
-    df.loc[df['type'] == 'cost','value_per_unit'] *= -1
+    df.loc[df['type'] == 'cost','$/kW'] *= -1
     #sum costs
     df =  df.groupby(['tech', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
     return df
@@ -767,31 +767,32 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
         ],
         'presets': collections.OrderedDict((
-            ('New Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['new']}}),
-            ('Old Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['old']}}),
-            ('Mixed Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['mixed']}}),
+            ('New Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
+            ('Old Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['old']}}),
+            ('Mixed Bil $ by type over time', {'x':'year','y':'value','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['mixed']}}),
         )),
         }
     ),
     ('Tech Val Streams potential',
         {'file': 'valuestreams_potential.csv',
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'value_per_unit'}},
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MW by type final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
-            ('$/MW by type final p60', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('$/MW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('$/MW by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
     ('Stacked profitability potential',
         {'file': 'valuestreams_potential.csv',
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'value_per_unit'}},
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
             {'func': pre_stacked_profitability_potential, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked profitability final', {'x':'var_set','y':'value_per_unit','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('Stacked profitability final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
+            ('Stacked profitability final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']}}}),
         )),
         }
     ),
