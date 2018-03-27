@@ -209,8 +209,8 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
+                    filepath = scenarios[i]['path'] + '\\gdxfiles\\' + src['file']
                     if src['file'].endswith('.gdx'):
-                        filepath = scenarios[i]['path'] + '\\gdxfiles\\' + src['file']
                         data = gdx2py.par2list(filepath, src['param'])
                         df_src = pd.DataFrame(data)
                         df_src.columns = src['columns']
