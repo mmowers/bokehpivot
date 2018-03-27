@@ -256,6 +256,28 @@ def pre_stacked_profitability(df, **kw):
     df =  df.groupby(['tech', 'new_exist', 'year', 'n','tech_val_type'], sort=False, as_index =False).sum()
     return df
 
+def pre_tech_val_streams_potential(dfs, **kw):
+    #Add a MWh/kW row for each resource for $/MWh calc, and add block revenue in $/kW for value factor calc.
+    #All $ are annualized
+    df_valstream = dfs['valstream']
+    df_load = dfs['load']
+    df_price = dfs['prices_nat']
+    #convert to annualized $/kW
+    df_valstream['$/kW'] = df_valstream['$/kW'] * inflation_mult * CRF_reeds
+    df_load['type'] = 'MWh/kW'
+    df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])].copy()
+    #sum load and res_marg prices
+    df_price = sum_over_cols(df_price, sum_over_cols=['type'], group_cols=['year'])
+    #merge df_load into df_price
+    df_price['year'] = pd.to_numeric(df_price['year'])
+    df_price = pd.merge(left=df_price, right=df_load, on=['year'], how='left', sort=False)
+    df_price['$/kW'] = df_price['$/MWh'] * df_price['MWh/kW'] * inflation_mult
+    df_price['type'] = 'block_revenue'
+    df_price.drop(['$/MWh','MWh/kW'], axis='columns', inplace=True)
+    df_load.rename(columns={'MWh/kW': '$/kW'}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
+    df = pd.concat([df_valstream,df_load,df_price], ignore_index=True)
+    return df
+
 def pre_stacked_profitability_potential(df, **kw):
     #Sum all costs so that we can calculate value / total cost for each value stream
     #remove quantity
@@ -780,10 +802,27 @@ results_meta = collections.OrderedDict((
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
-            ('$/MW by type retire final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['retire']}}),
-            ('$/MW by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
-            ('$/MW by type retire final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['retire']}}),
+            ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
+            ('$/kW by type retire final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['retire']}}),
+            ('$/kW by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
+            ('$/kW by type retire final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['retire']}}),
+        )),
+        }
+    ),
+    ('Tech Val Streams $/MWh potential',
+        {'sources': [
+            {'name': 'valstream', 'file': 'valuestreams_potential.csv'},
+            {'name': 'load', 'file': 'load_pca_potential.csv'},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year', '$/MWh']},
+        ],
+        'preprocess': [
+            {'func': pre_tech_val_streams_potential, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('$/MWh by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
+            ('Stacked Value factor by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_revenue', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['MWh/kW','profit','reduced_cost','fix_cost','gp']},'new_old':['new']}}),
+            ('$/MWh by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
+            ('Stacked Value factor by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_revenue', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['MWh/kW','profit','reduced_cost','fix_cost','gp']},'new_old':['new']}}),
         )),
         }
     ),
