@@ -783,7 +783,7 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Tech Val Streams mps chosen',
-        {'file': 'valuestreams_chosen.csv',
+        {'file': 'valuestreams/valuestreams_chosen.csv',
         'preprocess': [
             {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_old', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
             {'func': scale_column, 'args': {'scale_factor': 1000*CRF_reeds*inflation_mult/1e9, 'column': 'value'}},
@@ -797,7 +797,7 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Tech Val Streams potential',
-        {'file': 'valuestreams_potential.csv',
+        {'file': 'valuestreams/valuestreams_potential.csv',
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
         ],
@@ -811,8 +811,8 @@ results_meta = collections.OrderedDict((
     ),
     ('Tech Val Streams $/MWh potential',
         {'sources': [
-            {'name': 'valstream', 'file': 'valuestreams_potential.csv'},
-            {'name': 'load', 'file': 'load_pca_potential.csv'},
+            {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
+            {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year', '$/MWh']},
         ],
         'preprocess': [
@@ -827,7 +827,7 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Stacked profitability potential',
-        {'file': 'valuestreams_potential.csv',
+        {'file': 'valuestreams/valuestreams_potential.csv',
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
             {'func': pre_stacked_profitability_potential, 'args': {}},
