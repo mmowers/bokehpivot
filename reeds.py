@@ -42,7 +42,7 @@ def discount_costs(df, **kw):
     return df
 
 #Return present value multiplier
-def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20, refyear=2017, lastyear=2050):
+def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20, refyear=2017, lastyear=2100):
     if type == "Operation":
         pv_mult = 1 / (1 + dsocial)**(year - refyear)
     elif type == "Capital":
