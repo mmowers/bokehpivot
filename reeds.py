@@ -28,9 +28,9 @@ def scale_column_filtered(df, **kw):
     return df
 
 def sum_over_cols(df, **kw):
-    df.drop(kw['sum_over_cols'], axis='columns', inplace=True)
-    df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
-    return df
+    df_out = df.drop(kw['sum_over_cols'], axis='columns')
+    df_out =  df_out.groupby(kw['group_cols'], sort=False, as_index =False).sum()
+    return df_out
 
 def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
@@ -89,23 +89,43 @@ def pre_marginal_curtailment(df, **kw):
 def pre_tech_val_streams_potential(dfs, **kw):
     #Add a MWh/kW row for each resource for $/MWh calc, and add block revenue in $/kW for value factor calc.
     #All $ are annualized
+
     df_valstream = dfs['valstream']
-    df_load = dfs['load']
-    df_price = dfs['prices_nat']
     #convert to annualized $/kW
     df_valstream['$/kW'] = df_valstream['$/kW'] * inflation_mult * CRF_reeds
+
+    df_load = dfs['load']
+
+    #All dist prices are load-weighted. Ideally, res_marg price would be weighted based on reserve margin requirement
+    df_price_dist = dfs['prices_nat']
+    df_price_ba = dfs['prices_ba']
+    df_price_dist = df_price_dist[df_price_dist['type'].isin(['load_pca','res_marg'])].copy()
+    df_price_ba = df_price_ba[df_price_ba['type'].isin(['load_pca','res_marg'])].copy()
+    df_price_dist['year'] = pd.to_numeric(df_price_dist['year'])
+    df_price_ba['year'] = pd.to_numeric(df_price_ba['year'])
+
+    #Gather all prices, price_ba_load, price_ba_res_marg, price_ba_comb, price_dist_load, price_dist_res_marg, price_dist_comb
+    df_price_dist_comb = sum_over_cols(df_price_dist, sum_over_cols=['type'], group_cols=['year'])
+    df_price_ba_comb = sum_over_cols(df_price_ba, sum_over_cols=['type'], group_cols=['n','year'])
+    df_price_dist_comb['type'] = 'comb'
+    df_price_ba_comb['type'] = 'comb'
+    df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True)
+    df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True)
+
+    #merge df_price into df_load and calculate block values for these types:
+    #block_local_load, block_local_resmarg, block_local_comb, block_dist_load, block_dist_resmarg, block_dist_comb, 
+    df_block_dist = pd.merge(left=df_load, right=df_price_dist, on=['year'], how='left', sort=False)
+    df_block_ba = pd.merge(left=df_load, right=df_price_ba, on=['n','year'], how='left', sort=False)
+    df_block_dist['$/kW'] = df_block_dist['$/MWh'] * df_block_dist['MWh/kW'] * inflation_mult
+    df_block_ba['$/kW'] = df_block_ba['$/MWh'] * df_block_ba['MWh/kW'] * inflation_mult
+    df_block_dist.drop(['$/MWh','MWh/kW'], axis='columns', inplace=True)
+    df_block_ba.drop(['$/MWh','MWh/kW'], axis='columns', inplace=True)
+    df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
+    df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
+
     df_load['type'] = 'MWh/kW'
-    df_price = df_price[df_price['type'].isin(['load_pca','res_marg'])].copy()
-    #sum load and res_marg prices
-    df_price = sum_over_cols(df_price, sum_over_cols=['type'], group_cols=['year'])
-    #merge df_load into df_price
-    df_price['year'] = pd.to_numeric(df_price['year'])
-    df_price = pd.merge(left=df_price, right=df_load, on=['year'], how='left', sort=False)
-    df_price['$/kW'] = df_price['$/MWh'] * df_price['MWh/kW'] * inflation_mult
-    df_price['type'] = 'block_revenue'
-    df_price.drop(['$/MWh','MWh/kW'], axis='columns', inplace=True)
     df_load.rename(columns={'MWh/kW': '$/kW'}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
-    df = pd.concat([df_valstream,df_load,df_price], ignore_index=True)
+    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist], ignore_index=True)
     return df
 
 def pre_stacked_profitability_potential(df, **kw):
@@ -444,7 +464,8 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
-            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year', '$/MWh']},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
+            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams_potential, 'args': {}},
@@ -452,8 +473,21 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('$/MWh by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
             ('$/MWh by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
-            ('Stacked Value factor by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_revenue', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_revenue','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Stacked Value factor by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_revenue', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_revenue','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+
+            ('Value factor Combined Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+            ('Value factor Combined Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+            ('Value factor Combined Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+            ('Value factor Combined Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+
+            ('Value factor Load Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
+            ('Value factor Load Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
+            ('Value factor Load Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_load','load_pca','surplus'],'new_old':['new']}}),
+            ('Value factor Load Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_load','load_pca','surplus'],'new_old':['new']}}),
+
+            ('Value factor Res Marg Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_resmarg','res_marg'],'new_old':['new']}}),
+            ('Value factor Res Marg Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_resmarg','res_marg'],'new_old':['new']}}),
+            ('Value factor Res Marg Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_resmarg','res_marg'],'new_old':['new']}}),
+            ('Value factor Res Marg Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_resmarg','res_marg'],'new_old':['new']}}),
         )),
         }
     ),
