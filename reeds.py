@@ -134,17 +134,29 @@ def pre_tech_val_streams(dfs, **kw):
     df_load['type'] = load_val
     df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
     df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist], ignore_index=True)
+    if kw['cat'] == 'potential':
+        df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
+        df.rename(columns={'MW': 'chosen'}, inplace=True)
+        df['chosen'] = df['chosen'].fillna(value='no')
+        df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
     return df
 
-def pre_stacked_profitability_potential(df, **kw):
+def pre_stacked_profitability_potential(dfs, **kw):
     #Sum all costs so that we can calculate value / total cost for each value stream
     #remove quantity
     #label all costs the same so they can be grouped
+    df = dfs['valstream']
+    df['$/kW'] = df['$/kW'] * inflation_mult
     costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$/kW'] *= -1
     #sum costs
-    df =  df.groupby(['tech', 'new_old', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
+    df = df.groupby(['tech', 'new_old', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
+    #merge with chosen so we can filter by chosen plants
+    df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
+    df.rename(columns={'MW': 'chosen'}, inplace=True)
+    df['chosen'] = df['chosen'].fillna(value='no')
+    df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
     return df
 
 def add_huc_reg(df, **kw):
@@ -496,6 +508,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
+            {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
         ],
@@ -524,9 +537,11 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Tech Val Streams potential profitability',
-        {'file': 'valuestreams/valuestreams_potential.csv',
+        {'sources': [
+            {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
+            {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+        ],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
             {'func': pre_stacked_profitability_potential, 'args': {}},
         ],
         'presets': collections.OrderedDict((
