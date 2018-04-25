@@ -556,6 +556,18 @@ results_meta = collections.OrderedDict((
         'columns': ['n', 'm', 'type', 'year', 'value'],
         }
     ),
+    ('BA Ann Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_BA_ann_allyrs',
+        'columns': ['n', 'type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+        )),
+        }
+    ),
     ('Nat Ann Marginal Prices',
         {'file': 'MarginalPrices.gdx',
         'param': 'pmarg_nat_ann_allyrs',
