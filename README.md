@@ -10,18 +10,20 @@ https://github.com/bokeh/bokeh/tree/master/examples/app/pivot
 There are two different ways to use this app: On Scorpio or Orion (easiest way), and locally. See the following sections for details on each:
 
 ## Running on Scorpio/Orion (easiest)
-1. Simply double click the *Launch Common Bokeh Pivot.bat* file on your desktop. This will launch the bokeh server in a terminal window and a browser window for the results
-    * If you're curious, you can open the .bat file in a text editor. The contents will look like:
-      ```
-      bokeh serve \\nrelqnap01d/ReEDS/bokehpivot --show --allow-websocket-origin 1wp11rdori02.nrel.gov:<port> --allow-websocket-origin localhost:<port> --port <port>
-      ```
-    * Here is a breakdown of the contents of *Launch Common Bokeh Pivot.bat*:
-        * `bokeh serve`: Launch bokeh server. See http://bokeh.pydata.org/en/latest/docs/user_guide/server.html for more info.
-        * `\\nrelqnap01d/ReEDS/bokehpivot`: Path to common bokehpivot app. Note that this app will be updated frequently. If you want to launch from your own bokehpivot repo, simply enter that path in the .bat file instead.
-        * `--port <port>`: Jonathan has assigned you a unique port on Scorpio/Orion to run your bokeh server. We can't all use the same port number because each port can only be used once.
-        * `--allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port>`: The first address allows requests that are external to Scorpio/Orion (but on the NREL network) to access the bokeh server that you have launched. The Second allows internal requests to localhost, which is the default request when you run the .bat file.
-1. Go to the *Loading ReEDS data* section below.
+There should be two .bat files on your desktop on both Orion and Scorpio. One is called *Launch Common Bokeh Pivot.bat* and the other is called *Launch Local Bokeh Pivot.bat*. *Launch Common Bokeh Pivot.bat* launches the common bokehpivot repo at //nrelqnap02/ReEDS/bokehpivot, and *Launch Local Bokeh Pivot.bat* can be used to launch from own bokehpivot repo.
+1. If running from your own bokehpivot repo, make sure that *Launch Local Bokeh Pivot.bat* is located in the directory above your bokehpivot repo. This step is not necessary when using the common repo.
+1. Simply double click on one of the .bat files to launch the tool. This will start a bokeh server in a terminal window and a browser window with an interactive interface.
+1. After the tool is launched, go to the *Loading ReEDS data* section below.
 1. When done, simply close the terminal window that is running the server.
+* If you're curious about the contents of the .bat files, you can open the *Launch Common Bokeh Pivot.bat* in a text editor. The contents will look like:
+  ```
+  bokeh serve \\nrelqnap02/ReEDS/bokehpivot --show --allow-websocket-origin 1wp11rdori02.nrel.gov:<port> --allow-websocket-origin localhost:<port> --port <port>
+  ```
+* Here is a breakdown of the contents of *Launch Common Bokeh Pivot.bat*:
+    * `bokeh serve`: Launch bokeh server. See http://bokeh.pydata.org/en/latest/docs/user_guide/server.html for more info.
+    * `\\nrelqnap02/ReEDS/bokehpivot`: Path to common bokehpivot app. Note that this app will be updated frequently. If you want to launch from your own bokehpivot repo, simply enter that path in the .bat file instead.
+    * `--port <port>`: Jonathan has assigned you a unique port on Scorpio/Orion to run your bokeh server. We can't all use the same port number because each port can only be used once.
+    * `--allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port>`: The first address allows requests that are external to Scorpio/Orion (but on the NREL network) to access the bokeh server that you have launched. The Second allows internal requests to localhost, which is the default request when you run the .bat file.
 
 ## Running Locally
 1. If you don't already have Python/Bokeh, Easiest way is to get Anaconda for python 2.7 at:
@@ -68,6 +70,7 @@ After starting up the app in a browser window, you must enter a path in the *Dat
     * After entering one of the above, see the *ReEDS Widgets* and *Core Pivot Functionality* sections below.
 
 ## ReEDS Widgets
+* **ReEDS Variables**: Click the *ReEDS Variables* section to expand, and update any ReEDS variables, e.g. dollar year and present value reference and end years.
 * **Meta**: Click the *Meta* section to expand, and see the files used for some default *maps* (to rename and aggregate ReEDS categories), *styles* (to reorder categories and style them), and *merges* (to join more columns, e.g. to add regional aggregations). If you'd like to update any of these files, simply edit the file (only if you're working locally), or point to a new file. When changing mappings, note that all ReEDS set elements have been lowercased!
 * **Filter Scenarios**: A list of scenarios will be fetched after entering a path in *Runs*. Use the *Filter Scenarios* section to reduce the scenarios from which the app will fetch ReEDS gdx output data. Note that this filter does not have an effect after the data has already been fetched. To do further filtering of scenarios when building/updating figures, use the "scenario" filter in the "Filters" dropdown (described below).
 * **Build Report**: Build an HTML/Excel report based on a python file with a list of bokehpivot configurations. A select widget allows any of the reports in the *reports\\templates\\* folder to be chosen, or the path to a custom report may be entered in a text widget (for example, one that is exported using the *Export Report Config* button described below). If the report references a base case, this may be chosen with a select widget. Click the *Build Report* button to create one html file and excel file with results for that report, or click *Build Separate Reports* to split each report configuration into its own html file. In either case, a separate and independent process is initiated each time one of these buttons is clicked. Note that *Filter Scenarios* may be used to limit the scenarios included in the report.
