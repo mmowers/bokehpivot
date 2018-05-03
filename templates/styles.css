@@ -39,6 +39,7 @@ body {
     display: none !important;
 }
 .chart-drop,
+.reeds-vars-drop,
 .meta-drop,
 .report-drop,
 .x-drop,
@@ -63,6 +64,7 @@ body {
 }
 .chart-dropdown,
 .data-dropdown,
+.reeds-vars-dropdown,
 .meta-dropdown,
 .report-dropdown,
 .x-dropdown,

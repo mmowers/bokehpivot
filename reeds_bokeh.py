@@ -15,6 +15,10 @@ import subprocess as sp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
+DEFAULT_DOLLAR_YEAR = 2015
+DEFAULT_PV_YEAR = 2017
+DEFAULT_END_YEAR = 2050
+
 #ReEDS globals
 #scenarios: each element is a dict with name of scenario and path to scenario
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
@@ -92,6 +96,12 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     print('***Fetching ReEDS scenarios...')
     topwdg = collections.OrderedDict()
 
+    #ReEDS Variables
+    topwdg['reeds_vars'] = bmw.Div(text='ReEDS Variables', css_classes=['reeds-vars-dropdown'])
+    topwdg['var_dollar_year'] = bmw.TextInput(title='Dollar Year', value=str(DEFAULT_DOLLAR_YEAR), css_classes=['wdgkey-dollar_year', 'reeds-vars-drop'])
+    topwdg['var_pv_year'] = bmw.TextInput(title='Present Value Reference Year', value=str(DEFAULT_PV_YEAR), css_classes=['wdgkey-pv_year', 'reeds-vars-drop'])
+    topwdg['var_end_year'] = bmw.TextInput(title='Present Value End Year', value=str(DEFAULT_END_YEAR), css_classes=['wdgkey-end_year', 'reeds-vars-drop'])
+
     #Meta widgets
     topwdg['meta'] = bmw.Div(text='Meta', css_classes=['meta-dropdown'])
     for col in reeds.columns_meta:
@@ -163,6 +173,8 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     for key in topwdg:
         if key.startswith('meta_'):
             topwdg[key].on_change('value', update_reeds_meta)
+        elif key.startswith('var_'):
+            topwdg[key].on_change('value', update_reeds_var)
     topwdg['report_build'].on_click(build_reeds_report)
     topwdg['report_build_separate'].on_click(build_reeds_report_separate)
     topwdg['result'].on_change('value', update_reeds_result)
@@ -377,6 +389,12 @@ def update_reeds_data_source(path, init_load, init_config):
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], init_load, init_config, wdg_defaults=core.GL['wdg_defaults']))
 
+def update_reeds_var(attr, old, new):
+    '''
+    When ReEDS var fields are updated, call update_reeds_wdg with the 'vars' flag
+    '''
+    update_reeds_wdg(wdg_type='vars')
+
 def update_reeds_meta(attr, old, new):
     '''
     When ReEDS meta fields are updated, call update_reeds_wdg with the 'meta' flag
@@ -431,12 +449,14 @@ def update_reeds_wdg(wdg_type):
     '''
     core.GL['widgets'] = core.GL['data_source_wdg'].copy()
     core.GL['widgets'].update(core.GL['variant_wdg'])
+    if wdg_type == 'vars':
+        GL_REEDS['result_dfs'] = {}
     for key in core.GL['wdg_defaults'].keys():
         if key not in core.GL['variant_wdg'].keys() + ['data']:
             core.GL['wdg_defaults'].pop(key, None)
     if 'result' in core.GL['variant_wdg'] and core.GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
-        if wdg_type == 'result':
+        if wdg_type in ['result','vars']:
             get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
             preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()

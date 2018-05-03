@@ -1,4 +1,7 @@
 $(document).ready(function(){
+    $('body').on('click', '.reeds-vars-dropdown', function(){
+        $('.reeds-vars-drop').toggle();
+    });
     $('body').on('click', '.meta-dropdown', function(){
         $('.meta-drop').toggle();
     });
@@ -74,6 +77,7 @@ $(document).ready(function(){
 document.onkeydown = function(e) {
   if(e.which == 18) {
     $('.data-drop').hide();
+    $('.reeds-vars-drop').hide();
     $('.meta-drop').hide();
     $('.report-drop').hide();
     $('.wdgkey-runs input').hide();

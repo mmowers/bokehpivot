@@ -12,37 +12,52 @@ from __future__ import division
 import os
 import pandas as pd
 import collections
+import core
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
-inflation_mult = 1.2547221 #2004$ to 2015$
-CRF_reeds = 0.0832902994316595
+CRF_reeds = 0.0878901910837298
+df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 
 #1. Preprocess functions for results_meta
-def scale_column(df, **kw):
+def scale_column(df_in, **kw):
+    df = df_in.copy()
     df[kw['column']] = df[kw['column']] * kw['scale_factor']
     return df
 
-def scale_column_filtered(df, **kw):
+def scale_column_filtered(df_in, **kw):
+    df = df_in.copy()
     cond = df[kw['by_column']].isin(kw['by_vals'])
     df.loc[cond, kw['change_column']] = df.loc[cond, kw['change_column']] * kw['scale_factor']
     return df
 
-def sum_over_cols(df, **kw):
-    df_out = df.drop(kw['sum_over_cols'], axis='columns')
-    df_out =  df_out.groupby(kw['group_cols'], sort=False, as_index =False).sum()
-    return df_out
+def sum_over_cols(df_in, **kw):
+    df = df_in.copy()
+    df = df.drop(kw['sum_over_cols'], axis='columns')
+    df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
+    return df
 
-def discount_costs(df, **kw):
+def apply_inflation(df_in, **kw):
+    df = df_in.copy()
+    df[kw['column']] = inflate_series(df[kw['column']])
+    return df
+
+def inflate_series(ser_in):
+    return ser_in * 1/df_deflator.loc[int(core.GL['widgets']['var_dollar_year'].value),'Deflator']
+
+def discount_costs(df_in, **kw):
+    df = df_in.copy()
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
     cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
-    df['Discounted Cost (Bil 2015$)'] = df['Cost (Bil 2015$)'] * df['pv_mult']
+    df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] * df['pv_mult']
     return df
 
 #Return present value multiplier
-def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20, refyear=2017, lastyear=2050):
+def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20):
+    refyear = int(core.GL['widgets']['var_pv_year'].value)
+    lastyear = int(core.GL['widgets']['var_end_year'].value)
     if type == "Operation":
         pv_mult = 1 / (1 + dsocial)**(year - refyear)
     elif type == "Capital":
@@ -58,15 +73,15 @@ def pre_elec_price(df, **kw):
     df.drop(['t2','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13','t14','t15','t16'], axis='columns', inplace=True)
     df.columns.name = None
     df.rename(columns={'t1': 'load', 't3': 'Regulated', 't17': 'Competitive'}, inplace=True)
-    df = pd.melt(df, id_vars=['n', 'year', 'load'], value_vars=['Competitive', 'Regulated'], var_name='type', value_name= 'Price (2015$/MWh)')
-    df['Price (2015$/MWh)'] = df['Price (2015$/MWh)'] * inflation_mult
+    df = pd.melt(df, id_vars=['n', 'year', 'load'], value_vars=['Competitive', 'Regulated'], var_name='type', value_name= 'Price ($/MWh)')
+    df['Price ($/MWh)'] = inflate_series(df['Price ($/MWh)'])
     return df
 
 def pre_elec_price_components(dfs, **kw):
     df_load = dfs['load'][dfs['load']['type'] == 'reqt']
     df_load = df_load.drop('type', 1)
     df_main = dfs['main']
-    df_main['value'] = df_main['value'] * inflation_mult
+    df_main['value'] = inflate_series(df_main['value'])
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
@@ -104,7 +119,7 @@ def pre_tech_val_streams(dfs, **kw):
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
 
     #Annualize and adjust by inflation
-    df_valstream[valstream_val] = df_valstream[valstream_val] * inflation_mult * CRF_reeds
+    df_valstream[valstream_val] = inflate_series(df_valstream[valstream_val]) * CRF_reeds
 
     #All dist prices are load-weighted. Ideally, res_marg price would be weighted based on reserve margin requirement
     df_price_dist = df_price_dist[df_price_dist['type'].isin(['load_pca','res_marg'])].copy()
@@ -124,8 +139,8 @@ def pre_tech_val_streams(dfs, **kw):
     #block_local_load, block_local_resmarg, block_local_comb, block_dist_load, block_dist_resmarg, block_dist_comb, 
     df_block_dist = pd.merge(left=df_load, right=df_price_dist, on=['year'], how='left', sort=False)
     df_block_ba = pd.merge(left=df_load, right=df_price_ba, on=['n','year'], how='left', sort=False)
-    df_block_dist[valstream_val] = df_block_dist['$/MWh'] * df_block_dist[load_val] * inflation_mult
-    df_block_ba[valstream_val] = df_block_ba['$/MWh'] * df_block_ba[load_val] * inflation_mult
+    df_block_dist[valstream_val] = inflate_series(df_block_dist['$/MWh']) * df_block_dist[load_val]
+    df_block_ba[valstream_val] = inflate_series(df_block_ba['$/MWh']) * df_block_ba[load_val]
     df_block_dist.drop(['$/MWh',load_val], axis='columns', inplace=True)
     df_block_ba.drop(['$/MWh',load_val], axis='columns', inplace=True)
     df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
@@ -146,7 +161,7 @@ def pre_stacked_profitability_potential(dfs, **kw):
     #remove quantity
     #label all costs the same so they can be grouped
     df = dfs['valstream']
-    df['$/kW'] = df['$/kW'] * inflation_mult
+    df['$/kW'] = inflate_series(df['$/kW'])
     costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$/kW'] *= -1
@@ -352,18 +367,19 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Sys Cost (Bil 2015$)',
+    ('Sys Cost (Bil $)',
         {'file': 'systemcost.gdx',
         'param': 'aSystemCost_ba',
-        'columns': ['cost_cat', 'n', 'year', 'Cost (Bil 2015$)'],
+        'columns': ['cost_cat', 'n', 'year', 'Cost (Bil $)'],
         'index': ['cost_cat', 'n', 'year'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult/1e9, 'column': 'Cost (Bil 2015$)'}},
+            {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
             {'func': discount_costs, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar'}),
-            ('2017-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil 2015$)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2017}}}),
+            ('Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar'}),
+            ('2017-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2017}}}),
         )),
         }
     ),
@@ -394,7 +410,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Elec Price (2015$/MWh)',
+    ('Elec Price ($/MWh)',
         {'file': 'Reporting.gdx',
         'param': 'ElecPriceOut',
         'columns': ['n', 'year', 'elem', 'value'],
@@ -403,9 +419,9 @@ results_meta = collections.OrderedDict((
             {'func': pre_elec_price, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'Price (2015$/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'type', 'chart_type':'Line'}),
-            ('National Scenario',{'x':'year','y':'Price (2015$/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'type', 'explode': 'scenario', 'chart_type':'Line'}),
-            ('Census',{'x':'year','y':'Price (2015$/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'censusregions', 'explode_group': 'type', 'chart_type':'Line'}),
+            ('National',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'type', 'chart_type':'Line'}),
+            ('National Scenario',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'type', 'explode': 'scenario', 'chart_type':'Line'}),
+            ('Census',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'censusregions', 'explode_group': 'type', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -457,7 +473,8 @@ results_meta = collections.OrderedDict((
         {'file': 'valuestreams/valuestreams_chosen.csv',
         'preprocess': [
             {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_old', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
-            {'func': scale_column, 'args': {'scale_factor': CRF_reeds*inflation_mult/1e9, 'column': '$'}},
+            {'func': apply_inflation, 'args': {'column': '$'}},
+            {'func': scale_column, 'args': {'scale_factor': CRF_reeds/1e9, 'column': '$'}},
         ],
         'presets': collections.OrderedDict((
             ('New Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
@@ -494,7 +511,7 @@ results_meta = collections.OrderedDict((
     ('Tech Val Streams potential',
         {'file': 'valuestreams/valuestreams_potential.csv',
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/kW'}},
+            {'func': apply_inflation, 'args': {'column': '$/kW'}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
@@ -561,7 +578,7 @@ results_meta = collections.OrderedDict((
         'param': 'pmarg_BA_ann_allyrs',
         'columns': ['n', 'type', 'year', '$/MWh'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': '$/MWh'}},
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
             ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
@@ -651,9 +668,9 @@ results_meta = collections.OrderedDict((
     ('<Old> System Cost',
         {'file': 'Reporting.gdx',
         'param': 'aSystemCost',
-        'columns': ['cost_cat', 'year', 'Cost (2015$)'],
+        'columns': ['cost_cat', 'year', 'Cost ($)'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': inflation_mult, 'column': 'Cost (2015$)'}},
+            {'func': apply_inflation, 'args': {'column': 'Cost ($)'}},
             {'func': discount_costs, 'args': {}},
         ],
         }
