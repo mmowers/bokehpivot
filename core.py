@@ -539,12 +539,6 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     if df_plots.empty:
         return df_plots
 
-    #Scale Axes
-    if wdg['x_scale'].value != '' and wdg['x'].value in cols['continuous']:
-        df_plots[wdg['x'].value] = df_plots[wdg['x'].value] * float(wdg['x_scale'].value)
-    if wdg['y_scale'].value != '' and wdg['y'].value in cols['continuous']:
-        df_plots[wdg['y'].value] = df_plots[wdg['y'].value] * float(wdg['y_scale'].value)
-
     #Apply Aggregation
     if wdg['y'].value in cols['continuous'] and wdg['y_agg'].value != 'None':
         groupby_cols = [wdg['x'].value]
@@ -593,6 +587,12 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
             df_plots.drop(['tempgroup'], axis='columns', inplace=True)
         df_plots = df_plots[~df_plots[col].isin([col_base])]
         df_plots = df_plots[pd.notnull(df_plots[y_val])]
+
+    #Scale Axes
+    if wdg['x_scale'].value != '' and wdg['x'].value in cols['continuous']:
+        df_plots[wdg['x'].value] = df_plots[wdg['x'].value] * float(wdg['x_scale'].value)
+    if wdg['y_scale'].value != '' and wdg['y'].value in cols['continuous']:
+        df_plots[wdg['y'].value] = df_plots[wdg['y'].value] * float(wdg['y_scale'].value)
 
     #For bar charts with convert flag 'c' or sort flag 's', we will sort by cumulative y value.
     bar_height_sort = False
