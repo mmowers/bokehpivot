@@ -395,7 +395,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Gen by m (GW)',
+    ('Gen by m national (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
         'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
@@ -409,7 +409,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Gen by m full (GW)',
+    ('Gen by m regional (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'CONVqmnallm',
         'columns': ['tech', 'n', 'year', 'm', 'Generation (GW)'],
