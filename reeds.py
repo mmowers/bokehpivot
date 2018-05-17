@@ -66,7 +66,11 @@ def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20):
 
 #Capital recovery factor
 def CRF(i,n):
-    return i/(1-(1/(1+i)**n))
+    tempn = n
+    if tempn == 0:
+        tempn = 1
+        print('Data goes beyond Present Value End Year. Filter out data beyond this year for proper system cost calculation.')
+    return i/(1-(1/(1+i)**tempn))
 
 def pre_elec_price(df, **kw):
     df = df.pivot_table(index=['n','year'], columns='elem', values='value').reset_index()
