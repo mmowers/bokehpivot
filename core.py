@@ -320,7 +320,7 @@ def get_df_csv(data_source):
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     '''
     print('***Fetching csv...')
-    df_source = pd.read_csv(data_source)
+    df_source = pd.read_csv(data_source, low_memory=False)
     cols = {}
     cols['all'] = df_source.columns.values.tolist()
     cols['discrete'] = [x for x in cols['all'] if df_source[x].dtype == object]
