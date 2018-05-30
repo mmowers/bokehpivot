@@ -327,8 +327,8 @@ def get_df_csv(data_source):
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
     cols['x-axis'] = cols['all']
     cols['y-axis'] = cols['continuous']
-    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 100]
-    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 60]
+    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 500]
+    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if len(df_source[x].unique()) < 100]
     df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
     df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
     print('***Done fetching csv.')
