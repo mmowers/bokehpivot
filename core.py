@@ -1256,7 +1256,12 @@ def get_palette(palette, num):
         elif palette == 'all_gray':
             return bpa.linear_palette(['#%02x%02x%02x' % (255-i, 255-i, 255-i) for i in range(256)],num)
     else:
-        return list(reversed(bpa.all_palettes[palette][num]))
+        pal = bpa.all_palettes[palette]
+        if 2 not in pal:
+            pal[2] = [pal[3][0], pal[3][2]]
+        if 1 not in pal:
+            pal[1] = [pal[3][0]]
+        return list(reversed(pal[num]))
 
 def build_plot_legend(df_plots, series_val, custom_colors):
     '''
