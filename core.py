@@ -1246,6 +1246,8 @@ def get_palette(palette, num):
         List of hex strings in palette
     '''
 
+    if num == 0:
+        return []
     if palette.startswith('all_'):
         if palette == 'all_red':
             return bpa.linear_palette(['#%02x%02x%02x' % (255, 255-i, 255-i) for i in range(256)],num)
