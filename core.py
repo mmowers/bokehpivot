@@ -533,7 +533,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     for j, col in enumerate(cols['filterable']):
         active = [wdg['filter_'+str(j)].labels[i] for i in wdg['filter_'+str(j)].active]
         if col in cols['continuous']:
-            active = [float(i) for i in active]
+            active = np.asarray(active)
+            active = active.astype(df_plots[col].dtype)
+            active = active.tolist()
         df_plots = df_plots[df_plots[col].isin(active)]
 
     if df_plots.empty:
