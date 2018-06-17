@@ -228,6 +228,8 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                         df_src.columns = src['columns']
                     elif src['file'].endswith('.csv'):
                         df_src = pd.read_csv(filepath, low_memory=False)
+                        if 'columns' in src:
+                            df_src.columns = src['columns']
                     df_src = df_to_lowercase(df_src)
                     df_scen_result[src['name']] = df_src
             else:
@@ -239,6 +241,8 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     df_scen_result.columns = result_meta['columns']
                 elif result_meta['file'].endswith('.csv'):
                     df_scen_result = pd.read_csv(filepath, low_memory=False)
+                    if 'columns' in result_meta:
+                        df_scen_result.columns = result_meta['columns']
                 df_scen_result = df_to_lowercase(df_scen_result)
             #preprocess and return one dataframe
             if 'preprocess' in result_meta:
