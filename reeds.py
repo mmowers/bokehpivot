@@ -17,6 +17,8 @@ import core
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 CRF_reeds = 0.0878901910837298
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
+ILR_UPV = 1.3
+ILR_distPV = 1.1
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
@@ -287,7 +289,8 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
@@ -312,7 +315,8 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
@@ -327,7 +331,8 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
