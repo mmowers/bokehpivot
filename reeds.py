@@ -287,7 +287,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
@@ -312,7 +312,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
@@ -327,7 +327,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.1}},
+            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv', 'distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/1.3}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
