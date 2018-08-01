@@ -511,8 +511,8 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
-            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
-            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
+            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
@@ -570,8 +570,8 @@ results_meta = collections.OrderedDict((
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
-            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
-            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
+            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'potential'}},
@@ -619,7 +619,7 @@ results_meta = collections.OrderedDict((
     ),
     ('BA Ann Marginal Prices',
         {'file': 'MarginalPrices.gdx',
-        'param': 'pmarg_BA_ann_allyrs',
+        'param': 'p_block_ba_ann',
         'columns': ['n', 'type', 'year', '$/MWh'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
@@ -631,7 +631,7 @@ results_meta = collections.OrderedDict((
     ),
     ('Nat Ann Marginal Prices',
         {'file': 'MarginalPrices.gdx',
-        'param': 'pmarg_nat_ann_allyrs',
+        'param': 'p_block_nat_ann',
         'columns': ['type', 'year', '$/MWh'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
