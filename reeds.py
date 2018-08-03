@@ -638,7 +638,7 @@ results_meta = collections.OrderedDict((
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
-            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'filter': {'type':['load_pca','oper_res_reqt-flex','oper_res_reqt-reg','oper_res_reqt-spin','res_marg'], }}),
+            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'filter': {'type':['load_pca','res_marg'], }}),
         )),
         }
     ),
