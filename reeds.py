@@ -19,6 +19,7 @@ CRF_reeds = 0.0878901910837298
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
+costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost']
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
@@ -167,7 +168,6 @@ def pre_stacked_profitability_chosen(df, **kw):
     #remove quantity
     #label all costs the same so they can be grouped
     df['$'] = inflate_series(df['$'])
-    costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$'] *= -1
     #sum costs
@@ -180,7 +180,6 @@ def pre_stacked_profitability_potential(dfs, **kw):
     #label all costs the same so they can be grouped
     df = dfs['valstream']
     df['$/kW'] = inflate_series(df['$/kW'])
-    costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$/kW'] *= -1
     #sum costs
