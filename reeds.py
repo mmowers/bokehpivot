@@ -619,17 +619,53 @@ results_meta = collections.OrderedDict((
     ),
     ('BA Ann Marginal Prices',
         {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_BA_ann_allyrs',
+        'columns': ['n', 'type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+        )),
+        }
+    ),
+    ('State Ann Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_st_ann_allyrs',
+        'columns': ['st','type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final load and res_marg annual st prices', {'x':'st', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+        )),
+        }
+    ),
+    ('Nat Ann Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_nat_ann_allyrs',
+        'columns': ['type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'explode':'scenario', 'filter': {'type':['load_pca','oper_res_reqt-flex','oper_res_reqt-reg','oper_res_reqt-spin','res_marg'], }}),
+        )),
+        }
+    ),
+    ('BA Ann Marginal Block Prices',
+        {'file': 'MarginalPrices.gdx',
         'param': 'p_block_ba_ann',
         'columns': ['n', 'type', 'year', '$/MWh'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
-            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
         )),
         }
     ),
-    ('Nat Ann Marginal Prices',
+    ('Nat Ann Marginal Block Prices',
         {'file': 'MarginalPrices.gdx',
         'param': 'p_block_nat_ann',
         'columns': ['type', 'year', '$/MWh'],
@@ -637,7 +673,7 @@ results_meta = collections.OrderedDict((
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
-            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'filter': {'type':['load_pca','res_marg'], }}),
+            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'explode':'scenario', 'filter': {'type':['load_pca','res_marg'], }}),
         )),
         }
     ),
