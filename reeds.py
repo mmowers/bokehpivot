@@ -185,18 +185,18 @@ def pre_stacked_profitability_potential(dfs, **kw):
     return df
 
 def add_chosen_available(df, dfs):
-        #Add chosen column to indicate if this resource was built.
-        df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
-        df.rename(columns={'MW': 'chosen'}, inplace=True)
-        df['chosen'] = df['chosen'].fillna(value='no')
-        df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
-        #Add available column to indicate if the resource was available to be built.
-        df_avail = dfs['available_potential']
-        df_avail['available'] = 'yes'
-        df = pd.merge(left=df, right=df_avail, on=['year','var_set'], how='left', sort=False)
-        df.loc[~df['tech'].isin(['wind-ons','wind-ofs','upv','dupv']), 'available'] = 'yes'
-        df['available'] = df['available'].fillna(value='no')
-        return df
+    #Add chosen column to indicate if this resource was built.
+    df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
+    df.rename(columns={'MW': 'chosen'}, inplace=True)
+    df['chosen'] = df['chosen'].fillna(value='no')
+    df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+    #Add available column to indicate if the resource was available to be built.
+    df_avail = dfs['available_potential']
+    df_avail['available'] = 'yes'
+    df = pd.merge(left=df, right=df_avail, on=['year','var_set'], how='left', sort=False)
+    df.loc[~df['tech'].isin(['wind-ons','wind-ofs','upv','dupv']), 'available'] = 'yes'
+    df['available'] = df['available'].fillna(value='no')
+    return df
 
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
