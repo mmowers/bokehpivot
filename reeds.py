@@ -609,6 +609,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
         ],
         'preprocess': [
             {'func': pre_stacked_profitability_potential, 'args': {}},
