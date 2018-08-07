@@ -157,10 +157,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
     df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist], ignore_index=True)
     if kw['cat'] == 'potential':
-        df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
-        df.rename(columns={'MW': 'chosen'}, inplace=True)
-        df['chosen'] = df['chosen'].fillna(value='no')
-        df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+        df = add_chosen_available(df, dfs)
     return df
 
 def pre_stacked_profitability_chosen(df, **kw):
@@ -184,12 +181,22 @@ def pre_stacked_profitability_potential(dfs, **kw):
     df.loc[df['type'] == 'cost','$/kW'] *= -1
     #sum costs
     df = df.groupby(['tech', 'new_old', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
-    #merge with chosen so we can filter by chosen plants
-    df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
-    df.rename(columns={'MW': 'chosen'}, inplace=True)
-    df['chosen'] = df['chosen'].fillna(value='no')
-    df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+    df = add_chosen_available(df, dfs)
     return df
+
+def add_chosen_available(df, dfs):
+        #Add chosen column to indicate if this resource was built.
+        df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
+        df.rename(columns={'MW': 'chosen'}, inplace=True)
+        df['chosen'] = df['chosen'].fillna(value='no')
+        df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+        #Add available column to indicate if the resource was available to be built.
+        df_avail = dfs['available_potential']
+        df_avail['available'] = 'yes'
+        df = pd.merge(left=df, right=df_avail, on=['year','var_set'], how='left', sort=False)
+        df.loc[~df['tech'].isin(['wind-ons','wind-ofs','upv','dupv']), 'available'] = 'yes'
+        df['available'] = df['available'].fillna(value='no')
+        return df
 
 def add_huc_reg(df, **kw):
     huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
@@ -570,6 +577,7 @@ results_meta = collections.OrderedDict((
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
         ],
