@@ -1,4 +1,4 @@
-#Copy this file anywhere and run as a python script in a command prompt.
+#Don't edit this file directly. Make a copy (to any location), edit the copy, and run the copy as a python script in a command prompt.
 
 #EDIT THE FOLLOWING FIELDS
 bokehpivot_dir = r'\\nrelqnap02\ReEDS\bokehpivot' #path to the desired bokehpivot repo.
@@ -10,7 +10,7 @@ html_num = 'one' #'one' or 'multiple'. 'one' will create one html file with all 
 output_dir = r'\\nrelqnap02\ReEDS\Some Location' #This is the location that will hold the report.
 auto_open = 'yes' #'yes' or 'no'. Automatically open the resulting report excel and html files when they are created.
 
-#DON'T EDIT BELOW
+#DON'T EDIT BELOW HERE
 import os, sys
 import importlib
 import datetime
