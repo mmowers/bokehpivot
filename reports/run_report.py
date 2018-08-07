@@ -1,3 +1,4 @@
+#This file allows reports to be run directly from this python script (without need for the bokeh server and bokehpivot UI).
 #Don't edit this file directly. Make a copy (to any location), edit the copy, and run the copy as a python script in a command prompt.
 
 #EDIT THE FOLLOWING FIELDS
