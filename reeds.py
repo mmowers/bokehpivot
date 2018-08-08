@@ -20,7 +20,7 @@ df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
 costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','other_cost']
-values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus']
+values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
