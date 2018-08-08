@@ -700,13 +700,15 @@ def set_axis_bounds(df, plots, wdg, cols):
         Nothing. Axes of plots are modified.
     '''
     if wdg['x'].value in cols['continuous'] and wdg['x_group'].value == 'None':
+        if wdg['chart_type'].value == 'Bar':
+            bar_width_half = float(re.sub('[^0-9.]','',wdg['bar_width'].value))/2
         if wdg['x_min'].value != '':
             for p in plots:
                 p.x_range.start = float(wdg['x_min'].value)
         elif wdg['sync_axes'].value == 'Yes':
             min_x = df[wdg['x'].value].min()
             if wdg['chart_type'].value == 'Bar':
-                min_x = min_x - float(wdg['bar_width'].value)/2
+                min_x = min_x - bar_width_half
             for p in plots:
                 p.x_range.start = min_x
         if wdg['x_max'].value != '':
@@ -715,7 +717,7 @@ def set_axis_bounds(df, plots, wdg, cols):
         elif wdg['sync_axes'].value == 'Yes':
             max_x = df[wdg['x'].value].max()
             if wdg['chart_type'].value == 'Bar':
-                max_x = max_x + float(wdg['bar_width'].value)/2
+                max_x = max_x + bar_width_half
             for p in plots:
                 p.x_range.end = max_x
     elif wdg['chart_type'].value == 'Bar' and wdg['bar_width'].value == 'c':
