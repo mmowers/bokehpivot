@@ -597,18 +597,28 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         df_plots[wdg['y'].value] = df_plots[wdg['y'].value] * float(wdg['y_scale'].value)
 
     #For bar charts with convert flag 'c' or sort flag 's', we will sort by cumulative y value.
+    #If net levels are shown, we must also calculate cumulative y value.
     bar_height_sort = False
-    if wdg['chart_type'].value == 'Bar' and (wdg['bar_width'].value == 'c'  or 's' in wdg['bar_width'].value):
-        bar_height_sort = True
+    bar_sort_cond = wdg['chart_type'].value == 'Bar' and ((wdg['bar_width'].value == 'c')  or ('s' in wdg['bar_width'].value))
+    net_level_cond = wdg['net_levels'].value == 'Yes' and wdg['chart_type'].value in STACKEDTYPES
+    net_level_col = []
+    if bar_sort_cond or net_level_cond:
         #adjust groupby_cols from Aggregation section above, and remove series from group if it is there
-        bar_group_cols = [c for c in groupby_cols if c != wdg['series'].value]
+        net_group_cols = [c for c in groupby_cols if c != wdg['series'].value]
         #group and sum across series to get the cumulative y for each x
-        df_bar_group = df_plots.groupby(bar_group_cols, sort=False)
-        df_bar = df_bar_group[wdg['y'].value].sum().reset_index()
-        df_bar.rename(columns={wdg['y'].value: 'y_bar_cumulative'}, inplace=True)
-        #multiply by -1 so that we sort from large to small instead of small to large
-        df_bar['y_bar_cumulative'] = df_bar['y_bar_cumulative']*-1
-        df_plots = df_plots.merge(df_bar, how='left', on=bar_group_cols, sort=False)
+        df_net_group = df_plots.groupby(net_group_cols, sort=False)
+        df_net = df_net_group[wdg['y'].value].sum().reset_index()
+        if bar_sort_cond:
+            bar_height_sort = True
+            df_bar = df_net.rename(columns={wdg['y'].value: 'y_bar_cumulative'})
+            #multiply by -1 so that we sort from large to small instead of small to large
+            df_bar['y_bar_cumulative'] = df_bar['y_bar_cumulative']*-1
+            df_plots = df_plots.merge(df_bar, how='left', on=net_group_cols, sort=False)
+        if net_level_cond:
+            net_level_col_name = 'Net Level ' + wdg['y'].value
+            net_level_col = [net_level_col_name]
+            df_net_lev = df_net.rename(columns={wdg['y'].value: net_level_col_name})
+            df_plots = df_plots.merge(df_net_lev, how='left', on=net_group_cols, sort=False)
 
     #Sort Dataframe
     sortby_cols = [wdg['x'].value]
@@ -634,7 +644,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         sortby_cols.remove('y_bar_cumulative')
 
     #Rearrange column order for csv download
-    sorted_cols = sortby_cols + [wdg['y'].value] + range_cols
+    sorted_cols = sortby_cols + [wdg['y'].value] + range_cols + net_level_col
     unsorted_columns = [col for col in df_plots.columns if col not in sorted_cols]
     df_plots = df_plots[unsorted_columns + sorted_cols]
     print('***Done Filtering, Scaling, Aggregating, Adv Operations, Sorting: '+ str(datetime.datetime.now() - startTime))
