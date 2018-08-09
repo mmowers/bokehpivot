@@ -109,6 +109,12 @@ def pre_marginal_curtailment(df, **kw):
     df['surpmar'] = df['surplus'] / df['gen']
     return df
 
+def pre_tech_val_streams_raw(dfs, **kw):
+    df = dfs['valstream']
+    df['$/kW'] = inflate_series(df['$/kW'])
+    df = add_chosen_available(df, dfs)
+    return df
+
 def pre_tech_val_streams(dfs, **kw):
     #Calculate $/MWh and block values
     df_valstream = dfs['valstream']
@@ -560,10 +566,14 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams potential',
-        {'file': 'valuestreams/valuestreams_potential.csv',
+    ('Tech Val Streams potential $/kW',
+        {'sources': [
+            {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
+            {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
+        ],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column': '$/kW'}},
+            {'func': pre_tech_val_streams_raw, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
