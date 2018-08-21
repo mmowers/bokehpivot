@@ -19,6 +19,8 @@ CRF_reeds = 0.0878901910837298
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
+costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','other_cost']
+values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
@@ -107,6 +109,12 @@ def pre_marginal_curtailment(df, **kw):
     df['surpmar'] = df['surplus'] / df['gen']
     return df
 
+def pre_tech_val_streams_raw(dfs, **kw):
+    df = dfs['valstream']
+    df['$/kW'] = inflate_series(df['$/kW'])
+    df = add_chosen_available(df, dfs)
+    return df
+
 def pre_tech_val_streams(dfs, **kw):
     #Calculate $/MWh and block values
     df_valstream = dfs['valstream']
@@ -156,10 +164,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
     df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist], ignore_index=True)
     if kw['cat'] == 'potential':
-        df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
-        df.rename(columns={'MW': 'chosen'}, inplace=True)
-        df['chosen'] = df['chosen'].fillna(value='no')
-        df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+        df = add_chosen_available(df, dfs)
     return df
 
 def pre_stacked_profitability_chosen(df, **kw):
@@ -167,7 +172,6 @@ def pre_stacked_profitability_chosen(df, **kw):
     #remove quantity
     #label all costs the same so they can be grouped
     df['$'] = inflate_series(df['$'])
-    costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$'] *= -1
     #sum costs
@@ -180,16 +184,25 @@ def pre_stacked_profitability_potential(dfs, **kw):
     #label all costs the same so they can be grouped
     df = dfs['valstream']
     df['$/kW'] = inflate_series(df['$/kW'])
-    costs = ['fix_cost','var_cost','trans_cost','gp']
     df.loc[df['type'].isin(costs),'type'] = 'cost'
     df.loc[df['type'] == 'cost','$/kW'] *= -1
     #sum costs
     df = df.groupby(['tech', 'new_old', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
-    #merge with chosen so we can filter by chosen plants
+    df = add_chosen_available(df, dfs)
+    return df
+
+def add_chosen_available(df, dfs):
+    #Add chosen column to indicate if this resource was built.
     df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
     df.rename(columns={'MW': 'chosen'}, inplace=True)
     df['chosen'] = df['chosen'].fillna(value='no')
     df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+    #Add available column to indicate if the resource was available to be built.
+    df_avail = dfs['available_potential']
+    df_avail['available'] = 'yes'
+    df = pd.merge(left=df, right=df_avail, on=['year','var_set'], how='left', sort=False)
+    df.loc[~df['tech'].isin(['wind-ons','wind-ofs','upv','dupv']), 'available'] = 'yes'
+    df['available'] = df['available'].fillna(value='no')
     return df
 
 def add_huc_reg(df, **kw):
@@ -511,8 +524,8 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
-            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
-            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
+            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
@@ -531,8 +544,9 @@ results_meta = collections.OrderedDict((
             ('Value factor Load Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
             ('Value factor Load Local by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_load', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_load','load_pca','surplus'],'new_old':['new']}}),
             ('Value factor Load over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_load','load_pca','surplus'], }}),
-            ('Value factor Load Temporal over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_load', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_local_load','load_pca','surplus'], }}),
+            ('Value factor Load Temporal over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_load', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_local_load','load_pca'], }}),
             ('Value factor Load Spatial over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_load','block_local_load'], }}),
+            ('Curtail Frac over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'load_pca', 'y_scale':'-1', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['load_pca','surplus'], }}),
 
             ('Value factor Res Marg Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_resmarg','res_marg'],'new_old':['new']}}),
             ('Value factor Res Marg Local by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_resmarg','res_marg'],'new_old':['new']}}),
@@ -552,10 +566,14 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams potential',
-        {'file': 'valuestreams/valuestreams_potential.csv',
+    ('Tech Val Streams potential $/kW',
+        {'sources': [
+            {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
+            {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
+        ],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column': '$/kW'}},
+            {'func': pre_tech_val_streams_raw, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
@@ -570,8 +588,9 @@ results_meta = collections.OrderedDict((
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
-            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_nat_ann_allyrs', 'columns': ['type','year','$/MWh']},
-            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'pmarg_BA_ann_allyrs', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
+            {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
+            {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'potential'}},
@@ -601,6 +620,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
+            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
         ],
         'preprocess': [
             {'func': pre_stacked_profitability_potential, 'args': {}},
@@ -625,7 +645,19 @@ results_meta = collections.OrderedDict((
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
-            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+        )),
+        }
+    ),
+    ('State Ann Marginal Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'pmarg_st_ann_allyrs',
+        'columns': ['st','type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final load and res_marg annual st prices', {'x':'st', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
         )),
         }
     ),
@@ -637,7 +669,31 @@ results_meta = collections.OrderedDict((
             {'func': apply_inflation, 'args': {'column': '$/MWh'}},
         ],
         'presets': collections.OrderedDict((
-            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'filter': {'type':['load_pca','oper_res_reqt-flex','oper_res_reqt-reg','oper_res_reqt-spin','res_marg'], }}),
+            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'explode':'scenario', 'filter': {'type':['load_pca','oper_res_reqt-flex','oper_res_reqt-reg','oper_res_reqt-spin','res_marg'], }}),
+        )),
+        }
+    ),
+    ('BA Ann Marginal Block Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'p_block_ba_ann',
+        'columns': ['n', 'type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final load and res_marg annual ba prices', {'x':'n', 'y':'$/MWh', 'explode':'type', 'explode_group':'scenario', 'plot_width':r'1200', 'filter': {'type':['load_pca','res_marg'], 'year':'last'}}),
+        )),
+        }
+    ),
+    ('Nat Ann Marginal Block Prices',
+        {'file': 'MarginalPrices.gdx',
+        'param': 'p_block_nat_ann',
+        'columns': ['type', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Major Prices over time', {'chart_type':'Line', 'x':'year', 'y':'$/MWh', 'series':'type', 'explode':'scenario', 'filter': {'type':['load_pca','res_marg'], }}),
         )),
         }
     ),
