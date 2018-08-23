@@ -123,13 +123,15 @@ def pre_tech_val_streams(dfs, **kw):
     df_price_ba = dfs['prices_ba']
 
     if kw['cat'] == 'potential':
+        valstream_cols = ['year','tech','new_old','n','type','var_set']
         valstream_val = '$/kW'
         load_val = 'MWh/kW'
     elif kw['cat'] == 'chosen':
+        valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
         load_val = 'MWh'
         #sum over m
-        df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=['year','tech','new_old','n','type'])
+        df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
 
     #Annualize and adjust by inflation
@@ -160,35 +162,21 @@ def pre_tech_val_streams(dfs, **kw):
     df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
     df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
 
+    #Reformat Energy Output
     df_load['type'] = load_val
     df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
-    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist], ignore_index=True)
+
+    #Add Total Cost
+    df_cost = df_valstream[df_valstream['type'].isin(costs)].copy()
+    df_cost['type'] = 'total cost'
+    df_cost = df_cost.groupby(valstream_cols, sort=False, as_index =False).sum()
+    df_cost[valstream_val] = df_cost[valstream_val]*-1
+
+    #Combine dataframes
+    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_cost], ignore_index=True)
+
     if kw['cat'] == 'potential':
         df = add_chosen_available(df, dfs)
-    return df
-
-def pre_stacked_profitability_chosen(df, **kw):
-    #Sum all costs so that we can calculate value / total cost for each value stream
-    #remove quantity
-    #label all costs the same so they can be grouped
-    df['$'] = inflate_series(df['$'])
-    df.loc[df['type'].isin(costs),'type'] = 'cost'
-    df.loc[df['type'] == 'cost','$'] *= -1
-    #sum costs
-    df = df.groupby(['tech', 'new_old', 'year', 'n','type'], sort=False, as_index =False).sum()
-    return df
-
-def pre_stacked_profitability_potential(dfs, **kw):
-    #Sum all costs so that we can calculate value / total cost for each value stream
-    #remove quantity
-    #label all costs the same so they can be grouped
-    df = dfs['valstream']
-    df['$/kW'] = inflate_series(df['$/kW'])
-    df.loc[df['type'].isin(costs),'type'] = 'cost'
-    df.loc[df['type'] == 'cost','$/kW'] *= -1
-    #sum costs
-    df = df.groupby(['tech', 'new_old', 'year', 'n','type','var_set'], sort=False, as_index =False).sum()
-    df = add_chosen_available(df, dfs)
     return df
 
 def add_chosen_available(df, dfs):
@@ -503,7 +491,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams chosen',
+    ('Tech Val Streams chosen raw',
         {'file': 'valuestreams/valuestreams_chosen.csv',
         'preprocess': [
             {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_old', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
@@ -520,7 +508,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams chosen $/MWh',
+    ('Tech Val Streams chosen',
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
@@ -531,14 +519,15 @@ results_meta = collections.OrderedDict((
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MWh by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':{'exclude':['block_dist_comb','block_local_comb','block_dist_load','block_local_load','block_dist_resmarg','block_local_resmarg']},'new_old':['new']}}),
+            ('$/MWh by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['MWh'],'new_old':['new']}}),
+            ('Stacked profitability over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['total cost'],'new_old':['new']}}),
 
-            ('LCOE over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'sync_axes':'No', 'bar_width':r'1.75', 'y_scale':'-1', 'filter': {'new_old':['new'], 'type':['MWh','fix_cost','gp','trans_cost','var_cost'], }}),
+            ('LCOE over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'sync_axes':'No', 'bar_width':r'1.75', 'y_scale':'-1', 'filter': {'new_old':['new'], 'type':costs + ['MWh'], }}),
 
-            ('Value factor Combined Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Value factor Combined Local by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Value factor Combined over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_comb','cap_fo_po','load_pca','oper_res','other','res_marg','surplus'], }}),
-            ('Value factor Combined Temporal over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'], }}),
+            ('Value factor Combined Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb']+values,'new_old':['new']}}),
+            ('Value factor Combined Local by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb']+values,'new_old':['new']}}),
+            ('Value factor Combined over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_comb']+values, }}),
+            ('Value factor Combined Temporal over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_local_comb']+values, }}),
             ('Value factor Combined Spatial over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_comb','block_local_comb'], }}),
 
             ('Value factor Load Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
@@ -556,17 +545,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams chosen profitability',
-        {'file': 'valuestreams/valuestreams_chosen.csv',
-        'preprocess': [
-            {'func': pre_stacked_profitability_chosen, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('Stacked profitability over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
-        )),
-        }
-    ),
-    ('Tech Val Streams potential $/kW',
+    ('Tech Val Streams potential raw',
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
@@ -583,7 +562,7 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Tech Val Streams potential $/MWh',
+    ('Tech Val Streams potential',
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
             {'name': 'load', 'file': 'valuestreams/load_pca_potential.csv'},
@@ -596,13 +575,15 @@ results_meta = collections.OrderedDict((
             {'func': pre_tech_val_streams, 'args': {'cat':'potential'}},
         ],
         'presets': collections.OrderedDict((
-            ('$/MWh by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost','block_dist_comb','block_local_comb','block_dist_load','block_local_load','block_dist_resmarg','block_local_resmarg']},'new_old':['new']}}),
-            ('$/MWh by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost','block_dist_comb','block_local_comb','block_dist_load','block_local_load','block_dist_resmarg','block_local_resmarg']},'new_old':['new']}}),
+            ('$/MWh by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':costs+values+['MWh/kW'],'new_old':['new']}}),
+            ('$/MWh by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh/kW', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':costs+values+['MWh/kW'],'new_old':['new']}}),
+            ('Stacked profitability final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':costs+values+['total cost'],'new_old':['new']}}),
+            ('Stacked profitability final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':costs+values+['total cost'],'new_old':['new']}}),
 
-            ('Value factor Combined Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Value factor Combined Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Value factor Combined Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
-            ('Value factor Combined Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_comb','cap_fo_po','load_pca','res_marg','oper_res','surplus','other'],'new_old':['new']}}),
+            ('Value factor Combined Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb']+values,'new_old':['new']}}),
+            ('Value factor Combined Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_comb']+values,'new_old':['new']}}),
+            ('Value factor Combined Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb']+values,'new_old':['new']}}),
+            ('Value factor Combined Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_comb']+values,'new_old':['new']}}),
 
             ('Value factor Load Dist by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
             ('Value factor Load Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_load', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_load','load_pca','surplus'],'new_old':['new']}}),
@@ -613,21 +594,6 @@ results_meta = collections.OrderedDict((
             ('Value factor Res Marg Dist by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_dist_resmarg','res_marg'],'new_old':['new']}}),
             ('Value factor Res Marg Local by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_resmarg','res_marg'],'new_old':['new']}}),
             ('Value factor Res Marg Local by type final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':['block_local_resmarg','res_marg'],'new_old':['new']}}),
-        )),
-        }
-    ),
-    ('Tech Val Streams potential profitability',
-        {'sources': [
-            {'name': 'valstream', 'file': 'valuestreams/valuestreams_potential.csv'},
-            {'name': 'levels_potential', 'file': 'valuestreams/levels_potential.csv'},
-            {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
-        ],
-        'preprocess': [
-            {'func': pre_stacked_profitability_potential, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('Stacked profitability final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
-            ('Stacked profitability final p60', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cost', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'n':['p60'],'year':'last','type':{'exclude':['profit','reduced_cost']},'new_old':['new']}}),
         )),
         }
     ),
