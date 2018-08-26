@@ -623,8 +623,8 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     #Sort Dataframe
     sortby_cols = [wdg['x'].value]
     if wdg['x_group'].value != 'None': sortby_cols = [wdg['x_group'].value] + sortby_cols
-    if bar_height_sort: sortby_cols = ['y_bar_cumulative'] + sortby_cols
     if wdg['series'].value != 'None': sortby_cols = [wdg['series'].value] + sortby_cols
+    if bar_height_sort: sortby_cols = ['y_bar_cumulative'] + sortby_cols
     if wdg['explode'].value != 'None': sortby_cols = [wdg['explode'].value] + sortby_cols
     if wdg['explode_group'].value != 'None': sortby_cols = [wdg['explode_group'].value] + sortby_cols
     #Add custom sort columns
