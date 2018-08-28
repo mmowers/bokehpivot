@@ -21,6 +21,7 @@ ILR_UPV = 1.3
 ILR_distPV = 1.1
 costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','other_cost']
 values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
+values_decomp = ['block_dist_load','loc_min_dist_load','real_min_loc_load','block_dist_resmarg','loc_min_dist_resmarg','real_min_loc_resmarg','oper_res','rps','cap_fo_po','surplus','other']
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
@@ -159,8 +160,24 @@ def pre_tech_val_streams(dfs, **kw):
     df_block_ba[valstream_val] = inflate_series(df_block_ba['$/MWh']) * df_block_ba[load_val]
     df_block_dist.drop(['$/MWh',load_val], axis='columns', inplace=True)
     df_block_ba.drop(['$/MWh',load_val], axis='columns', inplace=True)
+
+    #Calculate additive adjustments between values of real, local block, and distributed block (value factors are multiplicative adjustments)
+    #For load_pca df_real_min_loc represents temporal effects, but for res_marg it represents Capacity credit vs capacity factor.
+    #res_marg realy should have special treatment because block value streams are based on energy, and some techs may only be providing reserves.
+    #We would find spatial value factor from df_price_ba and df_price_dist, then we divide df_valstream by this spatial value factor to get the "quantity" component.
+    df_valstream_comb = df_valstream[df_valstream['type'].isin(['load_pca','res_marg'])].copy()
+    df_valstream_comb['type'] = 'comb'
+    df_valstream_comb = df_valstream_comb.groupby(valstream_cols, sort=False, as_index =False).sum()
+    df_valstream.append(df_valstream_comb)
+    df_valstream_red = df_valstream[df_valstream['type'].isin(['load_pca','res_marg','comb'])].copy()
+    df_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_ba.set_index(valstream_cols),fill_value=0).reset_index()
+    df_loc_min_dist = df_block_ba.set_index(valstream_cols).subtract(df_block_dist.set_index(valstream_cols),fill_value=0).reset_index()
+
+    #rename types to differentiate components
     df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
     df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
+    df_real_min_loc['type'] = df_real_min_loc['type'].map({'load_pca': 'real_min_loc_load', 'res_marg': 'real_min_loc_resmarg', 'comb': 'real_min_loc_comb'})
+    df_loc_min_dist['type'] = df_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load', 'res_marg': 'loc_min_dist_resmarg', 'comb': 'loc_min_dist_comb'})
 
     #Reformat Energy Output
     df_load['type'] = load_val
@@ -173,7 +190,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_cost[valstream_val] = df_cost[valstream_val]*-1
 
     #Combine dataframes
-    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_cost], ignore_index=True)
+    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,df_cost], ignore_index=True)
 
     if kw['cat'] == 'potential':
         df = add_chosen_available(df, dfs)
@@ -520,7 +537,12 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('$/MWh by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['MWh'],'new_old':['new']}}),
-            ('Stacked profitability over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['total cost'],'new_old':['new']}}),
+            ('$/MWh by type decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values_decomp+['MWh'],'new_old':['new']}}),
+            ('Profitability over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['total cost'],'new_old':['new']}}),
+            ('Profitability decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values_decomp+['total cost'],'new_old':['new']}}),
+
+            ('Profitability final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':costs+values+['total cost'], 'year':'last', }}),
+            ('Profitability decomposed final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':costs+values_decomp+['total cost'], 'year':'last', }}),
 
             ('LCOE over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'sync_axes':'No', 'bar_width':r'1.75', 'y_scale':'-1', 'filter': {'new_old':['new'], 'type':costs + ['MWh'], }}),
 
