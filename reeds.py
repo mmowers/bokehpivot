@@ -127,6 +127,12 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_cols = ['year','tech','new_old','n','type','var_set']
         valstream_val = '$/kW'
         load_val = 'MWh/kW'
+        df_valstream = scale_column_filtered(df_valstream, by_column='tech', by_vals=['upv', 'dupv'], change_column=valstream_val, scale_factor=ILR_UPV)
+        df_valstream = scale_column_filtered(df_valstream, by_column='tech', by_vals=['distpv'], change_column=valstream_val, scale_factor=ILR_distPV)
+        df_load = scale_column_filtered(df_load, by_column='tech', by_vals=['upv', 'dupv'], change_column=load_val, scale_factor=ILR_UPV)
+        df_load = scale_column_filtered(df_load, by_column='tech', by_vals=['distpv'], change_column=load_val, scale_factor=ILR_distPV)
+        dfs['levels_potential'] = scale_column_filtered(dfs['levels_potential'], by_column='tech', by_vals=['upv', 'dupv'], change_column='MW', scale_factor=1/ILR_UPV)
+        dfs['levels_potential'] = scale_column_filtered(dfs['levels_potential'], by_column='tech', by_vals=['distpv'], change_column='MW', scale_factor=1/ILR_distPV)
     elif kw['cat'] == 'chosen':
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
