@@ -155,8 +155,8 @@ def pre_tech_val_streams(dfs, **kw):
     df_price_ba_comb = sum_over_cols(df_price_ba, sum_over_cols=['type'], group_cols=['n','year'])
     df_price_dist_comb['type'] = 'comb'
     df_price_ba_comb['type'] = 'comb'
-    df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True)
-    df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True)
+    df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True, sort=False)
+    df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True, sort=False)
 
     #merge df_price into df_load and calculate block values for these types:
     #block_local_load, block_local_resmarg, block_local_comb, block_dist_load, block_dist_resmarg, block_dist_comb, 
@@ -196,7 +196,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_cost[valstream_val] = df_cost[valstream_val]*-1
 
     #Combine dataframes
-    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,df_cost], ignore_index=True)
+    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,df_cost], ignore_index=True, sort=False)
 
     if kw['cat'] == 'potential':
         df = add_chosen_available(df, dfs)

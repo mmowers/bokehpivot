@@ -257,7 +257,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
             if result_dfs[result] is None:
                 result_dfs[result] = df_scen_result
             else:
-                result_dfs[result] = pd.concat([result_dfs[result], df_scen_result]).reset_index(drop=True)
+                result_dfs[result] = pd.concat([result_dfs[result], df_scen_result], sort=False, ignore_index=True)
         print('***Done fetching ' + str(result) + ' for ' + str(scenario_name) + '.')
 
     #fill missing values with 0:
