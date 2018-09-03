@@ -37,6 +37,12 @@ def scale_column_filtered(df_in, **kw):
     df.loc[cond, kw['change_column']] = df.loc[cond, kw['change_column']] * kw['scale_factor']
     return df
 
+def scale_pv(df_in, **kw):
+    df = df_in.copy()
+    df = scale_column_filtered(df, by_column='tech', by_vals=['upv', 'dupv'], change_column='Capacity (GW)', scale_factor=1/ILR_UPV)
+    df = scale_column_filtered(df, by_column='tech', by_vals=['distpv'], change_column='Capacity (GW)', scale_factor=1/ILR_distPV)
+    return df
+
 def sum_over_cols(df_in, **kw):
     df = df_in.copy()
     df = df.drop(kw['sum_over_cols'], axis='columns')
@@ -129,12 +135,9 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_cols = ['year','tech','new_old','n','type','var_set']
         valstream_val = '$/kW'
         load_val = 'MWh/kW'
-        df_valstream = scale_column_filtered(df_valstream, by_column='tech', by_vals=['upv', 'dupv'], change_column=valstream_val, scale_factor=ILR_UPV)
-        df_valstream = scale_column_filtered(df_valstream, by_column='tech', by_vals=['distpv'], change_column=valstream_val, scale_factor=ILR_distPV)
-        df_load = scale_column_filtered(df_load, by_column='tech', by_vals=['upv', 'dupv'], change_column=load_val, scale_factor=ILR_UPV)
-        df_load = scale_column_filtered(df_load, by_column='tech', by_vals=['distpv'], change_column=load_val, scale_factor=ILR_distPV)
-        dfs['levels_potential'] = scale_column_filtered(dfs['levels_potential'], by_column='tech', by_vals=['upv', 'dupv'], change_column='MW', scale_factor=1/ILR_UPV)
-        dfs['levels_potential'] = scale_column_filtered(dfs['levels_potential'], by_column='tech', by_vals=['distpv'], change_column='MW', scale_factor=1/ILR_distPV)
+        df_valstream = scale_pv(df_valstream)
+        df_load = scale_pv(df_load)
+        dfs['levels_potential'] = scale_pv(dfs['levels_potential'])
     elif kw['cat'] == 'chosen':
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
@@ -315,8 +318,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
+            {'func': scale_pv, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
@@ -341,8 +343,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
+            {'func': scale_pv, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
@@ -357,8 +358,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['upv', 'dupv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_UPV}},
-            {'func': scale_column_filtered, 'args': {'by_column': 'tech', 'by_vals': ['distpv'], 'change_column': 'Capacity (GW)', 'scale_factor': 1/ILR_distPV}},
+            {'func': scale_pv, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
