@@ -15,7 +15,7 @@ import collections
 import core
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
-CRF_reeds = 0.0878901910837298
+CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
