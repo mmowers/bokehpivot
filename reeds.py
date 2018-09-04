@@ -134,6 +134,7 @@ def pre_tech_val_streams(dfs, **kw):
     if kw['cat'] == 'potential':
         valstream_cols = ['year','tech','new_old','n','type','var_set']
         valstream_val = '$/kW'
+        df_valstream.rename(columns={'$/kW': valstream_val}, inplace=True)
         load_val = 'MWh/kW'
         df_valstream = scale_pv(df_valstream)
         df_load = scale_pv(df_load)
@@ -142,20 +143,26 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
         load_val = 'MWh'
-        #sum over m
         df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
+        df_new_cap = dfs['new_cap']
+        df_new_cap['Capacity (GW)'] = df_new_cap['Capacity (GW)'] / 1000 #original data is in MW
+        df_new_cap = scale_pv(df_new_cap)
+        df_new_cap['new_old'] = 'new'
+        df_new_cap['year'] = pd.to_numeric(df_new_cap['year'])
 
     #Annualize and adjust by inflation
     df_valstream[valstream_val] = inflate_series(df_valstream[valstream_val]) * CRF_reeds
 
-    #All dist prices are load-weighted. Ideally, res_marg price would be weighted based on reserve margin requirement
+    #Gather national (dist) and ba-level prices (all in $/MWh assuming block generator with full capacity factor and capacity credit). Adjust by inflation
     df_price_dist = df_price_dist[df_price_dist['type'].isin(['load_pca','res_marg'])].copy()
     df_price_ba = df_price_ba[df_price_ba['type'].isin(['load_pca','res_marg'])].copy()
     df_price_dist['year'] = pd.to_numeric(df_price_dist['year'])
     df_price_ba['year'] = pd.to_numeric(df_price_ba['year'])
+    df_price_ba['$/MWh'] = inflate_series(df_price_ba['$/MWh'])
+    df_price_dist['$/MWh'] = inflate_series(df_price_dist['$/MWh'])
 
-    #Gather all prices, price_ba_load, price_ba_res_marg, price_ba_comb, price_dist_load, price_dist_res_marg, price_dist_comb
+    #Calculate combined load_pca and res_marg prices (comb) and concatenate into df_price_dist and df_price_ba dataframes.
     df_price_dist_comb = sum_over_cols(df_price_dist, sum_over_cols=['type'], group_cols=['year'])
     df_price_ba_comb = sum_over_cols(df_price_ba, sum_over_cols=['type'], group_cols=['n','year'])
     df_price_dist_comb['type'] = 'comb'
@@ -163,14 +170,29 @@ def pre_tech_val_streams(dfs, **kw):
     df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True)
     df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True)
 
-    #merge df_price into df_load and calculate block values for these types:
-    #block_local_load, block_local_resmarg, block_local_comb, block_dist_load, block_dist_resmarg, block_dist_comb, 
+    #merge df_price into df_load and calculate energy-based block value streams
     df_block_dist = pd.merge(left=df_load, right=df_price_dist, on=['year'], how='left', sort=False)
     df_block_ba = pd.merge(left=df_load, right=df_price_ba, on=['n','year'], how='left', sort=False)
-    df_block_dist[valstream_val] = inflate_series(df_block_dist['$/MWh']) * df_block_dist[load_val]
-    df_block_ba[valstream_val] = inflate_series(df_block_ba['$/MWh']) * df_block_ba[load_val]
+    df_block_dist[valstream_val] = df_block_dist['$/MWh'] * df_block_dist[load_val]
+    df_block_ba[valstream_val] = df_block_ba['$/MWh'] * df_block_ba[load_val]
     df_block_dist.drop(['$/MWh',load_val], axis='columns', inplace=True)
     df_block_ba.drop(['$/MWh',load_val], axis='columns', inplace=True)
+
+    #Add annualized $/kW capacity prices and capacity-based block value streams
+    df_price_dist['$/kW'] = df_price_dist['$/MWh'] * 8760/1000
+    df_price_ba['$/kW'] = df_price_ba['$/MWh'] * 8760/1000
+    if kw['cat'] == 'potential':
+        df_block_cap_dist = df_price_dist.copy()
+        df_block_cap_ba = df_price_ba.copy()
+        df_block_cap_dist.drop(['$/MWh'], axis='columns', inplace=True)
+        df_block_cap_ba.drop(['$/MWh'], axis='columns', inplace=True)
+    elif kw['cat'] == 'chosen':
+        df_block_cap_dist = pd.merge(left=df_new_cap, right=df_price_dist, on=['year'], how='left', sort=False)
+        df_block_cap_ba = pd.merge(left=df_new_cap, right=df_price_ba, on=['n','year'], how='left', sort=False)
+        df_block_cap_dist[valstream_val] = df_block_cap_dist['$/kW'] * df_block_cap_dist['Capacity (GW)'] * 1e6
+        df_block_cap_ba[valstream_val] = df_block_cap_ba['$/kW'] * df_block_cap_ba['Capacity (GW)'] * 1e6
+        df_block_cap_dist.drop(['$/MWh', '$/kW','Capacity (GW)'], axis='columns', inplace=True)
+        df_block_cap_ba.drop(['$/MWh', '$/kW','Capacity (GW)'], axis='columns', inplace=True)
 
     #Calculate additive adjustments between values of real, local block, and distributed block (value factors are multiplicative adjustments)
     #For load_pca df_real_min_loc represents temporal effects, but for res_marg it represents Capacity credit vs capacity factor.
@@ -183,16 +205,22 @@ def pre_tech_val_streams(dfs, **kw):
     df_valstream_red = df_valstream[df_valstream['type'].isin(['load_pca','res_marg','comb'])].copy()
     df_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_ba.set_index(valstream_cols),fill_value=0).reset_index()
     df_loc_min_dist = df_block_ba.set_index(valstream_cols).subtract(df_block_dist.set_index(valstream_cols),fill_value=0).reset_index()
+    df_cap_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_cap_ba.set_index(valstream_cols),fill_value=0).reset_index()
+    df_cap_loc_min_dist = df_block_cap_ba.set_index(valstream_cols).subtract(df_block_cap_dist.set_index(valstream_cols),fill_value=0).reset_index()
 
     #rename types to differentiate components
     df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
     df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
     df_real_min_loc['type'] = df_real_min_loc['type'].map({'load_pca': 'real_min_loc_load', 'res_marg': 'real_min_loc_resmarg', 'comb': 'real_min_loc_comb'})
     df_loc_min_dist['type'] = df_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load', 'res_marg': 'loc_min_dist_resmarg', 'comb': 'loc_min_dist_comb'})
+    df_block_cap_dist['type'] = df_block_cap_dist['type'].map({'load_pca': 'block_cap_dist_load', 'res_marg': 'block_cap_dist_resmarg', 'comb': 'block_cap_dist_comb'})
+    df_block_cap_ba['type'] = df_block_cap_ba['type'].map({'load_pca': 'block_cap_local_load', 'res_marg': 'block_cap_local_resmarg', 'comb': 'block_cap_local_comb'})
+    df_cap_real_min_loc['type'] = df_cap_real_min_loc['type'].map({'load_pca': 'real_min_loc_load_cap', 'res_marg': 'real_min_loc_resmarg_cap', 'comb': 'real_min_loc_comb_cap'})
+    df_cap_loc_min_dist['type'] = df_cap_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load_cap', 'res_marg': 'loc_min_dist_resmarg_cap', 'comb': 'loc_min_dist_comb_cap'})
 
     #Reformat Energy Output
     df_load['type'] = load_val
-    df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are MWh/kW
+    df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are load_val
 
     #Add Total Cost
     df_cost = df_valstream[df_valstream['type'].isin(costs)].copy()
@@ -201,9 +229,21 @@ def pre_tech_val_streams(dfs, **kw):
     df_cost[valstream_val] = df_cost[valstream_val]*-1
 
     #Combine dataframes
-    df = pd.concat([df_valstream,df_load,df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,df_cost], ignore_index=True)
-
-    if kw['cat'] == 'potential':
+    if kw['cat'] == 'chosen':
+        #Reformat Capacity Output
+        df_new_cap['type'] = 'GW'
+        df_new_cap.rename(columns={'Capacity (GW)': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are GW
+        df = pd.concat([
+            df_valstream,df_new_cap,df_load,df_cost,
+            df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,
+            df_block_cap_ba,df_block_cap_dist,df_cap_real_min_loc,df_cap_loc_min_dist
+        ], ignore_index=True)
+    elif kw['cat'] == 'potential':
+        df = pd.concat([
+            df_valstream,df_load,df_cost,
+            df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,
+            df_block_cap_ba,df_block_cap_dist,df_cap_real_min_loc,df_cap_loc_min_dist
+        ], ignore_index=True)
         df = add_chosen_available(df, dfs)
     return df
 
@@ -539,6 +579,7 @@ results_meta = collections.OrderedDict((
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'Capacity (GW)']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
