@@ -40,8 +40,8 @@ def scale_column_filtered(df_in, **kw):
 
 def scale_pv(df_in, **kw):
     df = df_in.copy()
-    df = scale_column_filtered(df, by_column='tech', by_vals=['upv', 'dupv'], change_column='Capacity (GW)', scale_factor=1/ILR_UPV)
-    df = scale_column_filtered(df, by_column='tech', by_vals=['distpv'], change_column='Capacity (GW)', scale_factor=1/ILR_distPV)
+    df = scale_column_filtered(df, by_column='tech', by_vals=['upv', 'dupv'], change_column=kw['change_column'], scale_factor=1/ILR_UPV)
+    df = scale_column_filtered(df, by_column='tech', by_vals=['distpv'], change_column=kw['change_column'], scale_factor=1/ILR_distPV)
     return df
 
 def sum_over_cols(df_in, **kw):
@@ -137,9 +137,9 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_val = '$/kW'
         df_valstream.rename(columns={'$/kW': valstream_val}, inplace=True)
         load_val = 'MWh/kW'
-        df_valstream = scale_pv(df_valstream)
-        df_load = scale_pv(df_load)
-        dfs['levels_potential'] = scale_pv(dfs['levels_potential'])
+        df_valstream = scale_pv(df_valstream, change_column=valstream_val)
+        df_load = scale_pv(df_load, change_column=load_val)
+        dfs['levels_potential'] = scale_pv(dfs['levels_potential'],change_column='MW')
     elif kw['cat'] == 'chosen':
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
@@ -147,9 +147,8 @@ def pre_tech_val_streams(dfs, **kw):
         df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
         df_new_cap = dfs['new_cap']
-        df_new_cap = scale_pv(df_new_cap)
-        df_new_cap['kW'] = df_new_cap['Capacity (GW)'] * 1000 #original data is actually in MW, not GW.
-        df_new_cap.drop(['Capacity (GW)'], axis='columns', inplace=True)
+        df_new_cap = scale_pv(df_new_cap, change_column='kW')
+        df_new_cap['kW'] = df_new_cap['kW'] * 1000 #original data is in MW
         df_new_cap['new_old'] = 'new'
         df_new_cap['year'] = pd.to_numeric(df_new_cap['year'])
 
@@ -180,14 +179,14 @@ def pre_tech_val_streams(dfs, **kw):
     df_block_dist.drop(['$/MWh',load_val], axis='columns', inplace=True)
     df_block_ba.drop(['$/MWh',load_val], axis='columns', inplace=True)
 
-    #Add annualized $/kW capacity prices and capacity-based block value streams
+    #Add annualized $/kW-yr capacity prices and capacity-based block value streams
     df_price_dist['$/kW'] = df_price_dist['$/MWh'] * 8760/1000
     df_price_ba['$/kW'] = df_price_ba['$/MWh'] * 8760/1000
     if kw['cat'] == 'potential':
-        df_block_cap_dist = df_price_dist.copy()
-        df_block_cap_ba = df_price_ba.copy()
-        df_block_cap_dist.drop(['$/MWh'], axis='columns', inplace=True)
-        df_block_cap_ba.drop(['$/MWh'], axis='columns', inplace=True)
+        cap_cols = [c for c in valstream_cols if c not in ['type']]
+        df_vs_red = df_valstream[cap_cols].drop_duplicates()
+        df_block_cap_dist = pd.merge(left=df_vs_red, right=df_price_dist, on=['year'], how='left', sort=False)
+        df_block_cap_ba = pd.merge(left=df_vs_red, right=df_price_ba, on=['n','year'], how='left', sort=False)
     elif kw['cat'] == 'chosen':
         df_block_cap_dist = pd.merge(left=df_new_cap, right=df_price_dist, on=['year'], how='left', sort=False)
         df_block_cap_ba = pd.merge(left=df_new_cap, right=df_price_ba, on=['n','year'], how='left', sort=False)
@@ -360,7 +359,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_pv, 'args': {}},
+            {'func': scale_pv, 'args': {'change_column': 'Capacity (GW)'}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
@@ -385,7 +384,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_pv, 'args': {}},
+            {'func': scale_pv, 'args': {'change_column': 'Capacity (GW)'}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
@@ -400,7 +399,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
-            {'func': scale_pv, 'args': {}},
+            {'func': scale_pv, 'args': {'change_column': 'Capacity (GW)'}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.5'}),
@@ -581,7 +580,7 @@ results_meta = collections.OrderedDict((
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
-            {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'Capacity (GW)']},
+            {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'kW']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
