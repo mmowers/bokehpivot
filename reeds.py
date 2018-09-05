@@ -24,6 +24,7 @@ values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
 values_decomp = ['block_dist_load','loc_min_dist_load','real_min_loc_load','block_dist_resmarg','loc_min_dist_resmarg','real_min_loc_resmarg','oper_res','rps','cap_fo_po','surplus','other']
 values_load = ['block_dist_load','loc_min_dist_load','real_min_loc_load','surplus']
 values_resmarg = ['block_dist_resmarg','loc_min_dist_resmarg','real_min_loc_resmarg']
+values_resmarg_cap = ['block_cap_dist_resmarg','loc_min_dist_resmarg_cap','real_min_loc_resmarg_cap']
 
 #1. Preprocess functions for results_meta
 def scale_column(df_in, **kw):
@@ -146,8 +147,9 @@ def pre_tech_val_streams(dfs, **kw):
         df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
         df_new_cap = dfs['new_cap']
-        df_new_cap['Capacity (GW)'] = df_new_cap['Capacity (GW)'] / 1000 #original data is in MW
         df_new_cap = scale_pv(df_new_cap)
+        df_new_cap['kW'] = df_new_cap['Capacity (GW)'] * 1000 #original data is actually in MW, not GW.
+        df_new_cap.drop(['Capacity (GW)'], axis='columns', inplace=True)
         df_new_cap['new_old'] = 'new'
         df_new_cap['year'] = pd.to_numeric(df_new_cap['year'])
 
@@ -189,10 +191,10 @@ def pre_tech_val_streams(dfs, **kw):
     elif kw['cat'] == 'chosen':
         df_block_cap_dist = pd.merge(left=df_new_cap, right=df_price_dist, on=['year'], how='left', sort=False)
         df_block_cap_ba = pd.merge(left=df_new_cap, right=df_price_ba, on=['n','year'], how='left', sort=False)
-        df_block_cap_dist[valstream_val] = df_block_cap_dist['$/kW'] * df_block_cap_dist['Capacity (GW)'] * 1e6
-        df_block_cap_ba[valstream_val] = df_block_cap_ba['$/kW'] * df_block_cap_ba['Capacity (GW)'] * 1e6
-        df_block_cap_dist.drop(['$/MWh', '$/kW','Capacity (GW)'], axis='columns', inplace=True)
-        df_block_cap_ba.drop(['$/MWh', '$/kW','Capacity (GW)'], axis='columns', inplace=True)
+        df_block_cap_dist[valstream_val] = df_block_cap_dist['$/kW'] * df_block_cap_dist['kW']
+        df_block_cap_ba[valstream_val] = df_block_cap_ba['$/kW'] * df_block_cap_ba['kW']
+        df_block_cap_dist.drop(['$/MWh', '$/kW','kW'], axis='columns', inplace=True)
+        df_block_cap_ba.drop(['$/MWh', '$/kW','kW'], axis='columns', inplace=True)
 
     #Calculate additive adjustments between values of real, local block, and distributed block (value factors are multiplicative adjustments)
     #For load_pca df_real_min_loc represents temporal effects, but for res_marg it represents Capacity credit vs capacity factor.
@@ -231,8 +233,8 @@ def pre_tech_val_streams(dfs, **kw):
     #Combine dataframes
     if kw['cat'] == 'chosen':
         #Reformat Capacity Output
-        df_new_cap['type'] = 'GW'
-        df_new_cap.rename(columns={'Capacity (GW)': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are GW
+        df_new_cap['type'] = 'kW'
+        df_new_cap.rename(columns={'kW': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are different
         df = pd.concat([
             df_valstream,df_new_cap,df_load,df_cost,
             df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,
@@ -585,6 +587,11 @@ results_meta = collections.OrderedDict((
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
         ],
         'presets': collections.OrderedDict((
+            ('$/kW by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'kW', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['kW'],'new_old':['new']}}),
+            ('$/kW by type final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'kW', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':costs+values+['kW'], 'year':'last', }}),
+            ('Resmarg $/kW decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'kW', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':values_resmarg_cap+['kW'],'new_old':['new']}}),
+            ('Resmarg $/kW decomposed final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'kW', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':values_resmarg_cap+['kW'], 'year':'last', }}),
+
             ('$/MWh by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['MWh'],'new_old':['new']}}),
             ('$/MWh by type decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values_decomp+['MWh'],'new_old':['new']}}),
             ('$/MWh by type final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':costs+values+['MWh'], 'year':'last', }}),
@@ -604,6 +611,8 @@ results_meta = collections.OrderedDict((
             ('Load profit decomposed final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':values_load+['total cost'], 'year':'last', }}),
             ('Resmarg profit decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':values_resmarg+['total cost'],'new_old':['new']}}),
             ('Resmarg profit decomposed final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':values_resmarg+['total cost'], 'year':'last', }}),
+            ('Resmarg cap profit decomposed over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':values_resmarg_cap+['total cost'],'new_old':['new']}}),
+            ('Resmarg cap profit decomposed final', {'chart_type':'Bar', 'x':'tech', 'y':'$', 'series':'type', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'total cost', 'sync_axes':'No', 'bar_width':r'.9s', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'tech':{'exclude':['Distributed PV (AC)','distpv']}, 'type':values_resmarg_cap+['total cost'], 'year':'last', }}),
 
             ('Value factor Combined Dist by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_dist_comb']+values,'new_old':['new']}}),
             ('Value factor Combined Local by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_comb', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_local_comb']+values,'new_old':['new']}}),
@@ -623,6 +632,9 @@ results_meta = collections.OrderedDict((
             ('Value factor Res Marg over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_resmarg','res_marg'], }}),
             ('Value factor Res Marg CV/CF over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_local_resmarg', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_local_resmarg','res_marg'], }}),
             ('Value factor Res Marg Spatial over time', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_dist_resmarg', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_dist_resmarg','block_local_resmarg'], }}),
+
+            ('CC Res Marg by type final', {'x':'n','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_cap_local_resmarg', 'chart_type':'Bar', 'plot_width':'600', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':['block_cap_local_resmarg','res_marg'],'new_old':['new']}}),
+            ('CC Res Marg over time', {'chart_type':'Line', 'x':'year', 'y':'$', 'series':'type', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'block_cap_local_resmarg', 'sync_axes':'No', 'bar_width':r'1.75', 'filter': {'new_old':['new'], 'type':['block_cap_local_resmarg','res_marg'], }}),
         )),
         }
     ),
