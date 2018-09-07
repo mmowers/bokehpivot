@@ -131,6 +131,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_load = dfs['load']
     df_price_dist = dfs['prices_nat']
     df_price_ba = dfs['prices_ba']
+    df_crf = dfs['CRF']
 
     if kw['cat'] == 'potential':
         valstream_cols = ['year','tech','new_old','n','type','var_set']
@@ -153,7 +154,12 @@ def pre_tech_val_streams(dfs, **kw):
         df_new_cap['year'] = pd.to_numeric(df_new_cap['year'])
 
     #Annualize and adjust by inflation
-    df_valstream[valstream_val] = inflate_series(df_valstream[valstream_val]) * CRF_reeds
+    df_crf = df_crf[df_crf['crftype']=='crf_20'].copy()
+    df_crf.drop(['crftype'], axis='columns', inplace=True)
+    df_crf['year'] = pd.to_numeric(df_crf['year'])
+    df_valstream = pd.merge(left=df_valstream, right=df_crf, on=['year'], how='left', sort=False)
+    df_valstream[valstream_val] = inflate_series(df_valstream[valstream_val]) * df_valstream['crf']
+    df_valstream.drop(['crf'], axis='columns', inplace=True)
 
     #Gather national (dist) and ba-level prices (all in $/MWh assuming block generator with full capacity factor and capacity credit). Adjust by inflation
     df_price_dist = df_price_dist[df_price_dist['type'].isin(['load_pca','res_marg'])].copy()
@@ -581,6 +587,7 @@ results_meta = collections.OrderedDict((
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
             {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'kW']},
+            {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
@@ -662,6 +669,7 @@ results_meta = collections.OrderedDict((
             {'name': 'available_potential', 'file': 'valuestreams/available_potential.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
+            {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
             {'func': pre_tech_val_streams, 'args': {'cat':'potential'}},
