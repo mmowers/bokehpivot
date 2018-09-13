@@ -1,0 +1,44 @@
+order
+Fixed Cost
+Variable Cost
+Trans Cost
+Ancillary Cost
+Growth Cost
+Other Cost
+Energy Value
+Capacity Value
+Ancillary Value
+RPS Value
+Surplus
+Profit
+Reduced Cost
+Cap Fo Po
+Other Value
+total cost
+MWh/kW
+MWh
+kW
+block_local_load
+block_dist_load
+block_local_resmarg
+block_dist_resmarg
+block_local_comb
+block_dist_comb
+block_cap_local_load
+block_cap_dist_load
+block_cap_local_resmarg
+block_cap_dist_resmarg
+block_cap_local_comb
+block_cap_dist_comb
+real_min_loc_load
+loc_min_dist_load
+real_min_loc_resmarg
+loc_min_dist_resmarg
+real_min_loc_comb
+loc_min_dist_comb
+real_min_loc_load_cap
+loc_min_dist_load_cap
+real_min_loc_resmarg_cap
+loc_min_dist_resmarg_cap
+real_min_loc_comb_cap
+loc_min_dist_comb_cap
