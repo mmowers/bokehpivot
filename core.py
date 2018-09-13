@@ -1279,14 +1279,15 @@ def get_palette(palette, num):
             pal[1] = [pal[3][0]]
         return list(reversed(pal[num]))
 
-def build_plot_legend(df_plots, series_val, custom_colors):
+def build_plot_legend(df_plots, series_val, custom_sorts, custom_colors):
     '''
     Return html for series legend, based on values of column that was chosen for series, and global COLORS.
 
     Args:
         df_plots (pandas dataframe): Dataframe of all plots data.
         series_val (string): Header for column chosen as series.
-        custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
+        custom_sorts (dict): Keys are column names. Values are lists of values in the desired sort order.
+        custom_colors (dict): Keys are column names. Values are dicts that map column values to colors (hex strings)
 
     Returns:
         legend_string (string): html to be used as legend.
@@ -1299,6 +1300,14 @@ def build_plot_legend(df_plots, series_val, custom_colors):
         for i, lab in enumerate(labels):
              if lab in custom_colors[series_val]:
                  colors[i] = custom_colors[series_val][lab]
+    #resort to abide by series custom ordering. This may have been disrupted by x-axis bar height sorting or explode sorting.
+    if custom_sorts and series_val in custom_sorts:
+        label_color = dict(zip(labels, colors))
+        labels_1 = [l for l in custom_sorts[series_val] if l in labels]
+        labels_2 = [l for l in labels if l not in labels_1]
+        labels = labels_1 + labels_2
+        colors = [label_color[l] for l in labels]
+    #reverse order of legend
     labels.reverse()
     colors.reverse()
     legend_string = build_legend(labels, colors)
@@ -1538,7 +1547,7 @@ def update_plots():
             legend_text = build_map_legend(GL['widgets'], breakpoints)
         else:
             figs = create_figures(GL['df_plots'], GL['widgets'], GL['columns'], GL['custom_colors'])
-            legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value, GL['custom_colors'])
+            legend_text = build_plot_legend(GL['df_plots'], GL['widgets']['series'].value, GL['custom_sorts'], GL['custom_colors'])
         GL['widgets']['legend'].text = legend_text
         GL['plots'].children = figs
 
