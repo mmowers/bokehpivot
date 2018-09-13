@@ -201,6 +201,12 @@ def pre_tech_val_streams(dfs, **kw):
         df_block_cap_dist.drop(['$/MWh', '$/kW','kW'], axis='columns', inplace=True)
         df_block_cap_ba.drop(['$/MWh', '$/kW','kW'], axis='columns', inplace=True)
 
+    #rename types to differentiate components
+    df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
+    df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
+    df_block_cap_dist['type'] = df_block_cap_dist['type'].map({'load_pca': 'block_cap_dist_load', 'res_marg': 'block_cap_dist_resmarg', 'comb': 'block_cap_dist_comb'})
+    df_block_cap_ba['type'] = df_block_cap_ba['type'].map({'load_pca': 'block_cap_local_load', 'res_marg': 'block_cap_local_resmarg', 'comb': 'block_cap_local_comb'})
+
     #Calculate additive adjustments between values of real, local block, and distributed block (value factors are multiplicative adjustments)
     #For load_pca df_real_min_loc represents temporal effects, but for res_marg it represents Capacity credit vs capacity factor.
     #res_marg realy should have special treatment because block value streams are based on energy, and some techs may only be providing reserves.
@@ -209,21 +215,17 @@ def pre_tech_val_streams(dfs, **kw):
     df_valstream_comb['type'] = 'comb'
     df_valstream_comb = df_valstream_comb.groupby(valstream_cols, sort=False, as_index =False).sum()
     df_valstream.append(df_valstream_comb)
-    df_valstream_red = df_valstream[df_valstream['type'].isin(['load_pca','res_marg','comb'])].copy()
-    df_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_ba.set_index(valstream_cols),fill_value=0).reset_index()
-    df_loc_min_dist = df_block_ba.set_index(valstream_cols).subtract(df_block_dist.set_index(valstream_cols),fill_value=0).reset_index()
-    df_cap_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_cap_ba.set_index(valstream_cols),fill_value=0).reset_index()
-    df_cap_loc_min_dist = df_block_cap_ba.set_index(valstream_cols).subtract(df_block_cap_dist.set_index(valstream_cols),fill_value=0).reset_index()
-
-    #rename types to differentiate components
-    df_block_dist['type'] = df_block_dist['type'].map({'load_pca': 'block_dist_load', 'res_marg': 'block_dist_resmarg', 'comb': 'block_dist_comb'})
-    df_block_ba['type'] = df_block_ba['type'].map({'load_pca': 'block_local_load', 'res_marg': 'block_local_resmarg', 'comb': 'block_local_comb'})
-    df_real_min_loc['type'] = df_real_min_loc['type'].map({'load_pca': 'real_min_loc_load', 'res_marg': 'real_min_loc_resmarg', 'comb': 'real_min_loc_comb'})
-    df_loc_min_dist['type'] = df_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load', 'res_marg': 'loc_min_dist_resmarg', 'comb': 'loc_min_dist_comb'})
-    df_block_cap_dist['type'] = df_block_cap_dist['type'].map({'load_pca': 'block_cap_dist_load', 'res_marg': 'block_cap_dist_resmarg', 'comb': 'block_cap_dist_comb'})
-    df_block_cap_ba['type'] = df_block_cap_ba['type'].map({'load_pca': 'block_cap_local_load', 'res_marg': 'block_cap_local_resmarg', 'comb': 'block_cap_local_comb'})
-    df_cap_real_min_loc['type'] = df_cap_real_min_loc['type'].map({'load_pca': 'real_min_loc_load_cap', 'res_marg': 'real_min_loc_resmarg_cap', 'comb': 'real_min_loc_comb_cap'})
-    df_cap_loc_min_dist['type'] = df_cap_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load_cap', 'res_marg': 'loc_min_dist_resmarg_cap', 'comb': 'loc_min_dist_comb_cap'})
+    if kw['decompose'] == True:
+        df_valstream_red = df_valstream[df_valstream['type'].isin(['load_pca','res_marg','comb'])].copy()
+        df_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_ba.set_index(valstream_cols),fill_value=0).reset_index()
+        df_loc_min_dist = df_block_ba.set_index(valstream_cols).subtract(df_block_dist.set_index(valstream_cols),fill_value=0).reset_index()
+        df_cap_real_min_loc = df_valstream_red.set_index(valstream_cols).subtract(df_block_cap_ba.set_index(valstream_cols),fill_value=0).reset_index()
+        df_cap_loc_min_dist = df_block_cap_ba.set_index(valstream_cols).subtract(df_block_cap_dist.set_index(valstream_cols),fill_value=0).reset_index()
+        #rename types to differentiate components
+        df_cap_real_min_loc['type'] = df_cap_real_min_loc['type'].map({'load_pca': 'real_min_loc_load_cap', 'res_marg': 'real_min_loc_resmarg_cap', 'comb': 'real_min_loc_comb_cap'})
+        df_cap_loc_min_dist['type'] = df_cap_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load_cap', 'res_marg': 'loc_min_dist_resmarg_cap', 'comb': 'loc_min_dist_comb_cap'})
+        df_real_min_loc['type'] = df_real_min_loc['type'].map({'load_pca': 'real_min_loc_load', 'res_marg': 'real_min_loc_resmarg', 'comb': 'real_min_loc_comb'})
+        df_loc_min_dist['type'] = df_loc_min_dist['type'].map({'load_pca': 'loc_min_dist_load', 'res_marg': 'loc_min_dist_resmarg', 'comb': 'loc_min_dist_comb'})
 
     #Reformat Energy Output
     df_load['type'] = load_val
@@ -236,21 +238,19 @@ def pre_tech_val_streams(dfs, **kw):
     df_cost[valstream_val] = df_cost[valstream_val]*-1
 
     #Combine dataframes
+    df_list = [df_valstream, df_load, df_cost, df_block_ba, df_block_dist, df_block_cap_ba, df_block_cap_dist]
+
+    if kw['decompose'] == True:
+        df_list = df_list + [df_real_min_loc,df_loc_min_dist,df_cap_real_min_loc,df_cap_loc_min_dist]
+
     if kw['cat'] == 'chosen':
         #Reformat Capacity Output
         df_new_cap['type'] = 'kW'
         df_new_cap.rename(columns={'kW': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are different
-        df = pd.concat([
-            df_valstream,df_new_cap,df_load,df_cost,
-            df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,
-            df_block_cap_ba,df_block_cap_dist,df_cap_real_min_loc,df_cap_loc_min_dist
-        ], ignore_index=True)
+        df_list.append(df_new_cap)
+        df = pd.concat(df_list, ignore_index=True)
     elif kw['cat'] == 'potential':
-        df = pd.concat([
-            df_valstream,df_load,df_cost,
-            df_block_ba,df_block_dist,df_real_min_loc,df_loc_min_dist,
-            df_block_cap_ba,df_block_cap_dist,df_cap_real_min_loc,df_cap_loc_min_dist
-        ], ignore_index=True)
+        df = pd.concat(df_list, ignore_index=True)
         df = add_chosen_available(df, dfs)
     return df
 
@@ -590,7 +590,7 @@ results_meta = collections.OrderedDict((
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
-            {'func': pre_tech_val_streams, 'args': {'cat':'chosen'}},
+            {'func': pre_tech_val_streams, 'args': {'cat':'chosen','decompose':False}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'kW', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'type':costs+values+['kW'],'new_old':['new']}}),
@@ -672,7 +672,7 @@ results_meta = collections.OrderedDict((
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
-            {'func': pre_tech_val_streams, 'args': {'cat':'potential'}},
+            {'func': pre_tech_val_streams, 'args': {'cat':'potential','decompose':False}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9s', 'sync_axes':'No', 'filter': {'year':'last','type':costs+values,'new_old':['new']}}),
