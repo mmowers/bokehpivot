@@ -15,6 +15,8 @@ reduced_cost,Reduced Cost
 cap_fo_po,Cap Fo Po
 other,Other Value
 total cost,total cost
+total value,total value
+sys_lcoe_num,sys_lcoe_num
 MWh/kW,MWh/kW
 MWh,MWh
 kW,kW
