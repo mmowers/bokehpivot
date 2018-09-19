@@ -67,7 +67,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'bar_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -415,7 +415,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['y_major_label_size'] = bmw.TextInput(title='Y Labels Font Size', value=str(PLOT_AXIS_LABEL_SIZE), css_classes=['wdgkey-y_major_label_size', 'adjust-drop'])
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
-    wdg['bar_width_desc'] = bmw.Div(text='<strong>Flags</strong> <em>w</em>: use csv file for widths, <em>c</em>: sort and convert x axis to quantitative based on csv file, <em>s</em>: sort bars according to height (include numeric width)', css_classes=['adjust-drop', 'description'])
+    wdg['bar_width_desc'] = bmw.Div(text='<strong>Flags</strong> <em>w</em>: use csv file for widths, <em>c</em>: convert x axis to quantitative based on csv file', css_classes=['adjust-drop', 'description'])
+    wdg['bar_sort'] = bmw.Select(title='Bar Sort (Bar Only)', value='None', options=['None', 'Ascending', 'Descending'], css_classes=['wdgkey-bar_width','adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
     wdg['range_show_glyphs'] = bmw.Select(title='Show Line/Dot (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-range_show_glyphs', 'adjust-drop'])
     wdg['net_levels'] = bmw.Select(title='Add Net Levels to Stacked', value='Yes', options=['Yes','No'], css_classes=['wdgkey-net_levels', 'adjust-drop'])
@@ -596,10 +597,10 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     if wdg['y_scale'].value != '' and wdg['y'].value in cols['continuous']:
         df_plots[wdg['y'].value] = df_plots[wdg['y'].value] * float(wdg['y_scale'].value)
 
-    #For bar charts with convert flag 'c' or sort flag 's', we will sort by cumulative y value.
+    #For bar charts with bar_sort set to "Ascending" or "Descending" we will sort by cumulative y value.
     #If net levels are shown, we must also calculate cumulative y value.
     bar_height_sort = False
-    bar_sort_cond = wdg['chart_type'].value == 'Bar' and ((wdg['bar_width'].value == 'c')  or ('s' in wdg['bar_width'].value))
+    bar_sort_cond = wdg['chart_type'].value == 'Bar' and wdg['bar_sort'].value != 'None'
     net_level_cond = wdg['net_levels'].value == 'Yes' and wdg['chart_type'].value in STACKEDTYPES
     net_level_col = []
     if bar_sort_cond or net_level_cond:
@@ -611,8 +612,9 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         if bar_sort_cond:
             bar_height_sort = True
             df_bar = df_net.rename(columns={wdg['y'].value: 'y_bar_cumulative'})
-            #multiply by -1 so that we sort from large to small instead of small to large
-            df_bar['y_bar_cumulative'] = df_bar['y_bar_cumulative']*-1
+            if wdg['bar_sort'].value == 'Descending':
+                #multiply by -1 so that we sort from large to small instead of small to large
+                df_bar['y_bar_cumulative'] = df_bar['y_bar_cumulative']*-1
             df_plots = df_plots.merge(df_bar, how='left', on=net_group_cols, sort=False)
         if net_level_cond:
             net_level_col_name = 'Net Level ' + wdg['y'].value
@@ -701,7 +703,7 @@ def set_axis_bounds(df, plots, wdg, cols):
     '''
     if wdg['x'].value in cols['continuous'] and wdg['x_group'].value == 'None':
         if wdg['chart_type'].value == 'Bar':
-            bar_width_half = float(re.sub('[^0-9.]','',wdg['bar_width'].value))/2
+            bar_width_half = float(wdg['bar_width'].value)/2
         if wdg['x_min'].value != '':
             for p in plots:
                 p.x_range.start = float(wdg['x_min'].value)
@@ -957,9 +959,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
                 xs_cum = xs_cum + width
                 x_legend[i] = x_legend[i] + ' (width = ' + str(width) + ', ' + str(xs_cum) + ' cumulative)'
         else:
-            #strip off letters, for example, the 's' flag.
-            digits = re.sub("[a-z]", "", wdg['bar_width'].value)
-            widths = [float(digits)]*len(xs)
+            widths = [float(wdg['bar_width'].value)]*len(xs)
         #bars have issues when height is 0, so remove elements whose height is 0 
         heights_orig = list(heights) #we make a copy so we aren't modifying the list we are iterating on.
         for i, h in reversed(list(enumerate(heights_orig))):
