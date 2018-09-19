@@ -17,6 +17,7 @@ other,Other Value
 total cost,total cost
 total value,total value
 sys_lcoe_num,sys_lcoe_num
+base_value,base_value
 MWh/kW,MWh/kW
 MWh,MWh
 kW,kW
