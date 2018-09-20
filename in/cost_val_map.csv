@@ -9,7 +9,7 @@ load_pca,Energy Value
 res_marg,Capacity Value
 oper_res,Ancillary Value
 rps,RPS Value
-surplus,Surplus
+surplus,Curtailment
 profit,Profit
 reduced_cost,Reduced Cost
 cap_fo_po,Cap Fo Po
@@ -17,7 +17,7 @@ other,Other Value
 total cost,total cost
 total value,total value
 sys_lcoe_num,sys_lcoe_num
-base_value,base_value
+base_value,Base Value
 MWh/kW,MWh/kW
 MWh,MWh
 kW,kW

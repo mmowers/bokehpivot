@@ -9,7 +9,7 @@ Energy Value
 Capacity Value
 Ancillary Value
 RPS Value
-Surplus
+Curtailment
 Profit
 Reduced Cost
 Cap Fo Po
@@ -17,7 +17,7 @@ Other Value
 total cost
 total value
 sys_lcoe_num
-base_value
+Base Value
 MWh/kW
 MWh
 kW
