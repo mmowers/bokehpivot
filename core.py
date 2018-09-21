@@ -599,7 +599,6 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
 
     #For cum_sort set to "Ascending" or "Descending" we will sort by cumulative y value.
     #If net levels are shown, we must also calculate cumulative y value.
-    cumulative_sort = False
     cum_sort_cond = wdg['cum_sort'].value != 'None'
     net_level_cond = wdg['net_levels'].value == 'Yes' and wdg['chart_type'].value in STACKEDTYPES
     net_level_col = []
@@ -610,7 +609,6 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         df_net_group = df_plots.groupby(net_group_cols, sort=False)
         df_net = df_net_group[wdg['y'].value].sum().reset_index()
         if cum_sort_cond:
-            cumulative_sort = True
             df_cum = df_net.rename(columns={wdg['y'].value: 'y_cumulative'})
             if wdg['cum_sort'].value == 'Descending':
                 #multiply by -1 so that we sort from large to small instead of small to large
@@ -626,7 +624,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     sortby_cols = [wdg['x'].value]
     if wdg['x_group'].value != 'None': sortby_cols = [wdg['x_group'].value] + sortby_cols
     if wdg['series'].value != 'None': sortby_cols = [wdg['series'].value] + sortby_cols
-    if cumulative_sort: sortby_cols = ['y_cumulative'] + sortby_cols
+    if cum_sort_cond: sortby_cols = ['y_cumulative'] + sortby_cols
     if wdg['explode'].value != 'None': sortby_cols = [wdg['explode'].value] + sortby_cols
     if wdg['explode_group'].value != 'None': sortby_cols = [wdg['explode_group'].value] + sortby_cols
     #Add custom sort columns
@@ -641,7 +639,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     for col in custom_sorts:
         if col in sortby_cols:
             df_plots = df_plots.drop(col + '__sort_col', 1)
-    if cumulative_sort:
+    if cum_sort_cond:
         df_plots = df_plots.drop('y_cumulative', 1)
         sortby_cols.remove('y_cumulative')
 
