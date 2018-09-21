@@ -351,6 +351,7 @@ columns_meta = {
     },
     'm':{
         'type': 'string',
+        'map': this_dir_path + '/in/m_map.csv',
         'style': this_dir_path + '/in/m_style.csv',
     },
     'cost_cat':{

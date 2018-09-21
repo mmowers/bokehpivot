@@ -415,7 +415,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['y_major_label_size'] = bmw.TextInput(title='Y Labels Font Size', value=str(PLOT_AXIS_LABEL_SIZE), css_classes=['wdgkey-y_major_label_size', 'adjust-drop'])
     wdg['circle_size'] = bmw.TextInput(title='Circle Size (Dot Only)', value=str(CIRCLE_SIZE), css_classes=['wdgkey-circle_size', 'adjust-drop'])
     wdg['bar_width'] = bmw.TextInput(title='Bar Width (Bar Only)', value=str(BAR_WIDTH), css_classes=['wdgkey-bar_width', 'adjust-drop'])
-    wdg['bar_width_desc'] = bmw.Div(text='<strong>Flags</strong> <em>w</em>: use csv file for widths, <em>c</em>: convert x axis to quantitative based on csv file', css_classes=['adjust-drop', 'description'])
+    wdg['bar_width_desc'] = bmw.Div(text='<strong>Flags</strong> <em>w</em>: use csv file for widths, <em>c</em>: convert x axis to quantitative based on widths in csv file', css_classes=['adjust-drop', 'description'])
     wdg['bar_sort'] = bmw.Select(title='Bar Sort (Bar Only)', value='None', options=['None', 'Ascending', 'Descending'], css_classes=['wdgkey-bar_width','adjust-drop'])
     wdg['line_width'] = bmw.TextInput(title='Line Width (Line Only)', value=str(LINE_WIDTH), css_classes=['wdgkey-line_width', 'adjust-drop'])
     wdg['range_show_glyphs'] = bmw.Select(title='Show Line/Dot (Range Only)', value='Yes', options=['Yes','No'], css_classes=['wdgkey-range_show_glyphs', 'adjust-drop'])
@@ -944,13 +944,13 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         xs_cp = list(xs) #we don't want to modify xs that are passed into function
         x_legend = list(xs)
         if wdg['bar_width'].value == 'w': #this means we are looking for the mapping in the _bar_width file
-            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
+            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='display')
             max_width = df_bar_width['width'].max()
             widths = [df_bar_width.loc[x, 'width']/max_width for x in xs]
             x_legend = [x_legend[i] + ' (width = ' + str(df_bar_width.loc[x, 'width']) + ')' for i, x in enumerate(xs)]
         elif wdg['bar_width'].value == 'c': #this means we are converting x axis to continuous and have no gaps between bars
             widths = []
-            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='m')
+            df_bar_width = pd.read_csv(this_dir_path + '/in/' + wdg['x'].value + '_bar_width.csv', index_col='display')
             xs_cum = 0
             for i, xo in enumerate(xs):
                 width = df_bar_width.loc[xo, 'width']

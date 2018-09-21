@@ -1,47 +1,47 @@
-order
-Base Price
-Fixed Cost
-Variable Cost
-Trans Cost
-Ancillary Cost
-Growth Cost
-Other Cost
-Energy Value
-Capacity Value
-Ancillary Value
-RPS Value
-Curtailment
-Profit
-Reduced Cost
-Cap Fo Po
-Other Value
-total cost
-total value
-sys_lcoe_num
-MWh/kW
-MWh
-kW
-block_local_load
-block_dist_load
-block_local_resmarg
-block_dist_resmarg
-block_local_comb
-block_dist_comb
-block_cap_local_load
-block_cap_dist_load
-block_cap_local_resmarg
-block_cap_dist_resmarg
-block_cap_local_comb
-block_cap_dist_comb
-real_min_loc_load
-loc_min_dist_load
-real_min_loc_resmarg
-loc_min_dist_resmarg
-real_min_loc_comb
-loc_min_dist_comb
-real_min_loc_load_cap
-loc_min_dist_load_cap
-real_min_loc_resmarg_cap
-loc_min_dist_resmarg_cap
-real_min_loc_comb_cap
-loc_min_dist_comb_cap
+order,color
+Base Price,#1f77b4
+Fixed Cost,#ff7f0e
+Variable Cost,#2ca02c
+Trans Cost,#d62728
+Ancillary Cost,#9467bd
+Growth Cost,#8c564b
+Other Cost,#e377c2
+Energy Value,#7f7f7f
+Capacity Value,#bcbd22
+Ancillary Value,#17becf
+RPS Value,#aec7e8
+Curtailment,#ffbb78
+Profit,#98df8a
+Reduced Cost,#ff9896
+Cap Fo Po,#c5b0d5
+Other Value,#c49c94
+total cost,#f7b6d2
+total value,#c7c7c7
+sys_lcoe_num,#dbdb8d
+MWh/kW,#9edae5
+MWh,#1f77b4
+kW,#ff7f0e
+block_local_load,#2ca02c
+block_dist_load,#d62728
+block_local_resmarg,#9467bd
+block_dist_resmarg,#8c564b
+block_local_comb,#e377c2
+block_dist_comb,#7f7f7f
+block_cap_local_load,#bcbd22
+block_cap_dist_load,#17becf
+block_cap_local_resmarg,#aec7e8
+block_cap_dist_resmarg,#ffbb78
+block_cap_local_comb,#98df8a
+block_cap_dist_comb,#ff9896
+real_min_loc_load,#c5b0d5
+loc_min_dist_load,#c49c94
+real_min_loc_resmarg,#f7b6d2
+loc_min_dist_resmarg,#c7c7c7
+real_min_loc_comb,#dbdb8d
+loc_min_dist_comb,#9edae5
+real_min_loc_load_cap,#1f77b4
+loc_min_dist_load_cap,#ff7f0e
+real_min_loc_resmarg_cap,#2ca02c
+loc_min_dist_resmarg_cap,#d62728
+real_min_loc_comb_cap,#9467bd
+loc_min_dist_comb_cap,#8c564b

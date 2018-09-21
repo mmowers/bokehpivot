@@ -1,18 +1,18 @@
-m,width
-h1,736
-h2,644
-h3,328
-h4,460
-h5,488
-h6,427
-h7,244
-h8,305
-h9,960
-h10,840
-h11,480
-h12,600
-h13,736
-h14,644
-h15,368
-h16,460
-h17,40
+display,width
+Summer 10pm-6am,736
+Summer 6am-1pm,644
+Summer 1pm-5pm,328
+Summer 5pm-10pm,460
+Fall 10pm-6am,488
+Fall 6am-1pm,427
+Fall 1pm-5pm,244
+Fall 5pm-10pm,305
+Winter 10pm-6am,960
+Winter 6am-1pm,840
+Winter 1pm-5pm,480
+Winter 5pm-10pm,600
+Spring 10pm-6am,736
+Spring 6am-1pm,644
+Spring 1pm-5pm,368
+Spring 5pm-10pm,460
+Summer Peak,40
