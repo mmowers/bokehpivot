@@ -994,7 +994,10 @@ results_meta = collections.OrderedDict((
     ('oper_res',
         {'file': "Reporting.gdx",
         'param': 'OperRes',
-        'columns': ["tech", "n", "year", "m", "value"],
+        'columns': ["type", "tech", "n", "m", "year", "value"],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars all type and timeslice', {'chart_type':'Bar', 'x':'year', 'y':'value', 'series':'tech', 'explode':'scenario', 'bar_width':r'1.5', 'filter': {}}),
+        )),
         }
     ),
     ('vrre',
