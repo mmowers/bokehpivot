@@ -32,12 +32,6 @@ body {
 .bk-plot-layout{
     display: inline-block !important;
 }
-.wdgkey-data{
-    margin-top: 5px !important;
-}
-.wdgkey-data label{
-    display: none !important;
-}
 .chart-drop,
 .reeds-vars-drop,
 .meta-drop,

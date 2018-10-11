@@ -45,6 +45,7 @@ def reeds_static(data_source, scenario_filter, base, static_presets, report_path
     Returns:
         Nothing: HTML and Excel files are created
     '''
+    data_type = 'ReEDS 1.0'
     core_presets = []
     for static_preset in static_presets:
         #build the full widget configuration for each preset.
@@ -74,7 +75,7 @@ def reeds_static(data_source, scenario_filter, base, static_presets, report_path
     if scenario_filter != 'all':
         scenarios = map(int, scenario_filter.split(','))
         variant_wdg_config.append({'name':'scenario_filter', 'val': scenarios, 'type': 'active'})
-    core.static_report(data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config)
+    core.static_report(data_type, data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config)
 
 def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custom_colors):
     '''

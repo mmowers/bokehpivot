@@ -32,6 +32,8 @@ import reeds_bokeh as rb
 debug = False
 
 #Defaults to configure:
+DEFAULT_DATA_TYPE = 'ReEDS 1.0'
+DATA_TYPE_OPTIONS = ['ReEDS 1.0', 'CSV']
 PLOT_WIDTH = 300
 PLOT_HEIGHT = 300
 PLOT_FONT_SIZE = 10
@@ -74,7 +76,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
 #custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':{},
-      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {},
+      'widgets':None, 'controls': None, 'plots':None, 'custom_sorts': {},
       'custom_colors': {}}
 
 #os globals
@@ -95,14 +97,17 @@ def initialize():
     args = bio.curdoc().session_context.request.arguments
     wdg_arr = args.get('widgets')
     data_source = ''
-    GL['wdg_defaults']['data'] = ''
+    data_type = DEFAULT_DATA_TYPE
+    reset_wdg_defaults()
     if wdg_arr is not None:
         wdg_config = json.loads(urlp.unquote(wdg_arr[0].decode('utf-8')))
         if 'data' in wdg_config:
             data_source = str(wdg_config['data'])
+        if 'data_type' in wdg_config:
+            data_type = str(wdg_config['data_type'])
 
     #build widgets and plots
-    GL['data_source_wdg'] = build_data_source_wdg(data_source)
+    GL['data_source_wdg'] = build_data_source_wdg(data_type, data_source)
     GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()), css_classes=['widgets_section'])
     GL['plots'] = bl.column([], css_classes=['plots_section'])
     layout = bl.row(GL['controls'], GL['plots'], css_classes=['full_layout'])
@@ -116,10 +121,20 @@ def initialize():
     bio.curdoc().title = "Exploding Pivot Chart Maker"
     print('***Done Initializing')
 
-def static_report(data_source, static_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config=[]):
+def reset_wdg_defaults():
+    '''
+    Set global GL['wdg_defaults']
+    '''
+    GL['wdg_defaults'] = collections.OrderedDict()
+    GL['wdg_defaults']['data'] = ''
+    GL['wdg_defaults']['data_type'] = DEFAULT_DATA_TYPE
+
+
+def static_report(data_type, data_source, static_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config=[]):
     '''
     Build static HTML and excel reports based on specified presets.
     Args:
+        data_type (string): Type of data.
         data_source (string): Path to data for which a report will be made
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name': name of preset
@@ -134,10 +149,11 @@ def static_report(data_source, static_presets, report_path, report_format, html_
         Nothing: HTML and Excel files are created
     '''
     #build initial widgets and plots globals
-    GL['data_source_wdg'] = build_data_source_wdg('')
+    GL['data_source_wdg'] = build_data_source_wdg()
     GL['controls'] = bl.widgetbox(list(GL['data_source_wdg'].values()))
     GL['plots'] = bl.column([])
     #Update data source widget with input value
+    GL['data_source_wdg']['data_type'].value = data_type
     GL['data_source_wdg']['data'].value = data_source
     #update any variant_wdg
     for vwc in variant_wdg_config:
@@ -290,10 +306,11 @@ def preset_wdg(preset):
     #finally, set x, which will trigger the data and chart updates.
     wdg['x'].value = preset['x']
 
-def build_data_source_wdg(data_source):
+def build_data_source_wdg(data_type=DEFAULT_DATA_TYPE, data_source=''):
     '''
     Return the initial data source widget, prefilled with an input data_source
     Args:
+        data_type (string): 
         data_source (string): Path to data source
     Returns:
         wdg (ordered dict): ordered dictionary of bokeh.models.widgets (in this case only one) for data source.
@@ -301,7 +318,9 @@ def build_data_source_wdg(data_source):
     wdg = collections.OrderedDict()
     wdg['readme'] = bmw.Div(text='<a href="https://github.nrel.gov/ReEDS/bokehpivot" target="_blank">README</a>')
     wdg['data_dropdown'] = bmw.Div(text='Data Source (required)', css_classes=['data-dropdown'])
-    wdg['data'] = bmw.TextInput(value=data_source, css_classes=['wdgkey-data', 'data-drop'])
+    wdg['data_type'] = bmw.Select(title='Type', value=data_type, options=DATA_TYPE_OPTIONS, css_classes=['wdgkey-data-type', 'data-drop'])
+    wdg['data'] = bmw.TextInput(title='Path', value=data_source, css_classes=['wdgkey-data', 'data-drop'])
+    wdg['data_type'].on_change('value', update_data)
     wdg['data'].on_change('value', update_data)
     return wdg
 
@@ -1467,18 +1486,18 @@ def update_data_source(init_load=False, init_config={}):
         Nothing: All plots are cleared, and widgets are set to accept further configuration.
     '''
     GL['widgets'] = GL['data_source_wdg'].copy()
-    GL['wdg_defaults'] = collections.OrderedDict()
-    GL['wdg_defaults']['data'] = ''
+    reset_wdg_defaults()
+    data_type = GL['data_source_wdg']['data_type'].value
     path = GL['data_source_wdg']['data'].value
     path = path.replace('"', '')
     if path == '':
         pass
-    elif path.lower().endswith('.csv') and not path.lower().endswith('reeds_scenarios.csv'):
+    elif data_type == 'CSV':
         GL['df_source'], GL['columns'] = get_df_csv(path)
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
-    elif path.lower().endswith('.gdx'):
+    elif data_type == 'GDX':
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
-    else: #reeds path was entered
+    elif data_type == 'ReEDS 1.0':
         rb.update_reeds_data_source(path, init_load, init_config)
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
