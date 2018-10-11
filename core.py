@@ -76,7 +76,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
 #custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':{},
-      'widgets':None, 'controls': None, 'plots':None, 'custom_sorts': {},
+      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {},
       'custom_colors': {}}
 
 #os globals
