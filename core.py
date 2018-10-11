@@ -1492,6 +1492,8 @@ def update_data_source(init_load=False, init_config={}):
         Nothing: All plots are cleared, and widgets are set to accept further configuration.
     '''
     GL['widgets'] = GL['data_source_wdg'].copy()
+    GL['custom_sorts'] = {}
+    GL['custom_colors'] = {}
     reset_wdg_defaults()
     data_type = GL['data_source_wdg']['data_type'].value
     path = GL['data_source_wdg']['data'].value
