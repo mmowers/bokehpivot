@@ -320,7 +320,7 @@ def build_data_source_wdg(data_type=DEFAULT_DATA_TYPE, data_source=''):
     wdg['data_dropdown'] = bmw.Div(text='Data Source (required)', css_classes=['data-dropdown'])
     wdg['data_type'] = bmw.Select(title='Type', value=data_type, options=DATA_TYPE_OPTIONS, css_classes=['wdgkey-data-type', 'data-drop'])
     wdg['data'] = bmw.TextInput(title='Path', value=data_source, css_classes=['wdgkey-data', 'data-drop'])
-    wdg['data_type'].on_change('value', update_data)
+    wdg['data_type'].on_change('value', update_data_type)
     wdg['data'].on_change('value', update_data)
     return wdg
 
@@ -1467,6 +1467,12 @@ def prettify_numbers(number_list):
 def round_to_n(x, n):
     #https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
     return round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1))
+
+def update_data_type(attr, old, new):
+    '''
+    When data type is updated, clear the data source field, triggering update_data
+    '''
+    GL['data_source_wdg']['data'].value = ''
 
 def update_data(attr, old, new):
     '''
