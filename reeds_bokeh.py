@@ -15,6 +15,8 @@ import subprocess as sp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
+OUTPUT_SUBDIR = '\\gdxfiles\\'
+TEST_FILE = 'CONVqn.gdx'
 DEFAULT_DOLLAR_YEAR = 2015
 DEFAULT_PV_YEAR = 2017
 DEFAULT_END_YEAR = 2050
@@ -128,22 +130,22 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
             for i_scen, scen in df_scen.iterrows():
                 if os.path.isdir(scen['path']):
                     abs_path_scen = os.path.abspath(scen['path'])
-                    if os.path.isfile(abs_path_scen+'/gdxfiles/CONVqn.gdx'):
+                    if os.path.isfile(abs_path_scen + OUTPUT_SUBDIR + TEST_FILE):
                         custom_sorts['scenario'].append(scen['name'])
                         scenarios.append({'name': scen['name'], 'path': abs_path_scen})
                         if 'color' in df_scen:
                             custom_colors['scenario'][scen['name']] = scen['color']
         #Else if the path is pointing to a directory, check if the directory is a run folder
-        #containing gdxfiles/ and use this as the lone scenario. Otherwise, it must contain
+        #containing OUTPUT_SUBDIR and use this as the lone scenario. Otherwise, it must contain
         #run folders, so gather all of those scenarios.
         elif os.path.isdir(runs_path):
             abs_path = str(os.path.abspath(runs_path))
-            if os.path.isfile(abs_path+'/gdxfiles/CONVqn.gdx'):
+            if os.path.isfile(abs_path + OUTPUT_SUBDIR + TEST_FILE):
                 scenarios.append({'name': os.path.basename(abs_path), 'path': abs_path})
             else:
                 subdirs = os.walk(abs_path).next()[1]
                 for subdir in subdirs:
-                    if os.path.isfile(abs_path+'/'+subdir+'/gdxfiles/CONVqn.gdx'):
+                    if os.path.isfile(abs_path+'/'+subdir + OUTPUT_SUBDIR + TEST_FILE):
                         abs_subdir = str(os.path.abspath(abs_path+'/'+subdir))
                         scenarios.append({'name': subdir, 'path': abs_subdir})
     #If we have scenarios, build widgets for scenario filters and result.
@@ -222,7 +224,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
-                    filepath = scenarios[i]['path'] + '\\gdxfiles\\' + src['file']
+                    filepath = scenarios[i]['path'] + OUTPUT_SUBDIR + src['file']
                     if src['file'].endswith('.gdx'):
                         data = gdx2py.par2list(filepath, src['param'])
                         df_src = pd.DataFrame(data)
@@ -235,7 +237,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     df_scen_result[src['name']] = df_src
             else:
                 #else we have only one parameter as a data source
-                filepath = scenarios[i]['path'] + '\\gdxfiles\\' + result_meta['file']
+                filepath = scenarios[i]['path'] + OUTPUT_SUBDIR + result_meta['file']
                 if result_meta['file'].endswith('.gdx'):
                     data = gdx2py.par2list(filepath, result_meta['param'])
                     df_scen_result = pd.DataFrame(data)
