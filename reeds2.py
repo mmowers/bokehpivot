@@ -1,5 +1,5 @@
 '''
-ReEDS results metadata and preprocess functions.
+ReEDS 2.0 results metadata and preprocess functions.
 
 When adding a new ReEDS result and associated presets, this should be the only file you need to modify.
 
@@ -83,6 +83,8 @@ def CRF(i,n):
 columns_meta = {
     'i':{
         'type': 'string',
+        'map': this_dir_path + '/in/reeds2/tech_map.csv',
+        'style': this_dir_path + '/in/reeds2/tech_style.csv',
     },
     'c':{
         'type': 'string',
@@ -108,6 +110,9 @@ columns_meta = {
 results_meta = collections.OrderedDict((
     ('Capacity',
         {'file': 'cap.csv',
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Val'}},
+        ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'t','y':'Val','series':'i', 'explode': 'scenario','chart_type':'Area'}),
             ('Stacked Bars',{'x':'t','y':'Val','series':'i', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),

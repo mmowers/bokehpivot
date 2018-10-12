@@ -1,21 +1,26 @@
 order,color,color description
-Nuclear,#8B0000,red4
-Coal,#000000,black
-Coal-IGCC,#b3b3b3,gray70
-Coal-CCS,#e5e5e5,gray90
-Cofire,#528b8b,darkslategray4
-Gas-CC,#d2691e,chocolate
-Gas-CC-CCS,#ff7f24,chocolate1
-Gas-CT,#d2b48c,tan
-Oil-Gas-Steam,#cd5c5c,indianred
-Hydro,#27408b,royalblue4
-Ocean,#000080,navyblue
-Geothermal,#eedc82,lightgoldenrod2
-Biopower,#54ff9f,seagreen
-Landfill-gas,#3cb371,mediumseagreen
-Wind,#4f94cd,steelblue3
-CSP,#ee4000,orangered2
-PV (AC),#ffa500,orange
-Distributed PV (AC),#cd8500,orange3
-Storage,#dcdcdc,gainsboro
-Interruptible Load,#8b008b,magenta4
+biopower,#8B0000,red4
+Coal-IGCC,#000000,black
+coal-new,#b3b3b3,gray70
+CoalOldScr,#e5e5e5,gray90
+CoalOldUns,#528b8b,darkslategray4
+CofireNew,#d2691e,chocolate
+CofireOld,#ff7f24,chocolate1
+distPV,#d2b48c,tan
+dupv_her,#cd5c5c,indianred
+Gas-CC,#27408b,royalblue4
+Gas-CT,#000080,navyblue
+lfill-gas,#eedc82,lightgoldenrod2
+Nuclear,#54ff9f,seagreen
+o-g-s,#3cb371,mediumseagreen
+pumped-hydro,#4f94cd,steelblue3
+upv,#ee4000,orangered2
+dupv,#ffa500,orange
+wind-ofs,#cd8500,orange3
+wind-ons,#dcdcdc,gainsboro
+csp,#8b008b,magenta4
+Gas-CT-NSP,#8B0000,red4
+Gas-CC-NSP,#000000,black
+Coal-CCS-NSP,#b3b3b3,gray70
+Nuclear-NSP,#e5e5e5,gray90
+hydro,#528b8b,darkslategray4
