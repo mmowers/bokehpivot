@@ -2,6 +2,7 @@
 #Don't edit this file directly. Make a copy (to any location), edit the copy, and run the copy as a python script in a command prompt.
 
 #EDIT THE FOLLOWING FIELDS
+data_type = 'ReEDS 1.0'
 bokehpivot_dir = r'\\nrelqnap02\ReEDS\bokehpivot' #path to the desired bokehpivot repo.
 data_source = r'\\nrelqnap02\ReEDS\Some Project\runs\Some Runs Folder' #data_source allows all the same inputs as in the interface
 scenario_filter = 'all' #'all' or string of comma-separated names.
@@ -23,4 +24,4 @@ sys.path.insert(1, report_dir)
 report_name = os.path.basename(report_path)[:-3]
 report = importlib.import_module(report_name)
 output_dir = output_dir + '/report-' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-rb.reeds_static(data_source, scenario_filter, base, report.static_presets, report_path, report_format, html_num, output_dir, auto_open)
+rb.reeds_static(data_type, data_source, scenario_filter, base, report.static_presets, report_path, report_format, html_num, output_dir, auto_open)

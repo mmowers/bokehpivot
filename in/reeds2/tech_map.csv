@@ -1,0 +1,39 @@
+raw,display
+nuclear,Nuclear
+coalolduns,Coal
+coaloldscr,Coal
+cofireold,Cofire
+cofirenew,Cofire
+coal-new,Coal
+coal-igcc,Coal-IGCC
+coal-ccs,Coal-CCS
+o-g-s,Oil-Gas-Steam
+gas-cc,Gas-CC
+gas-cc-ccs,Gas-CC-CCS
+gas-ct,Gas-CT
+hydro,Hydro
+ocean,Ocean
+geothermal,Geothermal
+biopower,Biopower
+cofirebiomass,Biopower
+lfill-gas,Landfill-gas
+wind-ons,Wind
+wind-ofs,Wind
+wind-ofm,Wind
+wind-ofd,Wind
+csp,CSP
+upv,PV (AC)
+dupv,PV (AC)
+distpv,Distributed PV (AC)
+pumped-hydro,Storage
+battery,Storage
+caes,Storage
+ice-storage,Storage
+il,Interruptible Load
+demand-response,Interruptible Load
+phev,Interruptible Load
+gas-cc-nsp,Gas-CC
+gas-ct-nsp,Gas-CT
+coal-ccs-nsp,Coal-CCS
+nuclear-nsp,Nuclear
+canada,Canada

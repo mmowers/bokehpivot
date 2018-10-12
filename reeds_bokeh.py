@@ -8,15 +8,14 @@ import pandas as pd
 import collections
 import bokeh.models.widgets as bmw
 import gdx2py
-import reeds
+import reeds as rd
+import reeds2 as rd2
 import core
 import datetime
 import subprocess as sp
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
-OUTPUT_SUBDIR = '\\gdxfiles\\'
-TEST_FILE = 'CONVqn.gdx'
 DEFAULT_DOLLAR_YEAR = 2015
 DEFAULT_PV_YEAR = 2017
 DEFAULT_END_YEAR = 2050
@@ -25,8 +24,13 @@ DEFAULT_END_YEAR = 2050
 #scenarios: each element is a dict with name of scenario and path to scenario
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
+GLRD1 = {'output_subdir': '\\gdxfiles\\', 'test_file': 'CONVqn.gdx'}
+GLRD2 = {'output_subdir': '\\', 'test_file': 'cap.csv'}
+GLRD = {}
+GLDT = ''
+reeds = None
 
-def reeds_static(data_source, scenario_filter, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
+def reeds_static(data_type, data_source, scenario_filter, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
@@ -47,7 +51,7 @@ def reeds_static(data_source, scenario_filter, base, static_presets, report_path
     Returns:
         Nothing: HTML and Excel files are created
     '''
-    data_type = 'ReEDS 1.0'
+    set_globs_by_type(data_type)
     core_presets = []
     for static_preset in static_presets:
         #build the full widget configuration for each preset.
@@ -130,22 +134,22 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
             for i_scen, scen in df_scen.iterrows():
                 if os.path.isdir(scen['path']):
                     abs_path_scen = os.path.abspath(scen['path'])
-                    if os.path.isfile(abs_path_scen + OUTPUT_SUBDIR + TEST_FILE):
+                    if os.path.isfile(abs_path_scen + GLRD['output_subdir'] + GLRD['test_file']):
                         custom_sorts['scenario'].append(scen['name'])
                         scenarios.append({'name': scen['name'], 'path': abs_path_scen})
                         if 'color' in df_scen:
                             custom_colors['scenario'][scen['name']] = scen['color']
         #Else if the path is pointing to a directory, check if the directory is a run folder
-        #containing OUTPUT_SUBDIR and use this as the lone scenario. Otherwise, it must contain
+        #containing GLRD['output_subdir'] and use this as the lone scenario. Otherwise, it must contain
         #run folders, so gather all of those scenarios.
         elif os.path.isdir(runs_path):
             abs_path = str(os.path.abspath(runs_path))
-            if os.path.isfile(abs_path + OUTPUT_SUBDIR + TEST_FILE):
+            if os.path.isfile(abs_path + GLRD['output_subdir'] + GLRD['test_file']):
                 scenarios.append({'name': os.path.basename(abs_path), 'path': abs_path})
             else:
                 subdirs = os.walk(abs_path).next()[1]
                 for subdir in subdirs:
-                    if os.path.isfile(abs_path+'/'+subdir + OUTPUT_SUBDIR + TEST_FILE):
+                    if os.path.isfile(abs_path+'/'+subdir + GLRD['output_subdir'] + GLRD['test_file']):
                         abs_subdir = str(os.path.abspath(abs_path+'/'+subdir))
                         scenarios.append({'name': subdir, 'path': abs_subdir})
     #If we have scenarios, build widgets for scenario filters and result.
@@ -224,7 +228,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
-                    filepath = scenarios[i]['path'] + OUTPUT_SUBDIR + src['file']
+                    filepath = scenarios[i]['path'] + GLRD['output_subdir'] + src['file']
                     if src['file'].endswith('.gdx'):
                         data = gdx2py.par2list(filepath, src['param'])
                         df_src = pd.DataFrame(data)
@@ -237,7 +241,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     df_scen_result[src['name']] = df_src
             else:
                 #else we have only one parameter as a data source
-                filepath = scenarios[i]['path'] + OUTPUT_SUBDIR + result_meta['file']
+                filepath = scenarios[i]['path'] + GLRD['output_subdir'] + result_meta['file']
                 if result_meta['file'].endswith('.gdx'):
                     data = gdx2py.par2list(filepath, result_meta['param'])
                     df_scen_result = pd.DataFrame(data)
@@ -371,7 +375,7 @@ def build_reeds_presets_wdg(preset_options):
     wdg['presets'].on_change('value', update_reeds_presets)
     return wdg
 
-def update_reeds_data_source(path, init_load, init_config):
+def update_reeds_data_source(path, init_load, init_config, data_type):
     '''
     Respond to updates of data_source_wdg which are identified as ReEDS paths
 
@@ -383,7 +387,9 @@ def update_reeds_data_source(path, init_load, init_config):
     Returns:
         Nothing: Core Globals are updated
     '''
+    set_globs_by_type(data_type)
     GL_REEDS['result_dfs'] = {}
+    GL_REEDS['scenarios'] = []
     core.GL['variant_wdg'], GL_REEDS['scenarios'] = get_wdg_reeds(path, init_load, init_config, core.GL['wdg_defaults'], core.GL['custom_sorts'], core.GL['custom_colors'])
     core.GL['widgets'].update(core.GL['variant_wdg'])
     #if this is the initial load, we need to build the rest of the widgets if we've selected a result.
@@ -395,6 +401,16 @@ def update_reeds_data_source(path, init_load, init_config):
             preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], init_load, init_config, wdg_defaults=core.GL['wdg_defaults']))
+
+def set_globs_by_type(data_type):
+    global GLDT, reeds, GLRD
+    GLDT = data_type
+    if data_type == 'ReEDS 1.0':
+        reeds = rd
+        GLRD = GLRD1
+    elif data_type == 'ReEDS 2.0':
+        reeds = rd2
+        GLRD = GLRD2
 
 def update_reeds_var(attr, old, new):
     '''
@@ -420,6 +436,7 @@ def build_reeds_report(html_num='one'):
     Args:
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     '''
+    data_type = '"' + GLDT + '"'
     base = '"' + core.GL['widgets']['report_base'].value + '"'
     if core.GL['widgets']['report_options'].value == 'custom':
         report_path = core.GL['widgets']['report_custom'].value
@@ -439,7 +456,7 @@ def build_reeds_report(html_num='one'):
     start_str = 'start python'
     if core.debug:
         start_str = 'start cmd /K python'
-    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open + ' ' + data_type, shell=True)
 
 def build_reeds_report_separate():
     '''
