@@ -21,33 +21,28 @@ ILR_UPV = 1.3
 ILR_distPV = 1.1
 
 #1. Preprocess functions for results_meta
-def scale_column(df_in, **kw):
-    df = df_in.copy()
+def scale_column(df, **kw):
     df[kw['column']] = df[kw['column']] * kw['scale_factor']
     return df
 
-def scale_column_filtered(df_in, **kw):
-    df = df_in.copy()
+def scale_column_filtered(df, **kw):
     cond = df[kw['by_column']].isin(kw['by_vals'])
     df.loc[cond, kw['change_column']] = df.loc[cond, kw['change_column']] * kw['scale_factor']
     return df
 
-def sum_over_cols(df_in, **kw):
-    df = df_in.copy()
+def sum_over_cols(df, **kw):
     df = df.drop(kw['sum_over_cols'], axis='columns')
     df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
     return df
 
-def apply_inflation(df_in, **kw):
-    df = df_in.copy()
+def apply_inflation(df, **kw):
     df[kw['column']] = inflate_series(df[kw['column']])
     return df
 
 def inflate_series(ser_in):
     return ser_in * 1/df_deflator.loc[int(core.GL['widgets']['var_dollar_year'].value),'Deflator']
 
-def discount_costs(df_in, **kw):
-    df = df_in.copy()
+def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
     cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
@@ -74,6 +69,17 @@ def CRF(i,n):
         print('Data goes beyond Present Value End Year. Filter out data beyond this year for proper system cost calculation.')
     return i/(1-(1/(1+i)**tempn))
 
+def strip_s_from_region(df, **kw):
+    df['region'] = df['region'].map(lambda x: x.lstrip('s'))
+    return df
+
+def map_i_to_n(df, **kw):
+    df_hier = pd.read_csv(this_dir_path + '/in/hierarchy.csv')
+    dict_hier = dict(zip(df_hier['i'].to_string(), df_hier['n']))
+    df['region'] = df['region'].replace(dict_hier)
+    df.rename(columns={'region': 'n'}, inplace=True)
+    return df
+
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 
@@ -81,18 +87,26 @@ def CRF(i,n):
 #This is where joins, maps, and styles are applied for the columns.
 #For 'style', colors are in hex, but descriptions are given (see http://www.color-hex.com/color-names.html).
 columns_meta = {
-    'i':{
+    'tech':{
         'type': 'string',
         'map': this_dir_path + '/in/reeds2/tech_map.csv',
         'style': this_dir_path + '/in/reeds2/tech_style.csv',
     },
-    'c':{
+    'class':{
         'type': 'string',
     },
-    'r':{
+    'region':{
         'type': 'string',
     },
-    't':{
+    'i':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy.csv',
+    },
+    'n':{
+        'type': 'string',
+        'join': this_dir_path + '/in/hierarchy.csv',
+    },
+    'year':{
         'type': 'number',
         'filterable': True,
         'seriesable': True,
@@ -108,15 +122,18 @@ columns_meta = {
 #Note that multiple parameters may be read in for the same result (search below for 'sources')
 #Presets may also be defined.
 results_meta = collections.OrderedDict((
-    ('Capacity',
+    ('Capacity BA',
         {'file': 'cap.csv',
+        'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Val'}},
+            {'func': strip_s_from_region, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Area',{'x':'t','y':'Val','series':'i', 'explode': 'scenario','chart_type':'Area'}),
-            ('Stacked Bars',{'x':'t','y':'Val','series':'i', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
-            ('Explode By Tech',{'x':'t','y':'Val','series':'scenario', 'explode': 'i','chart_type':'Line'}),
+            ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
         )),
         }
     ),
