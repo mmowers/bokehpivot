@@ -128,8 +128,10 @@ results_meta = collections.OrderedDict((
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'n', 'year']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
+        'index': ['tech', 'n', 'year'],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
