@@ -75,7 +75,7 @@ def strip_s_from_region(df, **kw):
 
 def map_i_to_n(df, **kw):
     df_hier = pd.read_csv(this_dir_path + '/in/hierarchy.csv')
-    dict_hier = dict(zip(df_hier['i'].to_string(), df_hier['n']))
+    dict_hier = dict(zip(df_hier['i'].astype(str), df_hier['n']))
     df['region'] = df['region'].replace(dict_hier)
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
