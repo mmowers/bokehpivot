@@ -106,6 +106,11 @@ columns_meta = {
         'type': 'string',
         'join': this_dir_path + '/in/hierarchy.csv',
     },
+    'timeslice':{
+        'type': 'string',
+        'map': this_dir_path + '/in/m_map.csv',
+        'style': this_dir_path + '/in/m_style.csv',
+    },
     'year':{
         'type': 'number',
         'filterable': True,
@@ -138,6 +143,42 @@ results_meta = collections.OrderedDict((
             ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
             ('PCA Map Final by Tech',{'x':'n','y':'Capacity (GW)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}}),
             ('State Map Final by Tech',{'x':'st','y':'Capacity (GW)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+
+    ('Generation BA',
+        {'file': 'gen_out.csv',
+        'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (TWh)'],
+        'preprocess': [
+            {'func': strip_s_from_region, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class', 'timeslice'], 'group_cols': ['tech', 'n', 'year']}},
+            {'func': scale_column, 'args': {'scale_factor': .000001, 'column': 'Generation (TWh)'}},
+        ],
+        'index': ['tech', 'n', 'year'],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year','y':'Generation (TWh)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Generation (TWh)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Generation (TWh)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'n','y':'Generation (TWh)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}}),
+            ('State Map Final by Tech',{'x':'st','y':'Generation (TWh)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+
+    ('Gen by timeslice national (GW)',
+        {'file': 'gen_out.csv',
+        'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (GW)'],
+        'index': ['tech', 'year', 'timeslice'],
+        'preprocess': [
+        	{'func': strip_s_from_region, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['n', 'class'], 'group_cols': ['tech', 'year', 'timeslice']}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars Final',{'x':'timeslice','y':'Generation (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'filter': {'year': 'last'}}),
         )),
         }
     ),
