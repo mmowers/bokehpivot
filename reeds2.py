@@ -123,7 +123,7 @@ columns_meta = {
 #Presets may also be defined.
 results_meta = collections.OrderedDict((
     ('Capacity BA',
-        {'file': 'cap.csv',
+        {'file': 'cap_out.csv',
         'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
