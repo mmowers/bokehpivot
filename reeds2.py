@@ -80,6 +80,13 @@ def map_i_to_n(df, **kw):
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
 
+
+def remove_n(df, **kw):
+    df = df[~df['region'].astype(str).str.startswith('p')]
+    df.rename(columns={'region': 'i'}, inplace=True)
+    return df
+
+
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 
@@ -146,6 +153,26 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+
+    ('Capacity Resource Region',
+        {'file': 'cap.csv',
+        'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
+        'preprocess': [
+            {'func': strip_s_from_region, 'args': {}},
+            {'func': remove_n, 'args': {}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'i', 'year']}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
+        ],
+        'index': ['tech', 'i', 'year'],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
+            ('RR Map Final by Tech',{'x':'i','y':'Capacity (GW)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}})
+        )),
+        }
+    ),
+
 
     ('Generation BA',
         {'file': 'gen.csv',
