@@ -128,7 +128,7 @@ columns_meta = {
 #Presets may also be defined.
 results_meta = collections.OrderedDict((
     ('Capacity BA',
-        {'file': 'cap_out.csv',
+        {'file': 'cap.csv',
         'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
@@ -148,7 +148,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Generation BA',
-        {'file': 'gen_out.csv',
+        {'file': 'gen.csv',
         'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (TWh)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
@@ -168,7 +168,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Gen by timeslice national (GW)',
-        {'file': 'gen_out.csv',
+        {'file': 'gen.csv',
         'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (GW)'],
         'index': ['tech', 'year', 'timeslice'],
         'preprocess': [
