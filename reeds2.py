@@ -196,7 +196,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Gen by timeslice national (GW)',
-        {'file': 'gen.csv',
+        {'file': 'gen_h.csv',
         'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (GW)'],
         'index': ['tech', 'year', 'timeslice'],
         'preprocess': [
