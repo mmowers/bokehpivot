@@ -168,7 +168,8 @@ results_meta = collections.OrderedDict((
             ('Stacked Area',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area'}),
             ('Stacked Bars',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year','y':'Capacity (GW)','series':'scenario', 'explode': 'tech','chart_type':'Line'}),
-            ('RR Map Final by Tech',{'x':'i','y':'Capacity (GW)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}})
+            ('RR Map Final by Tech',{'x':'i','y':'Capacity (GW)', 'explode': 'scenario','explode_group': 'tech','chart_type':'Map', 'filter': {'year': 'last'}}),
+            ('RR Map Final Wind',{'x':'i','y':'Capacity (GW)', 'explode': 'scenario','chart_type':'Map', 'filter': {'year': 'last', 'tech':['wind-ons','wind-ofs']}}),
         )),
         }
     ),
