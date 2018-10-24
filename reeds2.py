@@ -134,7 +134,7 @@ columns_meta = {
 #Note that multiple parameters may be read in for the same result (search below for 'sources')
 #Presets may also be defined.
 results_meta = collections.OrderedDict((
-    ('Capacity BA',
+    ('Capacity BA (GW)',
         {'file': 'cap.csv',
         'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
@@ -154,7 +154,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Capacity Resource Region',
+    ('Capacity Resource Region (GW)',
         {'file': 'cap.csv',
         'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
@@ -175,14 +175,14 @@ results_meta = collections.OrderedDict((
     ),
 
 
-    ('Generation BA',
-        {'file': 'gen.csv',
-        'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (TWh)'],
+    ('Generation BA (TWh)',
+        {'file': 'gen_ann.csv',
+        'columns': ['tech', 'class', 'region', 'year', 'Generation (TWh)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class', 'timeslice'], 'group_cols': ['tech', 'n', 'year']}},
-            {'func': scale_column, 'args': {'scale_factor': .000001, 'column': 'Generation (TWh)'}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'n', 'year']}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Generation (TWh)'}},
         ],
         'index': ['tech', 'n', 'year'],
         'presets': collections.OrderedDict((
