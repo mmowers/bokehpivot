@@ -210,4 +210,58 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+
+    ('CO2 Emissions National (MMton)',
+        {'file': 'emit_nat.csv',
+        'columns': ['year', 'CO2 (MMton)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'CO2 (MMton)'}},
+        ],
+        'index': ['year'],
+        'presets': collections.OrderedDict((
+            ('Scenario Lines Over Time',{'x':'year','y':'CO2 (MMton)','explode': 'scenario','chart_type':'Line'}),
+        )),
+        }
+    ),
+
+    ('CO2 Emissions BA (MMton)',
+        {'file': 'emit_r.csv',
+        'columns': ['n', 'year', 'CO2 (MMton)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'CO2 (MMton)'}},
+        ],
+        'index': ['n','year'],
+        'presets': collections.OrderedDict((
+            ('Final BA Map',{'x':'n','y':'CO2 (MMton)','explode': 'scenario','chart_type':'Map', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+
+    ('Energy Price National ($/MWh)',
+        {'file': 'price_nat.csv',
+        'columns': ['year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'index': ['year'],
+        'presets': collections.OrderedDict((
+            ('Scenario Lines Over Time',{'x':'year','y':'$/MWh','series': 'scenario','chart_type':'Line'}),
+        )),
+        }
+    ),
+
+    ('Energy Price BA ($/MWh)',
+        {'file': 'price_ann.csv',
+        'columns': ['n', 'year', '$/MWh'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': '$/MWh'}},
+        ],
+        'index': ['n', 'year'],
+        'presets': collections.OrderedDict((
+            ('Final BA Map',{'x':'n','y':'$/MWh','explode': 'scenario','chart_type':'Map', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+
+
 ))
