@@ -82,7 +82,7 @@ def map_i_to_n(df, **kw):
 
 
 def remove_n(df, **kw):
-    df = df[~df['region'].astype(str).str.startswith('p')]
+    df = df[~df['region'].astype(str).str.startswith('p')].copy()
     df.rename(columns={'region': 'i'}, inplace=True)
     return df
 
