@@ -271,6 +271,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
     df = result_dfs[result]
     if 'index' in result_meta:
         idx_cols = ['scenario'] + result_meta['index']
+        df =  df.groupby(idx_cols, sort=False, as_index =False).sum()
         full_idx = pd.MultiIndex.from_product([df[col].unique().tolist() for col in idx_cols], names=idx_cols)
         result_dfs[result] = df.set_index(idx_cols).reindex(full_idx).reset_index()
     print('***Done fetching ' + str(result) + ': ' + str(datetime.datetime.now() - startTime))
