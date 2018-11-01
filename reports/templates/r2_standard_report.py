@@ -1,6 +1,8 @@
 static_presets = [
-    {'name': 'Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'Stacked Bars'},
     {'name': 'Generation (TWh)', 'result': 'Generation BA (TWh)', 'preset': 'Stacked Bars'},
+    {'name': 'Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'Stacked Bars'},
+    {'name': 'New Capacity (GW)', 'result': 'New Capacity BA (GW)', 'preset': 'Stacked Bars'},
+    {'name': 'Retirements (GW)', 'result': 'Retirements BA (GW)', 'preset': 'Stacked Bars'},
     {'name': 'Final Gen by timeslice (GW)', 'result': 'Gen by timeslice national (GW)', 'preset': 'Stacked Bars Final'},
     {'name': 'National Energy Price ($/MWh)', 'result': 'Energy Price National ($/MWh)', 'preset': 'Scenario Lines Over Time'},
     {'name': 'CO2 Emissions National (MMton)', 'result': 'CO2 Emissions National (MMton)', 'preset': 'Scenario Lines Over Time'},
