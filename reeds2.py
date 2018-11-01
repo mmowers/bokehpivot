@@ -44,7 +44,7 @@ def inflate_series(ser_in):
 
 def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
-    cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
+    cost_cat_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
@@ -123,6 +123,11 @@ columns_meta = {
         'filterable': True,
         'seriesable': True,
         'y-allow': False,
+    },
+    'cost_cat':{
+        'type': 'string',
+        'map': this_dir_path + '/in/reeds2/cost_cat_map.csv',
+        'style': this_dir_path + '/in/reeds2/cost_cat_style.csv',
     },
 }
 
@@ -294,6 +299,22 @@ results_meta = collections.OrderedDict((
         'index': ['n', 'year'],
         'presets': collections.OrderedDict((
             ('Final BA Map',{'x':'n','y':'$/MWh','explode': 'scenario','chart_type':'Map', 'filter': {'year': 'last'}}),
+        )),
+        }
+    ),
+
+    ('Sys Cost (Bil $)',
+        {'file': 'systemcost.csv',
+        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        'index': ['cost_cat', 'year'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
+            {'func': discount_costs, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar'}),
+            ('2017-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2017}}}),
         )),
         }
     ),
