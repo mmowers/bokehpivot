@@ -136,11 +136,10 @@ columns_meta = {
 results_meta = collections.OrderedDict((
     ('Capacity BA (GW)',
         {'file': 'cap.csv',
-        'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
+        'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'n', 'year']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
         'index': ['tech', 'n', 'year'],
@@ -156,11 +155,10 @@ results_meta = collections.OrderedDict((
 
     ('Capacity Resource Region (GW)',
         {'file': 'cap.csv',
-        'columns': ['tech', 'class', 'region', 'year', 'Capacity (GW)'],
+        'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': remove_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'i', 'year']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
         'index': ['tech', 'i', 'year'],
@@ -177,11 +175,10 @@ results_meta = collections.OrderedDict((
 
     ('Generation BA (TWh)',
         {'file': 'gen_ann.csv',
-        'columns': ['tech', 'class', 'region', 'year', 'Generation (TWh)'],
+        'columns': ['tech', 'region', 'year', 'Generation (TWh)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['class'], 'group_cols': ['tech', 'n', 'year']}},
             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Generation (TWh)'}},
         ],
         'index': ['tech', 'n', 'year'],
@@ -197,12 +194,12 @@ results_meta = collections.OrderedDict((
 
     ('Gen by timeslice national (GW)',
         {'file': 'gen_h.csv',
-        'columns': ['tech', 'class', 'region', 'timeslice', 'year', 'Generation (GW)'],
+        'columns': ['tech', 'region', 'timeslice', 'year', 'Generation (GW)'],
         'index': ['tech', 'year', 'timeslice'],
         'preprocess': [
         	{'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['n', 'class'], 'group_cols': ['tech', 'year', 'timeslice']}},
+            {'func': sum_over_cols, 'args': {'sum_over_cols': ['n'], 'group_cols': ['tech', 'year', 'timeslice']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
         ],
         'presets': collections.OrderedDict((
