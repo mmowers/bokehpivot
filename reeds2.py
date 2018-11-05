@@ -158,8 +158,8 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('New Capacity BA (GW)',
-        {'file': 'cap_new.csv',
+    ('New Annual Capacity BA (GW)',
+        {'file': 'cap_new_ann.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
@@ -177,8 +177,8 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Retirements BA (GW)',
-        {'file': 'ret.csv',
+    ('Annual Retirements BA (GW)',
+        {'file': 'ret_ann.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
