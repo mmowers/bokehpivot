@@ -9,6 +9,7 @@ cofireold,cofireold
 distpv,distpv
 dupv_her,dupv_her
 gas-cc,gas-cc
+gas-cc-ccs,gas-cc-ccs
 gas-ct,gas-ct
 lfill-gas,lfill-gas
 nuclear,nuclear
@@ -23,6 +24,7 @@ upv_6,upv
 upv_7,upv
 upv_8,upv
 upv_9,upv
+upv_her,upv
 dupv_1,dupv
 dupv_2,dupv
 dupv_3,dupv
@@ -32,7 +34,7 @@ dupv_6,dupv
 dupv_7,dupv
 dupv_8,dupv
 dupv_9,dupv
-upv_her,upv
+dupv_her,dupv
 wind-ofs_1,wind-ofs
 wind-ofs_2,wind-ofs
 wind-ofs_3,wind-ofs
@@ -58,6 +60,16 @@ wind-ons_7,wind-ons
 wind-ons_8,wind-ons
 wind-ons_9,wind-ons
 wind-ons_10,wind-ons
+csp_1,csp
+csp_2,csp
+csp_3,csp
+csp_4,csp
+csp_5,csp
+csp_6,csp
+csp_7,csp
+csp_8,csp
+csp_9,csp
+csp_10,csp
 csp_her,csp
 gas-ct-nsp,gas-ct-nsp
 gas-cc-nsp,gas-cc-nsp
