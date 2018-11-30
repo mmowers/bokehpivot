@@ -25,7 +25,7 @@ DEFAULT_END_YEAR = 2050
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
 GLRD1 = {'output_subdir': '\\gdxfiles\\', 'test_file': 'CONVqn.gdx'}
-GLRD2 = {'output_subdir': '\\', 'test_file': 'cap.csv'}
+GLRD2 = {'output_subdir': '\\outputs\\', 'test_file': 'cap.csv'}
 GLRD = {}
 GLDT = ''
 reeds = None
