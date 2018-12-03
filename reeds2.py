@@ -319,5 +319,25 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Value Streams chosen raw',
+        {'file': 'valuestreams_chosen.csv',
+        'columns': ['year', 'tech', 'new_old', 'region', 'type', 'timeslice', '$'],
+        'preprocess': [
+            {'func': strip_s_from_region, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
+            {'func': sum_over_cols, 'args': {'group_cols': ['year', 'tech', 'new_old', 'n', 'type'], 'sum_over_cols': ['timeslice']}},
+            {'func': apply_inflation, 'args': {'column': '$'}},
+            {'func': scale_column, 'args': {'scale_factor': CRF_reeds/1e9, 'column': '$'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('New Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
+            ('Old Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['old']}}),
+            ('Mixed Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['mixed']}}),
+            ('Retire Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['retire']}}),
+            ('New Bil $ Cost by tech over time', {'x':'year','y':'$','series':'tech', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'y_scale':'-1', 'filter': {'new_old':['new'], 'type':['fix_cost','gp','trans_cost','var_cost']}}),
+            ('New Bil $ by type over time agg', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['new']}}),
+        )),
+        }
+    ),
 
 ))
