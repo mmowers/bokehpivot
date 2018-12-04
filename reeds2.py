@@ -327,9 +327,10 @@ results_meta = collections.OrderedDict((
             {'func': map_i_to_n, 'args': {}},
             {'func': sum_over_cols, 'args': {'group_cols': ['year', 'tech', 'new_old', 'n', 'type'], 'sum_over_cols': ['timeslice']}},
             {'func': apply_inflation, 'args': {'column': '$'}},
-            {'func': scale_column, 'args': {'scale_factor': CRF_reeds/1e9, 'column': '$'}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': '$'}},
         ],
         'presets': collections.OrderedDict((
+            ('Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No'}),
             ('New Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
             ('Old Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['old']}}),
             ('Mixed Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['mixed']}}),
