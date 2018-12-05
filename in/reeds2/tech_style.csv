@@ -24,4 +24,6 @@ upv,#ffa500,orange
 dupv,#ffa500,orange
 distpv,#cd8500,orange3
 pumped-hydro,#dcdcdc,gainsboro
+battery,#dcdcdc,gainsboro
+caes,#dcdcdc,gainsboro
 Canada,#8b008b,magenta4

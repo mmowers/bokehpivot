@@ -17,5 +17,7 @@ Wind,#4f94cd,steelblue3
 CSP,#ee4000,orangered2
 PV (AC),#ffa500,orange
 Distributed PV (AC),#cd8500,orange3
-Storage,#dcdcdc,gainsboro
+PSH,#dcdcdc,gainsboro
+Battery,#dcdcdc,gainsboro
+CAES,#dcdcdc,gainsboro
 Interruptible Load,#8b008b,magenta4

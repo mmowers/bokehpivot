@@ -25,10 +25,10 @@ csp,CSP
 upv,PV (AC)
 dupv,PV (AC)
 distpv,Distributed PV (AC)
-pumped-hydro,Storage
-battery,Storage
-caes,Storage
-ice-storage,Storage
+pumped-hydro,PSH
+battery,Battery
+caes,CAES
+ice-storage,Ice Storage
 il,Interruptible Load
 demand-response,Interruptible Load
 phev,Interruptible Load
