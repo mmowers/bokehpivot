@@ -259,7 +259,7 @@ results_meta = collections.OrderedDict((
         ],
         'index': ['year'],
         'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year','y':'CO2 (MMton)','explode': 'scenario','chart_type':'Line'}),
+            ('Scenario Lines Over Time',{'x':'year','y':'CO2 (MMton)','series': 'scenario','chart_type':'Line'}),
         )),
         }
     ),
