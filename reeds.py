@@ -14,7 +14,7 @@ import pandas as pd
 import collections
 import core
 
-rb_globs = {'output_subdir': '\\gdxfiles\\', 'test_file': 'CONVqn.gdx'}
+rb_globs = {'output_subdir': '\\gdxfiles\\', 'test_file': 'CONVqn.gdx', 'report_subdir':'/'}
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)

@@ -158,7 +158,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
         topwdg['scenario_filter_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['scenario-filter-dropdown'])
         topwdg['scenario_filter'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['wdgkey-scenario_filter'])
         #Add code to build report
-        options = [o for o in os.listdir(this_dir_path+'/reports/templates') if o.endswith(".py")]
+        options = [o for o in os.listdir(this_dir_path+'/reports/templates'+GLRD['report_subdir']) if o.endswith(".py")]
         options = ['custom'] + options
         scenario_names = [i['name'] for i in scenarios]
         topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
@@ -440,7 +440,7 @@ def build_reeds_report(html_num='one'):
         report_path = core.GL['widgets']['report_custom'].value
         report_path = report_path.replace('"', '')
     else:
-        report_path = this_dir_path + '/reports/templates/' + core.GL['widgets']['report_options'].value
+        report_path = this_dir_path + '/reports/templates'+GLRD['report_subdir']+'/'+ core.GL['widgets']['report_options'].value
     report_path = '"' + report_path + '"'
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = '"' + core.user_out_path + '/report-' + time + '"'
