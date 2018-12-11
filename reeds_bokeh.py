@@ -24,8 +24,6 @@ DEFAULT_END_YEAR = 2050
 #scenarios: each element is a dict with name of scenario and path to scenario
 #result_dfs: keys are ReEDS result names. Values are dataframes for that result (with 'scenario' as one of the columns)
 GL_REEDS = {'scenarios': [], 'result_dfs': {}}
-GLRD1 = {'output_subdir': '\\gdxfiles\\', 'test_file': 'CONVqn.gdx'}
-GLRD2 = {'output_subdir': '\\outputs\\', 'test_file': 'cap.csv'}
 GLRD = {}
 GLDT = ''
 reeds = None
@@ -408,10 +406,9 @@ def set_globs_by_type(data_type):
     GLDT = data_type
     if data_type == 'ReEDS 1.0':
         reeds = rd
-        GLRD = GLRD1
     elif data_type == 'ReEDS 2.0':
         reeds = rd2
-        GLRD = GLRD2
+    GLRD = reeds.rb_globs
 
 def update_reeds_var(attr, old, new):
     '''
