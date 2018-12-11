@@ -1,0 +1,23 @@
+raw,display
+wind,wind
+pv tracking,pv
+pv rooftop,distpv
+pv fixed,pv
+pv battery,pv
+phes,storage
+oil,ogs
+nuclear,nuclear
+hydro fixed,hydro
+hydro,hydro
+geothermal,geo
+generic storage,storage
+generic shed,other
+gas steam,gas-other
+gas cogen,gas-other
+ct,gas-ct
+csp tes,csp
+csp notes,csp
+coal cogen,coal
+coal,coal
+cc,gas-cc
+biomass,bio

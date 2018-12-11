@@ -1,0 +1,16 @@
+order,color,color description
+nuclear,#8B0000,red4
+coal,#000000,black
+gas-cc,#d2691e,chocolate
+gas-ct,#d2b48c,tan
+gas-other,#ff7f24,chocolate1
+ogs,#cd5c5c,indianred
+hydro,#27408b,royalblue4
+bio,#54ff9f,seagreen
+geo,#b3b3b3,gray70
+wind,#4f94cd,steelblue3
+pv,#ffa500,orange
+csp,#ee4000,orangered2
+distpv,#cd8500,orange3
+storage,#dcdcdc,gainsboro
+other,#8b008b,magenta4

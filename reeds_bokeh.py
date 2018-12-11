@@ -10,6 +10,7 @@ import bokeh.models.widgets as bmw
 import gdx2py
 import reeds as rd
 import reeds2 as rd2
+import rpm
 import core
 import datetime
 import subprocess as sp
@@ -408,6 +409,8 @@ def set_globs_by_type(data_type):
         reeds = rd
     elif data_type == 'ReEDS 2.0':
         reeds = rd2
+    elif data_type == 'RPM':
+        reeds = rpm
     GLRD = reeds.rb_globs
 
 def update_reeds_var(attr, old, new):
