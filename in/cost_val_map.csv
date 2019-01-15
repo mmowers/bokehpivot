@@ -9,6 +9,8 @@ load_pca,Energy Value
 res_marg,Capacity Value
 oper_res,Ancillary Value
 rps,RPS Value
+emissions,Emissions Cost
+water,Water Cost
 surplus,Curtailment
 profit,Profit
 reduced_cost,Reduced Cost
