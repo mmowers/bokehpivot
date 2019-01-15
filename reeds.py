@@ -165,10 +165,6 @@ def pre_tech_val_streams(dfs, **kw):
     df_valstream[valstream_val] = inflate_series(df_valstream[valstream_val]) * df_valstream['crf']
     df_valstream.drop(['crf'], axis='columns', inplace=True)
 
-    #Reformat Energy Output
-    df_load['type'] = load_val
-    df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are load_val
-
     #Add Total Cost (positive)
     df_cost = df_valstream[df_valstream['type'].isin(raw_costs)].copy()
     df_cost['type'] = 'total cost'
@@ -180,7 +176,7 @@ def pre_tech_val_streams(dfs, **kw):
     df_val['type'] = 'total value'
     df_val = df_val.groupby(valstream_cols, sort=False, as_index =False).sum()
 
-    df_list = [df_valstream, df_load, df_cost, df_val]
+    df_list = [df_valstream, df_cost, df_val]
 
     if kw['detailed'] == True:
         #Gather national (dist) and ba-level prices (all in $/MWh assuming block generator with full capacity factor and capacity credit). Adjust by inflation
@@ -262,6 +258,11 @@ def pre_tech_val_streams(dfs, **kw):
         df_list = df_list + [df_slcoenum, df_block_ba, df_block_dist, df_block_cap_ba, df_block_cap_dist, df_baseval]
         if kw['decompose'] == True:
             df_list = df_list + [df_real_min_loc,df_loc_min_dist,df_cap_real_min_loc,df_cap_loc_min_dist]
+
+    #Reformat Energy Output
+    df_load['type'] = load_val
+    df_load.rename(columns={load_val: valstream_val}, inplace=True) #rename just so we can concatenate, even though units are load_val
+    df_list = df_list + [df_load]
 
     #Combine dataframes
     if kw['cat'] == 'chosen':
@@ -618,7 +619,7 @@ results_meta = collections.OrderedDict((
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
-            {'func': pre_tech_val_streams, 'args': {'cat':'chosen','detailed':False,'decompose':False}},
+            {'func': pre_tech_val_streams, 'args': {'cat':'chosen','detailed':False}},
         ],
         'presets': collections.OrderedDict((
             ('$ by type over time', {'x':'year','y':'$','series':'cost_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'cost_val_type':costs+values,'new_old':['new']}}),
@@ -727,7 +728,7 @@ results_meta = collections.OrderedDict((
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
-            {'func': pre_tech_val_streams, 'args': {'cat':'potential','detailed':False,'decompose':False}},
+            {'func': pre_tech_val_streams, 'args': {'cat':'potential','detailed':False}},
         ],
         'presets': collections.OrderedDict((
             ('$/kW by type final', {'x':'var_set','y':'$/kW','series':'cost_val_type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'plot_width':'1200', 'bar_width':'0.9', 'cum_sort': 'Descending', 'sync_axes':'No', 'filter': {'year':'last','cost_val_type':costs+values,'new_old':['new']}}),
