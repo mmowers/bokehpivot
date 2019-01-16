@@ -10,13 +10,15 @@ Energy Value,#7f7f7f
 Capacity Value,#bcbd22
 Ancillary Value,#17becf
 RPS Value,#aec7e8
-Curtailment,#ffbb78
-Profit,#98df8a
-Reduced Cost,#ff9896
-Other Value,#c49c94
-total cost,#f7b6d2
-total value,#c7c7c7
-sys_lcoe_num,#dbdb8d
+Emissions Cost,#ffbb78
+Water Cost,#98df8a
+Curtailment,#ff9896
+Profit,#c5b0d5
+Reduced Cost,#c49c94
+Other Value,#f7b6d2
+total cost,#c7c7c7
+total value,#dbdb8d
+sys_lcoe_num,#9edae5
 MWh/kW,#9edae5
 MWh,#1f77b4
 kW,#ff7f0e
