@@ -1,0 +1,20 @@
+raw,display
+rev_curtail,Curtailment Revenue
+rev_load_balance,Energy Revenue
+rev_reg_reserve,Reg Revenue
+rev_spin_reserve,Spin Revenue
+rev_flex_reserve,Flex Revenue
+rev_plan_reserve,Capacity Revenue
+rev_rps,RPS Revenue
+rev_rps_mw,RPS MW Revenue
+other,Other Revenue
+cost_fix,Fixed Cost
+cost_var,Variable Cost
+cost_reserves,Reserve Cost
+cost_hurdle,Hurdle Rate Cost
+cost_retire,Retirement Cost
+profit_operation,Profit Operation
+profit_resource,Profit Resource
+link_operation,Link Operation
+link_capacity,Link Capacity
+reduced_cost,Reduced Cost

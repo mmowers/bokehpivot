@@ -11,7 +11,7 @@ hydro fixed,hydro
 hydro,hydro
 geothermal,geo
 generic storage,storage
-generic shed,other
+generic shed,shed
 gas steam,gas-other
 gas cogen,gas-other
 ct,gas-ct

@@ -1,0 +1,18 @@
+order,color
+Curtailment Revenue,#1f77b4
+Energy Revenue,#ff7f0e
+Reg Revenue,#2ca02c
+Spin Revenue,#d62728
+Flex Revenue,#9467bd
+Capacity Revenue,#8c564b
+RPS Revenue,#e377c2
+RPS MW Revenue,#7f7f7f
+Other Revenue,#bcbd22
+Fixed Cost,#17becf
+Variable Cost,#aec7e8
+Reserve Cost,#ffbb78
+Hurdle Rate Cost,#98df8a
+Retirement Cost,#ff9896
+Link Operation,#c49c94
+Link Capacity,#f7b6d2
+Reduced Cost,#c7c7c7

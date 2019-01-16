@@ -13,6 +13,7 @@ import os
 import pandas as pd
 import collections
 import core
+import rpm_valuestreams as rpmvs
 
 rb_globs = {'output_subdir': '\\inout\\', 'test_file': 'Dispatch_allyrs.gdx', 'report_subdir':'/rpm'}
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -21,6 +22,11 @@ CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 #ILR_UPV = 1.3
 #ILR_distPV = 1.1
+
+raw_costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','other_cost']
+costs = ['Fixed Cost','Variable Cost','Trans Cost','Growth Cost','Ancillary Cost','Other Cost']
+raw_values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
+values = ['Energy Value','Capacity Value','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -95,6 +101,11 @@ columns_meta = {
         'seriesable': True,
         'y-allow': False,
     },
+    'cost_val_type':{
+        'type': 'string',
+        'map': this_dir_path + '/in/rpm/cost_val_map.csv',
+        'style': this_dir_path + '/in/rpm/cost_val_style.csv',
+    },
 }
 
 #---------------------------------------------------------------------------------------------------------
@@ -119,6 +130,41 @@ results_meta = collections.OrderedDict((
             ('Stacked Area Generation Capacity (GW)',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Area','filter': {'type': ['generation']}}),
             ('Stacked Bars Generation Capacity (GW)',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario','chart_type':'Bar', 'bar_width':'4.5','filter': {'type': ['generation']}}),
             ('Stacked Bars Generation Capacity Explode by BA (GW)',{'x':'year','y':'Capacity (GW)','series':'tech', 'explode': 'scenario', 'explode_group': 'region', 'sync_axes': 'No', 'chart_type':'Bar', 'bar_width':'4.5','filter': {'type': ['generation']}}),
+        )),
+        }
+    ),
+
+	('Value Streams BA',
+        {'file': 'valuestreams/valuestreams_chosen_ba.csv',
+		'columns': ['year','tech','class','new_old','ba','cost_val_type','$'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1/1e9, 'column': '$'}},
+        ],
+        'presets': collections.OrderedDict((
+		    ('WECC by Tech, Class over Time', {'x':'year', 'x_group':'class', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
+			('LDWP by Tech, Class over Time', {'x':'year', 'x_group':'class', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'ba':['ldwp']}}),
+
+            ('Geo by Class, BA over Time', {'x':'year', 'x_group':'ba', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['geo']}}),
+            ('Geo by Class over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['geo']}}),
+
+            ('Wind by Class, BA over Time', {'x':'year', 'x_group':'ba', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['wind']}}),
+            ('Wind by Class over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['wind']}}),
+
+			('By Tech over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
+
+            ('By BA over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'ba', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
+        )),
+        }
+    ),
+
+	('Value Streams Node',
+        {'file': 'valuestreams/valuestreams_chosen_node.csv',
+	    'columns': ['year','tech','class','new_old','node','cost_val_type','$'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1/1e9, 'column': '$'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('LDWP by Node over Time', {'x':'node', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'year', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
         )),
         }
     ),
