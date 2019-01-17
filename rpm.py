@@ -13,7 +13,6 @@ import os
 import pandas as pd
 import collections
 import core
-import rpm_valuestreams as rpmvs
 
 rb_globs = {'output_subdir': '\\inout\\', 'test_file': 'Dispatch_allyrs.gdx', 'report_subdir':'/rpm'}
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
