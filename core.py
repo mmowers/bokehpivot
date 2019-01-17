@@ -693,13 +693,13 @@ def create_figures(df_plots, wdg, cols, custom_colors):
     else:
         if wdg['explode_group'].value == 'None':
             for explode_val in df_plots_cp[wdg['explode'].value].unique().tolist():
-                df_exploded = df_plots_cp[df_plots_cp[wdg['explode'].value].isin([explode_val])]
+                df_exploded = df_plots_cp[df_plots_cp[wdg['explode'].value].isin([explode_val])].copy()
                 plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val))
         else:
             for explode_group in df_plots_cp[wdg['explode_group'].value].unique().tolist():
                 df_exploded_group = df_plots_cp[df_plots_cp[wdg['explode_group'].value].isin([explode_group])]
                 for explode_val in df_exploded_group[wdg['explode'].value].unique().tolist():
-                    df_exploded = df_exploded_group[df_exploded_group[wdg['explode'].value].isin([explode_val])]
+                    df_exploded = df_exploded_group[df_exploded_group[wdg['explode'].value].isin([explode_val])].copy()
                     plot_list.append(create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val, explode_group))
     set_axis_bounds(df_plots, plot_list, wdg, cols)
     print('***Done Building Figures.')
