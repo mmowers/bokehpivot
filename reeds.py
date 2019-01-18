@@ -151,11 +151,19 @@ def pre_tech_val_streams(dfs, **kw):
         load_val = 'MWh'
         df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
-        df_new_cap = dfs['new_cap']
-        df_new_cap = scale_pv(df_new_cap, change_column='kW')
-        df_new_cap['kW'] = df_new_cap['kW'] * 1000 #original data is in MW
-        df_new_cap['new_old'] = 'new'
-        df_new_cap['year'] = pd.to_numeric(df_new_cap['year'])
+        df_valstream_old = dfs['valstream_old']
+        df_valstream_old['year'] = pd.to_numeric(df_valstream_old['year'])
+        df_valstream_old['new_old'] = 'old'
+        df_valstream_old = df_valstream_old[valstream_cols + [valstream_val]]
+        df_valstream = pd.concat([df_valstream, df_valstream_old], ignore_index=True)
+        df_valstream = df_valstream.groupby(valstream_cols, sort=False, as_index =False).sum()
+        dfs['new_cap']['new_old'] = 'new'
+        dfs['old_cap']['new_old'] = 'old'
+        dfs['old_cap'] = dfs['old_cap'][['tech','n','year','kW','new_old']]
+        df_cap = pd.concat([dfs['new_cap'], dfs['old_cap']], ignore_index=True)
+        df_cap = scale_pv(df_cap, change_column='kW')
+        df_cap['kW'] = df_cap['kW'] * 1000 #original data is in MW
+        df_cap['year'] = pd.to_numeric(df_cap['year'])
 
     #Annualize and adjust by inflation
     df_crf = df_crf[df_crf['crftype']=='crf_20'].copy()
@@ -212,8 +220,8 @@ def pre_tech_val_streams(dfs, **kw):
             df_block_cap_dist = pd.merge(left=df_vs_red, right=df_price_dist, on=['year'], how='left', sort=False)
             df_block_cap_ba = pd.merge(left=df_vs_red, right=df_price_ba, on=['n','year'], how='left', sort=False)
         elif kw['cat'] == 'chosen':
-            df_block_cap_dist = pd.merge(left=df_new_cap, right=df_price_dist, on=['year'], how='left', sort=False)
-            df_block_cap_ba = pd.merge(left=df_new_cap, right=df_price_ba, on=['n','year'], how='left', sort=False)
+            df_block_cap_dist = pd.merge(left=df_cap, right=df_price_dist, on=['year'], how='left', sort=False)
+            df_block_cap_ba = pd.merge(left=df_cap, right=df_price_ba, on=['n','year'], how='left', sort=False)
             df_block_cap_dist[valstream_val] = df_block_cap_dist['$/kW'] * df_block_cap_dist['kW']
             df_block_cap_ba[valstream_val] = df_block_cap_ba['$/kW'] * df_block_cap_ba['kW']
             df_block_cap_dist.drop(['$/MWh', '$/kW','kW'], axis='columns', inplace=True)
@@ -267,12 +275,12 @@ def pre_tech_val_streams(dfs, **kw):
     #Combine dataframes
     if kw['cat'] == 'chosen':
         #Reformat Capacity Output
-        df_new_cap['type'] = 'kW'
-        df_new_cap.rename(columns={'kW': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are different
-        df_list.append(df_new_cap)
-        df = pd.concat(df_list, ignore_index=True)
+        df_cap['type'] = 'kW'
+        df_cap.rename(columns={'kW': valstream_val}, inplace=True) #rename just so we can concatenate, even though units are different
+        df_list.append(df_cap)
+        df = pd.concat(df_list, ignore_index=True, sort=False)
     elif kw['cat'] == 'potential':
-        df = pd.concat(df_list, ignore_index=True)
+        df = pd.concat(df_list, ignore_index=True, sort=False)
         df = add_chosen_available(df, dfs)
     df.rename(columns={'type': 'cost_val_type'}, inplace=True)
     return df
@@ -612,10 +620,12 @@ results_meta = collections.OrderedDict((
     ('Tech Val Streams chosen',
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
+            {'name': 'valstream_old', 'file': 'oldvaluestreams.gdx', 'param': 'OldValueStreams', 'columns': ['tech', 'year', 'n','type','$']},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
             {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'kW']},
+            {'name': 'old_cap', 'file': 'oldvaluestreams.gdx', 'param': 'OldCapacity', 'columns': ['tech', 'year', 'n', 'kW']},
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
