@@ -23,7 +23,7 @@ ILR_distPV = 1.1
 
 raw_costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','emissions','water','other_cost']
 costs = ['Fixed Cost','Variable Cost','Trans Cost','Growth Cost','Ancillary Cost','Emissions Cost','Water Cost','Other Cost']
-raw_values = ['load_pca','res_marg','oper_res','rps','cap_fo_po','surplus','other']
+raw_values = ['load_pca','res_marg','oper_res','rps','surplus','other']
 values = ['Energy Value','Capacity Value','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
 values_decomp = ['block_dist_load','loc_min_dist_load','real_min_loc_load','block_dist_resmarg','loc_min_dist_resmarg','real_min_loc_resmarg','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
 values_load = ['block_dist_load','loc_min_dist_load','real_min_loc_load','Curtailment']
