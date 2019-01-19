@@ -151,19 +151,43 @@ def pre_tech_val_streams(dfs, **kw):
         load_val = 'MWh'
         df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
         df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
+        #Gather separate old value streams and combine with df_valstream
         df_valstream_old = dfs['valstream_old']
         df_valstream_old['year'] = pd.to_numeric(df_valstream_old['year'])
         df_valstream_old['new_old'] = 'old'
         df_valstream_old = df_valstream_old[valstream_cols + [valstream_val]]
         df_valstream = pd.concat([df_valstream, df_valstream_old], ignore_index=True)
         df_valstream = df_valstream.groupby(valstream_cols, sort=False, as_index =False).sum()
+        #Apportion 'mixed' streams to old and new, proportional to old and new capacity
+        df_mixed = df_valstream[df_valstream['new_old'] == 'mixed']
+        dfs['new_cap']['year'] = pd.to_numeric(dfs['new_cap']['year'])
+        dfs['old_cap']['year'] = pd.to_numeric(dfs['old_cap']['year'])
+        df_mixed = pd.merge(left=df_mixed, right=dfs['new_cap'], on=['tech','n','year'], how='left', sort=False)
+        df_mixed.rename(columns={'kW': 'new_cap'}, inplace=True)
+        df_mixed = pd.merge(left=df_mixed, right=dfs['old_cap'], on=['tech','n','year'], how='left', sort=False)
+        df_mixed.rename(columns={'kW': 'old_cap'}, inplace=True)
+        df_mixed[['new_cap','old_cap']] = df_mixed[['new_cap','old_cap']].fillna(0)
+        df_mixed['new_$'] = df_mixed['$'] * df_mixed['new_cap'] / (df_mixed['old_cap'] + df_mixed['new_cap'])
+        df_mixed['old_$'] = df_mixed['$'] * df_mixed['old_cap'] / (df_mixed['old_cap'] + df_mixed['new_cap'])
+        df_mixed.to_csv('df_mixed.csv',index=False)
+        df_mixed[['new_$','old_$']] = df_mixed[['new_$','old_$']].fillna(0)
+        df_mixed_new = df_mixed[valstream_cols + ['new_$']].copy()
+        df_mixed_old = df_mixed[valstream_cols + ['old_$']].copy()
+        df_mixed_new['new_old'] = 'new'
+        df_mixed_old['new_old'] = 'old'
+        df_mixed_new.rename(columns={'new_$': '$'}, inplace=True)
+        df_mixed_old.rename(columns={'old_$': '$'}, inplace=True)
+        df_mixed_new = df_mixed_new[df_mixed_new['$'] != 0]
+        df_mixed_old = df_mixed_old[df_mixed_old['$'] != 0]
+        df_valstream = pd.concat([df_valstream, df_mixed_old, df_mixed_new], ignore_index=True)
+        df_valstream.to_csv('df_valstream.csv',index=False)
+        #Create dataframe of capacities
         dfs['new_cap']['new_old'] = 'new'
         dfs['old_cap']['new_old'] = 'old'
         dfs['old_cap'] = dfs['old_cap'][['tech','n','year','kW','new_old']]
         df_cap = pd.concat([dfs['new_cap'], dfs['old_cap']], ignore_index=True)
         df_cap = scale_pv(df_cap, change_column='kW')
         df_cap['kW'] = df_cap['kW'] * 1000 #original data is in MW
-        df_cap['year'] = pd.to_numeric(df_cap['year'])
 
     #Annualize and adjust by inflation
     df_crf = df_crf[df_crf['crftype']=='crf_20'].copy()
