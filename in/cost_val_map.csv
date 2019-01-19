@@ -3,7 +3,6 @@ fix_cost,Fixed Cost
 trans_cost,Trans Cost
 var_cost,Variable Cost
 oper_res_cost,Ancillary Cost
-other_cost,Other Cost
 gp,Growth Cost
 load_pca,Energy Value
 res_marg,Capacity Value
