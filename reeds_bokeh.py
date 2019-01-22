@@ -7,13 +7,15 @@ import copy
 import pandas as pd
 import collections
 import bokeh.models.widgets as bmw
-import gdx2py
+import sys
 import reeds as rd
 import reeds2 as rd2
 import rpm
 import core
 import datetime
 import subprocess as sp
+if sys.version_info[0] == 2:
+    import gdx2py
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -78,7 +80,7 @@ def reeds_static(data_type, data_source, scenario_filter, base, static_presets, 
     #Now add variant wdg configurations:
     variant_wdg_config = []
     if scenario_filter != 'all':
-        scenarios = map(int, scenario_filter.split(','))
+        scenarios = list(map(int, scenario_filter.split(',')))
         variant_wdg_config.append({'name':'scenario_filter', 'val': scenarios, 'type': 'active'})
     core.static_report(data_type, data_source, core_presets, report_path, report_format, html_num, output_dir, auto_open, variant_wdg_config)
 
@@ -398,7 +400,7 @@ def update_reeds_data_source(path, init_load, init_config, data_type):
         core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         preset_options = []
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
-            preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
+            preset_options = list(reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys())
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], init_load, init_config, wdg_defaults=core.GL['wdg_defaults']))
 
@@ -476,15 +478,15 @@ def update_reeds_wdg(wdg_type):
     core.GL['widgets'].update(core.GL['variant_wdg'])
     if wdg_type == 'vars':
         GL_REEDS['result_dfs'] = {}
-    for key in core.GL['wdg_defaults'].keys():
-        if key not in core.GL['variant_wdg'].keys() + ['data']:
+    for key in list(core.GL['wdg_defaults'].keys()):
+        if key not in list(core.GL['variant_wdg'].keys()) + ['data']:
             core.GL['wdg_defaults'].pop(key, None)
     if 'result' in core.GL['variant_wdg'] and core.GL['variant_wdg']['result'].value is not 'None':
         preset_options = []
         if wdg_type in ['result','vars']:
             get_reeds_data(core.GL['variant_wdg'], GL_REEDS['scenarios'], GL_REEDS['result_dfs'])
         if 'presets' in reeds.results_meta[core.GL['variant_wdg']['result'].value]:
-            preset_options = reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys()
+            preset_options = list(reeds.results_meta[core.GL['variant_wdg']['result'].value]['presets'].keys())
         core.GL['df_source'], core.GL['columns'] = process_reeds_data(core.GL['variant_wdg'], core.GL['custom_sorts'], core.GL['custom_colors'], GL_REEDS['result_dfs'])
         core.GL['widgets'].update(build_reeds_presets_wdg(preset_options))
         core.GL['widgets'].update(core.build_widgets(core.GL['df_source'], core.GL['columns'], wdg_defaults=core.GL['wdg_defaults']))

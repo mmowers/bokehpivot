@@ -23,7 +23,6 @@ import bokeh.resources as br
 import bokeh.embed as be
 import datetime
 import six.moves.urllib.parse as urlp
-import gdx2py
 import subprocess as sp
 import jinja2 as ji
 import reeds_bokeh as rb
@@ -242,7 +241,7 @@ def preset_wdg(preset):
         Nothing: widget values are set.
     '''
     #First set all wdg_variant values, if they exist, in order that they appear in wdg_variant, an ordered dict.
-    variant_presets = [key for key in GL['variant_wdg'].keys() if key in preset]
+    variant_presets = [key for key in list(GL['variant_wdg'].keys()) if key in preset]
     for key in variant_presets:
         if isinstance(GL['widgets'][key], bmw.groups.Group):
             GL['widgets'][key].active = [GL['widgets'][key].labels.index(i) for i in preset[key]]
@@ -255,7 +254,7 @@ def preset_wdg(preset):
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
-    wdg_resets = [i for i in wdg_defaults if i not in wdg_variant.keys()+['x', 'data', 'render_plots', 'auto_update']]
+    wdg_resets = [i for i in wdg_defaults if i not in list(wdg_variant.keys())+['x', 'data', 'render_plots', 'auto_update']]
     #reset widgets if they are not default
     for key in wdg_resets:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
@@ -264,7 +263,7 @@ def preset_wdg(preset):
             wdg[key].value = wdg_defaults[key]
     #set all presets except x and filter, in order that they appear in wdg, an ordered dict.
     #Filters are handled separately, after that. x will be set at end, triggering render of chart.
-    common_presets = [key for key in wdg.keys() if key in preset and key not in wdg_variant.keys()+['x', 'filter']]
+    common_presets = [key for key in list(wdg.keys()) if key in preset and key not in list(wdg_variant.keys())+['x', 'filter']]
     for key in common_presets:
         if isinstance(wdg[key], bmw.groups.Group):
             wdg[key].active = [wdg[key].labels.index(i) for i in preset[key]]
