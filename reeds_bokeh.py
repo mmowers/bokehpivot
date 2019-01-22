@@ -19,7 +19,7 @@ if sys.version_info[0] == 2:
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
-DEFAULT_DOLLAR_YEAR = 2015
+DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2017
 DEFAULT_END_YEAR = 2050
 
