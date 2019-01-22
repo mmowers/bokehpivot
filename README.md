@@ -1,8 +1,9 @@
 # Exploding Pivot Charts
 
 ## Intro
-This bokeh app creates multiple pivot charts from data, similar to Tableau.
-Currently, ReEDS results and csvs are supported.
+This python bokeh app creates multiple pivot charts from data, similar to Tableau.
+Currently, gdx and csv results are supported from heritage ReEDS, ReEDS 2.0, and RPM models.
+Bokehpivot is compatible with Python 2.7+ and 3+, but gdx output support is currently restricted to Python 2.7+.
 
 A more simplified version of this app has been contributed as an example to the main Bokeh repo:
 https://github.com/bokeh/bokeh/tree/master/examples/app/pivot
@@ -13,7 +14,7 @@ There are two different ways to use this app: On Scorpio or Orion (easiest way),
 There should be two .bat files on your desktop on both Orion and Scorpio. One is called *Launch Common Bokeh Pivot.bat* and the other is called *Launch Local Bokeh Pivot.bat*. *Launch Common Bokeh Pivot.bat* launches the common bokehpivot repo at //nrelqnap02/ReEDS/bokehpivot, and *Launch Local Bokeh Pivot.bat* can be used to launch from own bokehpivot repo.
 1. If running from your own bokehpivot repo, make sure that *Launch Local Bokeh Pivot.bat* is located in the directory above your bokehpivot repo. This step is not necessary when using the common repo.
 1. Simply double click on one of the .bat files to launch the tool. This will start a bokeh server in a terminal window and a browser window with an interactive interface.
-1. After the tool is launched, go to the *Loading ReEDS data* section below.
+1. After the tool is launched, go to the *Loading Model data* section below.
 1. When done, simply close the terminal window that is running the server.
 * If you're curious about the contents of the .bat files, you can open the *Launch Common Bokeh Pivot.bat* in a text editor. The contents will look like:
   ```
@@ -26,7 +27,7 @@ There should be two .bat files on your desktop on both Orion and Scorpio. One is
     * `--allow-websocket-origin 1wp11rdori01.nrel.gov:<port> --allow-websocket-origin localhost:<port>`: The first address allows requests that are external to Scorpio/Orion (but on the NREL network) to access the bokeh server that you have launched. The Second allows internal requests to localhost, which is the default request when you run the .bat file.
 
 ## Running Locally
-1. If you don't already have Python/Bokeh, Easiest way is to get Anaconda for python 2.7 at:
+1. If you don't already have Python/Bokeh, Easiest way is to get Anaconda for python (version 2 or 3) at:
     https://www.continuum.io/downloads
 
     You can check if Anaconda automatically installed bokeh by going to
@@ -44,7 +45,7 @@ There should be two .bat files on your desktop on both Orion and Scorpio. One is
     ```
     conda install bokeh
     ```
-1. This tool reads from the gdx outputs from ReEDS runs. The gams python bindings need to be installed so the necessary python modules are available for reading gdx data into Python. On command line, navigate to the Python API files for Python 2.7, e.g. C:\\GAMS\\win64\\24.7\\apifiles\\Python\\api and run this command:
+1. If you are reading any gdx outputs (Python 2.7+ only, not Python 3), the gams python bindings need to be installed so the necessary python modules are available for reading gdx data into Python. On command line, navigate to the Python API files, e.g. C:\\GAMS\\win64\\24.7\\apifiles\\Python\\api (for 2.7) and run this command:
     ```
     python setup.py install
     ```
@@ -53,26 +54,22 @@ There should be two .bat files on your desktop on both Orion and Scorpio. One is
     bokeh serve --show \path\to\this\repo
     ```
     This will launch the bokeh server and a browser window to view the app.
-    * Note that we simply used the same command to start the bokeh server process on Orion:
-      ```
-      bokeh serve \\nrelqnap01d\ReEDS\bokehpivot
-      ```
-1. Go to the *Loading ReEDS data* section below
+1. Go to the *Loading Model data* section below
 
 ## Loading data
-After starting up the app in a browser window, you must enter a path in the *Data Source* field, either to a CSV file or to a ReEDS run or set of runs:
+After starting up the app in a browser window, you must enter a path in the *Data Source* field, either to a CSV file or to a Model run or set of runs:
 * *CSV*: Enter a path to a csv file. This file must be properly formatted, with column headers but no row headers. You can *Shift+Right Click* on a csv file, then select *Copy as Path* to get the full path to a file. After that, see the *Core Pivot Functionality* section below.
-* *ReEDS Run(s)*: Here are the options:
-    * Enter a path to a ReEDS run folder (inside which there is a *gdxfiles/* folder). This works using shared drives too. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs\\someRun*.
-    * Enter a path to a folder containing ReEDS run folders. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs*.
-    * Enter any number of the two path types above, each separated by a | (pipe) symbol
+* *Model Run(s)*: Here are the options:
+    * Enter a path to a Model run folder. This works using shared drives too. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs\\someRun*.
+    * Enter a path to a folder containing run folders. For example,  *\\\\nrelqnap01d\\ReEDS\\someProject\\runs*.
+    * Enter any number of the path types above, each separated by a | (pipe) symbol
     * Enter a path to a csv file that contains a list of runs. Using this method allows scenarios to be ordered as desired and colors to be specified as well. See *in/reeds_scenarios.csv* for an example. It's easiest to just copy *reeds_scenarios.csv* to some other location and edit/use the copy. Note that the file name must end with *reeds_scenarios.csv*.
     * After entering one of the above, see the *ReEDS Widgets* and *Core Pivot Functionality* sections below.
 
-## ReEDS Widgets
-* **ReEDS Variables**: Click the *ReEDS Variables* section to expand, and update any ReEDS variables, e.g. dollar year and present value reference and end years.
-* **Meta**: Click the *Meta* section to expand, and see the files used for some default *maps* (to rename and aggregate ReEDS categories), *styles* (to reorder categories and style them), and *merges* (to join more columns, e.g. to add regional aggregations). If you'd like to update any of these files, simply edit the file (only if you're working locally), or point to a new file. When changing mappings, note that all ReEDS set elements have been lowercased!
-* **Filter Scenarios**: A list of scenarios will be fetched after entering a path in *Runs*. Use the *Filter Scenarios* section to reduce the scenarios from which the app will fetch ReEDS gdx output data. Note that this filter does not have an effect after the data has already been fetched. To do further filtering of scenarios when building/updating figures, use the "scenario" filter in the "Filters" dropdown (described below).
+## Model Widgets
+* **Model Variables**: Click the *Model Variables* section to expand, and update any model variables, e.g. dollar year and present value reference and end years.
+* **Meta**: Click the *Meta* section to expand, and see the files used for some default *maps* (to rename and aggregate different output categories), *styles* (to reorder categories and style them), and *merges* (to join more columns, e.g. to add regional aggregations). If you'd like to update any of these files, simply edit the file (only if you're working locally), or point to a new file. When changing mappings, note that all set elements have been lowercased!
+* **Filter Scenarios**: A list of scenarios will be fetched after entering a path in *Runs*. Use the *Filter Scenarios* section to reduce the scenarios from which the app will fetch output data. Note that this filter does not have an effect after the data has already been fetched. To do further filtering of scenarios when building/updating figures, use the "scenario" filter in the "Filters" dropdown (described below).
 * **Build Report**: Build an HTML/Excel report based on a python file with a list of bokehpivot configurations. A select widget allows any of the reports in the *reports\\templates\\* folder to be chosen, or the path to a custom report may be entered in a text widget (for example, one that is exported using the *Export Report Config* button described below). If the report references a base case, this may be chosen with a select widget. Click the *Build Report* button to create one html file and excel file with results for that report, or click *Build Separate Reports* to split each report configuration into its own html file. In either case, a separate and independent process is initiated each time one of these buttons is clicked. Note that *Filter Scenarios* may be used to limit the scenarios included in the report.
 * **Result**: Select a result from the *Result* select box. It may take a few seconds to fetch the data, depending on the number of scenarios being analyzed. After the result data is fetched, the following widgets will appear
 * **Presets**: You may select a preset result from the *Preset* select box, and a set of widgets will be automatically set for you. For example, for *Generation*, *Stacked Generation* is a preset result. Note that after selecting a preset, you may make further modifications to the widgets.
@@ -91,7 +88,7 @@ below) is Area or Bar, series will automatically be stacked. If Chart Type is Li
 exploded column values.
 * **Group Exploded Charts By**: Select a discrete column to group exploded charts. Play around with plot sizes (see below)
 and/or resize your browser screen to make a nice 2d array of charts.
-* **Comparisons**: This section allows comparisons across any dimension. You first select the *Operation*, then the column you'd like to *Operate Across*, then the *Base* that you'd like to compare to. Here are a couple examples for ReEDS results:
+* **Comparisons**: This section allows comparisons across any dimension. You first select the *Operation*, then the column you'd like to *Operate Across*, then the *Base* that you'd like to compare to. Here are a couple examples for results:
     * Generation differences: Select *Generation* as *Result*, and select *Stacked Gen* under *Presets*. Then, under *Comparisons*, select *Operation*=*Difference*, *Operate Across*=*scenario*, and *Base*=your-base-case.
     * Generation Fraction: Select *Generation* as *Result*, and select *Stacked Gen* under *Presets*. Then, under *Comparisons*, select *Operation*=*Ratio*, *Operate Across*=*tech*, and *Base*=*Total*.
     * Capacity Differences, solve-year-to-solve-year: Select *Capacity* as *Result*, and select *Stacked Capacity* under *Presets*. Then, under *Comparisons*, select *Operation*=*Difference*, *Operate Across*=*year*, and *Base*=*Consecutive*.
@@ -105,9 +102,9 @@ and/or resize your browser screen to make a nice 2d array of charts.
 ## Creating report templates:
 Report templates are in the *reports\\templates\\* folder. Each of these files consists of a list of configurations. Every configuration has these keys:
 * *name*: The title of this section of the report, shown in both the HTML and Excel sheets
-* *result* (optional): The ReEDS result name (required if using the *preset* key).
+* *result* (optional): The result name (required if using the *preset* key).
 * *preset* (optional): The preset name.
-* *config* (optional): Full configuration if not using *result* or *preset* keys, or additional configuration to add. See *reports\\templates\\jobs_report.py* for examples of the *config* key used in addition to ReEDS presets.
+* *config* (optional): Full configuration if not using *result* or *preset* keys, or additional configuration to add. See *reports\\templates\\jobs_report.py* for examples of the *config* key used in addition to presets.
 * *modify* (optional): This allows comparison charts to be built when a base case has been specified. *'modify': 'diff'* indicates that difference charts should be shown with the base case, while *'modify': 'base_only'* indicates that the result should only be shown for the base case.
 
 ## Pro tips

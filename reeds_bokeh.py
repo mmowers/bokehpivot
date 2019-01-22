@@ -104,8 +104,8 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     print('***Fetching ReEDS scenarios...')
     topwdg = collections.OrderedDict()
 
-    #ReEDS Variables
-    topwdg['reeds_vars'] = bmw.Div(text='ReEDS Variables', css_classes=['reeds-vars-dropdown'])
+    #Model Variables
+    topwdg['reeds_vars'] = bmw.Div(text='Model Variables', css_classes=['reeds-vars-dropdown'])
     topwdg['var_dollar_year'] = bmw.TextInput(title='Dollar Year', value=str(DEFAULT_DOLLAR_YEAR), css_classes=['wdgkey-dollar_year', 'reeds-vars-drop'])
     topwdg['var_pv_year'] = bmw.TextInput(title='Present Value Reference Year', value=str(DEFAULT_PV_YEAR), css_classes=['wdgkey-pv_year', 'reeds-vars-drop'])
     topwdg['var_end_year'] = bmw.TextInput(title='Present Value End Year', value=str(DEFAULT_END_YEAR), css_classes=['wdgkey-end_year', 'reeds-vars-drop'])
