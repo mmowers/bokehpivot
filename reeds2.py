@@ -87,6 +87,15 @@ def remove_n(df, **kw):
     df.rename(columns={'region': 'i'}, inplace=True)
     return df
 
+def pre_val_streams(df, **kw):
+    df_not_dol = df[df['con_name'].isin(['mwh','kw'])].copy()
+    df_dol = df[~df['con_name'].isin(['mwh','kw'])].copy()
+    #apply inflation and annualize
+    df_dol['value'] = inflate_series(df_dol['value']) * CRF_reeds
+    #adjust capacity of PV???
+    df = pd.concat([df_not_dol, df_dol],sort=False,ignore_index=True)
+    return df
+
 
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
@@ -320,24 +329,23 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Value Streams chosen raw',
+    ('Value Streams chosen',
         {'file': 'valuestreams_chosen.csv',
-        'columns': ['year', 'tech', 'new_old', 'region', 'type', 'timeslice', '$'],
+        'columns': ['tech', 'vintage', 'region', 'year','new_old', 'var_name', 'con_name', 'value'],
         'preprocess': [
             {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'group_cols': ['year', 'tech', 'new_old', 'n', 'type'], 'sum_over_cols': ['timeslice']}},
-            {'func': apply_inflation, 'args': {'column': '$'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': '$'}},
+            {'func': pre_val_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No'}),
-            ('New Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
-            ('Old Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['old']}}),
-            ('Mixed Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['mixed']}}),
-            ('Retire Bil $ by type over time', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['retire']}}),
-            ('New Bil $ Cost by tech over time', {'x':'year','y':'$','series':'tech', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'y_scale':'-1', 'filter': {'new_old':['new'], 'type':['fix_cost','gp','trans_cost','var_cost']}}),
-            ('New Bil $ by type over time agg', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'filter': {'new_old':['new']}}),
+            ('$ by type over time', {'x':'year','y':'value','series':'con_name', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
+            ('$ by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort': 'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['mwh','kw']}, 'year':'last', }}),
+
+            ('$/kW by type over time', {'x':'year','y':'value','series':'con_name', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kw', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'con_name':{'exclude':['mwh']},'new_old':['new']}}),
+            ('$/kW by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kw', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort': 'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['mwh']}, 'year':'last', }}),
+
+            ('$/MWh by type over time', {'x':'year','y':'value','series':'con_name', 'explode': 'scenario', 'explode_group': 'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'mwh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'con_name':{'exclude':['kw']},'new_old':['new']}}),
+            ('$/MWh by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'mwh', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort': 'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['kw']}, 'year':'last', }}),
         )),
         }
     ),
