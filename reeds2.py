@@ -70,20 +70,17 @@ def CRF(i,n):
         print('Data goes beyond Present Value End Year. Filter out data beyond this year for proper system cost calculation.')
     return i/(1-(1/(1+i)**tempn))
 
-def strip_s_from_region(df, **kw):
-    df['region'] = df['region'].map(lambda x: x.lstrip('s'))
-    return df
-
 def map_i_to_n(df, **kw):
-    df_hier = pd.read_csv(this_dir_path + '/in/hierarchy.csv')
-    dict_hier = dict(zip(df_hier['i'].astype(str), df_hier['n']))
-    df['region'] = df['region'].replace(dict_hier)
+    df_hier = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
+    dict_hier = dict(zip(df_hier['reg'], df_hier['n']))
+    df['region'] = df['region'].map(dict_hier)
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
 
 
 def remove_n(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
+    df['region'] = df['region'].map(lambda x: x.lstrip('s'))
     df.rename(columns={'region': 'i'}, inplace=True)
     return df
 
@@ -153,7 +150,6 @@ results_meta = collections.OrderedDict((
         {'file': 'cap.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -172,7 +168,6 @@ results_meta = collections.OrderedDict((
         {'file': 'cap_new_ann.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -191,7 +186,6 @@ results_meta = collections.OrderedDict((
         {'file': 'ret_ann.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -210,7 +204,6 @@ results_meta = collections.OrderedDict((
         {'file': 'cap.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': remove_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -230,7 +223,6 @@ results_meta = collections.OrderedDict((
         {'file': 'gen_ann.csv',
         'columns': ['tech', 'region', 'year', 'Generation (TWh)'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Generation (TWh)'}},
         ],
@@ -250,7 +242,6 @@ results_meta = collections.OrderedDict((
         'columns': ['tech', 'region', 'timeslice', 'year', 'Generation (GW)'],
         'index': ['tech', 'year', 'timeslice'],
         'preprocess': [
-        	{'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': sum_over_cols, 'args': {'sum_over_cols': ['n'], 'group_cols': ['tech', 'year', 'timeslice']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Generation (GW)'}},
@@ -333,7 +324,6 @@ results_meta = collections.OrderedDict((
         {'file': 'valuestreams_chosen.csv',
         'columns': ['tech', 'vintage', 'region', 'year','new_old', 'var_name', 'con_name', 'value'],
         'preprocess': [
-            {'func': strip_s_from_region, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': pre_val_streams, 'args': {}},
         ],
