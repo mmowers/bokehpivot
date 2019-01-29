@@ -133,37 +133,36 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-	('Value Streams BA',
+    ('Value Streams BA',
         {'file': 'valuestreams/valuestreams_chosen_ba.csv',
-		'columns': ['year','tech','class','new_old','ba','cost_val_type','$'],
+        'columns': ['year','tech','class','new_old','ba','cost_val_type','$'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': 1/1e9, 'column': '$'}},
+            {'func': scale_column, 'args': {'scale_factor': 1/1e6, 'column': '$'}},
         ],
         'presets': collections.OrderedDict((
-		    ('WECC by Tech, Class over Time', {'x':'year', 'x_group':'class', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
-			('LDWP by Tech, Class over Time', {'x':'year', 'x_group':'class', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'ba':['ldwp']}}),
-
-            ('Geo by Class, BA over Time', {'x':'year', 'x_group':'ba', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['geo']}}),
-            ('Geo by Class over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['geo']}}),
-
-            ('Wind by Class, BA over Time', {'x':'year', 'x_group':'ba', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['wind']}}),
-            ('Wind by Class over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'class', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No', 'filter':{'tech':['wind']}}),
-
-			('By Tech over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
-
-            ('By BA over Time', {'x':'year', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'ba', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
+#Configuration 1 - section=region | x=tech | explode=year
+            ('x=tech | ex=year', {'x':'tech', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'sync_axes':'Yes'}),
+#Configuration 2 - section=region | x=class | x-group=tech with configurations (battery; csp; pv-battery) | explode=year
+            ('x=class | x-gp=tech | ex=year', {'x':'class', 'x_group':'tech', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'sync_axes':'Yes', 'filter':{'tech':['storage','csp-tes','pv-bat']}}),
+#Configuration 3 - section=tech | x=region | explode=year
+            ('x=ba | ex=year', {'x':'ba', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'plot_width':'750', 'sync_axes':'Yes'}),
         )),
         }
     ),
 
-	('Value Streams Node',
+    ('Value Streams Node',
         {'file': 'valuestreams/valuestreams_chosen_node.csv',
-	    'columns': ['year','tech','class','new_old','node','cost_val_type','$'],
+        'columns': ['year','tech','class','new_old','node','cost_val_type','$'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': 1/1e9, 'column': '$'}},
+            {'func': scale_column, 'args': {'scale_factor': 1/1e6, 'column': '$'}},
         ],
         'presets': collections.OrderedDict((
-            ('LDWP by Node over Time', {'x':'node', 'y':'$', 'series':'cost_val_type', 'explode':'scenario', 'explode_group':'year', 'chart_type':'Bar', 'bar_width':'0.75', 'sync_axes':'No'}),
+#Configuration 1 - section=region | x=tech | explode=year
+            ('x=tech | ex=year', {'x':'tech', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'sync_axes':'Yes'}),
+#Configuration 2 - section=region | x=class | x-group=tech with configurations (battery; csp; pv-battery) | explode=year
+            ('x=class | x-gp=tech | ex=year', {'x':'class', 'x_group':'tech', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'sync_axes':'Yes', 'filter':{'tech':['storage','csp-tes','pv-bat']}}),
+#Configuration 3 - section=tech | x=region | explode=year
+            ('x=node | ex=year', {'x':'node', 'y':'$', 'series':'cost_val_type', 'explode':'year', 'chart_type':'Bar', 'bar_width':'0.5', 'plot_width':'750', 'sync_axes':'Yes'}),
         )),
         }
     ),

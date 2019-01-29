@@ -1,13 +1,13 @@
 raw,display
 wind,wind
-pv tracking,pv
-pv rooftop,distpv
-pv fixed,pv
-pv battery,pv
+pv tracking,pv-track
+pv rooftop,pv-roof
+pv fixed,pv-fix
+pv battery,pv-bat
 phes,storage
 oil,ogs
 nuclear,nuclear
-hydro fixed,hydro
+hydro fixed,hydro-fix
 hydro,hydro
 geothermal,geo
 generic storage,storage
@@ -15,8 +15,8 @@ generic shed,shed
 gas steam,gas-other
 gas cogen,gas-other
 ct,gas-ct
-csp tes,csp
-csp notes,csp
+csp tes,csp-tes
+csp notes,csp-notes
 coal cogen,coal
 coal,coal
 cc,gas-cc
