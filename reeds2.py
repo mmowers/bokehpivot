@@ -72,8 +72,8 @@ def CRF(i,n):
 
 def map_i_to_n(df, **kw):
     df_hier = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
-    dict_hier = dict(zip(df_hier['reg'], df_hier['n']))
-    df['region'] = df['region'].map(dict_hier)
+    dict_hier = dict(zip(df_hier['s'], df_hier['n']))
+    df.loc[df['region'].isin(dict_hier.keys()), 'region'] = df['region'].map(dict_hier)
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
 
