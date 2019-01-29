@@ -19,7 +19,7 @@ if sys.version_info[0] == 2:
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
-DEFAULT_DOLLAR_YEAR = 2015
+DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2017
 DEFAULT_END_YEAR = 2050
 
@@ -148,7 +148,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
             if os.path.isfile(abs_path + GLRD['output_subdir'] + GLRD['test_file']):
                 scenarios.append({'name': os.path.basename(abs_path), 'path': abs_path})
             else:
-                subdirs = os.walk(abs_path).next()[1]
+                subdirs = next(os.walk(abs_path))[1]
                 for subdir in subdirs:
                     if os.path.isfile(abs_path+'/'+subdir + GLRD['output_subdir'] + GLRD['test_file']):
                         abs_subdir = str(os.path.abspath(abs_path+'/'+subdir))
