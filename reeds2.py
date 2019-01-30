@@ -322,9 +322,8 @@ results_meta = collections.OrderedDict((
 
     ('Value Streams chosen',
         {'file': 'valuestreams_chosen.csv',
-        'columns': ['tech', 'vintage', 'region', 'year','new_old', 'var_name', 'con_name', 'value'],
+        'columns': ['tech', 'vintage', 'n', 'year','new_old', 'var_name', 'con_name', 'value'],
         'preprocess': [
-            {'func': map_i_to_n, 'args': {}},
             {'func': pre_val_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
