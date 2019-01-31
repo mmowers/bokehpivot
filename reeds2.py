@@ -77,6 +77,11 @@ def map_i_to_n(df, **kw):
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
 
+def remove_eps(df, **kw):
+    for c in kw['columns']:
+        df[c].replace('eps',0, inplace=True)
+        df[c] = pd.to_numeric(df[c])
+    return df
 
 def remove_n(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
@@ -93,6 +98,9 @@ def pre_val_streams(df, **kw):
     df = pd.concat([df_not_dol, df_dol],sort=False,ignore_index=True)
     return df
 
+def pre_reduced_cost(df, **kw):
+    df['icr'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region']
+    return df
 
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
@@ -339,4 +347,18 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Reduced Cost',
+        {'file': 'reduced_cost.csv',
+        'columns': ['tech', 'vintage', 'region', 'year','PV$/kW'],
+        'preprocess': [
+            {'func': remove_eps, 'args': {'columns':['PV$/kW']}},
+            {'func': pre_reduced_cost, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
+            {'func': apply_inflation, 'args': {'column': 'PV$/kW'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Final supply curves', {'chart_type':'Dot', 'x':'icr', 'y':'PV$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
+        )),
+        }
+    ),
 ))
