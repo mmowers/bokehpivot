@@ -149,8 +149,6 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
         load_val = 'MWh'
-        df_valstream = sum_over_cols(df_valstream, sum_over_cols=['m'], group_cols=valstream_cols)
-        df_load = sum_over_cols(df_load, sum_over_cols=['m'], group_cols=['year','tech','new_old','n'])
         #Gather separate old value streams and combine with df_valstream
         df_valstream_old = dfs['valstream_old']
         df_valstream_old['year'] = pd.to_numeric(df_valstream_old['year'])
@@ -627,7 +625,6 @@ results_meta = collections.OrderedDict((
     ('Tech Val Streams chosen raw',
         {'file': 'valuestreams/valuestreams_chosen.csv',
         'preprocess': [
-            {'func': sum_over_cols, 'args': {'group_cols': ['tech', 'new_old', 'year', 'n', 'type'], 'sum_over_cols': ['m']}},
             {'func': apply_inflation, 'args': {'column': '$'}},
             {'func': scale_column, 'args': {'scale_factor': CRF_reeds/1e9, 'column': '$'}},
         ],
