@@ -645,7 +645,7 @@ results_meta = collections.OrderedDict((
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
             {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'kW']},
-            {'name': 'old_cap', 'file': 'oldvaluestreams.gdx', 'param': 'OldCapacity', 'columns': ['tech', 'year', 'n', 'kW']},
+            {'name': 'old_cap', 'file': 'valuestreams.gdx', 'param': 'OldCapacity', 'columns': ['tech', 'year', 'n', 'kW']},
             {'name': 'CRF', 'file': '../input-data.gdx', 'param': 'CRF_allyears', 'columns': ['crftype','year','crf']},
         ],
         'preprocess': [
