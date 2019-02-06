@@ -150,11 +150,10 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_val = '$'
         load_val = 'MWh'
         #Gather separate old value streams and combine with df_valstream
-        df_valstream_old = dfs['valstream_old']
-        df_valstream_old['year'] = pd.to_numeric(df_valstream_old['year'])
-        df_valstream_old['new_old'] = 'old'
-        df_valstream_old = df_valstream_old[valstream_cols + [valstream_val]]
-        df_valstream = pd.concat([df_valstream, df_valstream_old], ignore_index=True)
+        df_valstream_gams = dfs['valstream_gams']
+        df_valstream_gams['year'] = pd.to_numeric(df_valstream_gams['year'])
+        df_valstream_gams = df_valstream_gams[valstream_cols + [valstream_val]]
+        df_valstream = pd.concat([df_valstream, df_valstream_gams], ignore_index=True)
         df_valstream = df_valstream.groupby(valstream_cols, sort=False, as_index =False).sum()
         #Apportion 'mixed' streams to old and new, proportional to old and new capacity
         df_mixed = df_valstream[df_valstream['new_old'] == 'mixed']
@@ -641,7 +640,7 @@ results_meta = collections.OrderedDict((
     ('Tech Val Streams chosen',
         {'sources': [
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
-            {'name': 'valstream_old', 'file': 'oldvaluestreams.gdx', 'param': 'OldValueStreams', 'columns': ['tech', 'year', 'n','type','$']},
+            {'name': 'valstream_gams', 'file': 'valuestreams.gdx', 'param': 'ValueStreams', 'columns': ['tech','new_old', 'year', 'n','type','$']},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
