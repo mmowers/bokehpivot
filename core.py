@@ -851,18 +851,23 @@ def create_figure(df_exploded, df_plots, wdg, cols, custom_colors, explode_val=N
         kw['title'] = kw['title'] + seperator + str(explode_val)
 
     #Add figure tools
-    hover = bmt.HoverTool(
+    hover_tool = bmt.HoverTool(
             tooltips=[
                 ("ser", "@ser_legend"),
                 ("x", "@x_legend"),
                 ("y", "@y_legend"),
             ]
     )
-    TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
+    pan_tool = bmt.PanTool()
+    wheelzoom_tool = bmt.WheelZoomTool()
+    reset_tool = bmt.ResetTool()
+    save_tool = bmt.SaveTool()
+    boxzoom_tool = bmt.BoxZoomTool()
+    TOOLS = [pan_tool, wheelzoom_tool, boxzoom_tool, hover_tool, reset_tool, save_tool]
 
     #Create figure with the ranges, titles, and tools, and adjust formatting and labels
     p = bp.figure(plot_height=int(wdg['plot_height'].value), plot_width=int(wdg['plot_width'].value), tools=TOOLS, **kw)
-    p.toolbar.active_drag = TOOLS[0]
+    p.toolbar.active_drag = pan_tool
     p.title.text_font_size = wdg['plot_title_size'].value + 'pt'
     p.xaxis.axis_label = wdg['x_title'].value
     p.yaxis.axis_label = wdg['y_title'].value
@@ -1149,14 +1154,19 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         color=colors,
     ))
     #Add figure tools
-    hover = bmt.HoverTool(
+    hover_tool = bmt.HoverTool(
             tooltips=[
                 ("reg", "@region"),
                 ("val", "@value"),
             ],
             point_policy = "follow_mouse",
     )
-    TOOLS = [bmt.PanTool(), bmt.WheelZoomTool(), hover, bmt.ResetTool(), bmt.SaveTool()]
+    pan_tool = bmt.PanTool()
+    wheelzoom_tool = bmt.WheelZoomTool()
+    reset_tool = bmt.ResetTool()
+    save_tool = bmt.SaveTool()
+    boxzoom_tool = bmt.BoxZoomTool()
+    TOOLS = [pan_tool, wheelzoom_tool, boxzoom_tool, hover_tool, reset_tool, save_tool]
     #find max and min of xs and ys to set aspect ration of map
     
     aspect_ratio = (ranges['y_max'] - ranges['y_min'])/(ranges['x_max'] - ranges['x_min'])
@@ -1173,7 +1183,7 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         tools=TOOLS
     )
     fig_map.title.text_font_size = wdg['map_font_size'].value + 'pt'
-    fig_map.toolbar.active_drag = TOOLS[0]
+    fig_map.toolbar.active_drag = pan_tool
     if wdg['bokeh_tools'].value == 'No':
         fig_map.toolbar.logo = None
         fig_map.toolbar_location = None
