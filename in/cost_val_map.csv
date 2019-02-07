@@ -1,11 +1,15 @@
 raw,display
 fix_cost,Fixed Cost
-cap_cost, Capital Cost
+cap_cost,Capital Cost
+gams_cap_cost,GAMS Capital Cost
 fixom_cost,Fixed O&M Cost
+gams_fixom_cost,GAMS Fixed O&M Cost
 trans_cost,Trans Cost
 var_cost,Variable Cost
-varom_cost, Variable O&M Cost
-fuel_cost, Fuel Cost
+varom_cost,Variable O&M Cost
+gams_varom_cost,GAMS Variable O&M Cost
+fuel_cost,Fuel Cost
+gams_fuel_cost,GAMS Fuel Cost
 oper_res_cost,Ancillary Cost
 gp,Growth Cost
 load_pca,Energy Value

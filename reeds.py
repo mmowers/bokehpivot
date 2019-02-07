@@ -21,8 +21,8 @@ df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
 
-raw_costs = ['fix_cost','var_cost','trans_cost','gp','oper_res_cost','emissions','water']
-costs = ['Fixed Cost','Variable Cost','Trans Cost','Growth Cost','Ancillary Cost','Emissions Cost','Water Cost']
+raw_costs = ['fix_cost','fixom_cost','cap_cost','var_cost','varom_cost','fuel_cost','trans_cost','gp','oper_res_cost','emissions','water']
+costs = ['Fixed Cost','Fixed O&M Cost','Capital Cost','Variable Cost', 'Variable O&M Cost','Fuel Cost','Trans Cost','Growth Cost','Ancillary Cost','Emissions Cost','Water Cost']
 raw_values = ['load_pca','res_marg','oper_res','rps','surplus','other']
 values = ['Energy Value','Capacity Value','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
 values_decomp = ['block_dist_load','loc_min_dist_load','real_min_loc_load','block_dist_resmarg','loc_min_dist_resmarg','real_min_loc_resmarg','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
@@ -153,6 +153,7 @@ def pre_tech_val_streams(dfs, **kw):
         df_valstream_gams = dfs['valstream_gams']
         df_valstream_gams['year'] = pd.to_numeric(df_valstream_gams['year'])
         df_valstream_gams = df_valstream_gams[valstream_cols + [valstream_val]]
+        df_valstream_gams.loc[df_valstream_gams['type'].isin(raw_costs), 'type'] = 'gams_' + df_valstream_gams.loc[df_valstream_gams['type'].isin(raw_costs), 'type']
         df_valstream = pd.concat([df_valstream, df_valstream_gams], ignore_index=True)
         df_valstream = df_valstream.groupby(valstream_cols, sort=False, as_index =False).sum()
         #Apportion 'mixed' streams to old and new, proportional to old and new capacity
