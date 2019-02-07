@@ -24,6 +24,7 @@ reduced_cost,Reduced Cost
 cap_fo_po,cap_fo_po
 other,Other Value
 total cost,total cost
+total cost gams,total cost gams
 total value,total value
 sys_lcoe_num,sys_lcoe_num
 base_value,Base Price

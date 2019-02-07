@@ -21,7 +21,9 @@ df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
 
-raw_costs = ['fix_cost','fixom_cost','cap_cost','var_cost','varom_cost','fuel_cost','trans_cost','gp','oper_res_cost','emissions','water']
+raw_costs_common = ['trans_cost','gp','oper_res_cost','emissions','water']
+raw_costs = ['fix_cost','fixom_cost','cap_cost','var_cost','varom_cost','fuel_cost'] + raw_costs_common
+raw_costs_gams = ['gams_fixom_cost','gams_cap_cost','gams_varom_cost','gams_fuel_cost'] + raw_costs_common
 costs = ['Fixed Cost','Fixed O&M Cost','Capital Cost','Variable Cost', 'Variable O&M Cost','Fuel Cost','Trans Cost','Growth Cost','Ancillary Cost','Emissions Cost','Water Cost']
 raw_values = ['load_pca','res_marg','oper_res','rps','surplus','other']
 values = ['Energy Value','Capacity Value','Ancillary Value','RPS Value','Cap Fo Po','Curtailment','Other Value']
@@ -201,12 +203,18 @@ def pre_tech_val_streams(dfs, **kw):
     df_cost = df_cost.groupby(valstream_cols, sort=False, as_index =False).sum()
     df_cost[valstream_val] = df_cost[valstream_val]*-1
 
+    #Add GAMS Total Cost (positive)
+    df_cost_gams = df_valstream[df_valstream['type'].isin(raw_costs_gams)].copy()
+    df_cost_gams['type'] = 'total cost gams'
+    df_cost_gams = df_cost_gams.groupby(valstream_cols, sort=False, as_index =False).sum()
+    df_cost_gams[valstream_val] = df_cost_gams[valstream_val]*-1
+
     #Add Total Value
     df_val = df_valstream[df_valstream['type'].isin(raw_values)].copy()
     df_val['type'] = 'total value'
     df_val = df_val.groupby(valstream_cols, sort=False, as_index =False).sum()
 
-    df_list = [df_valstream, df_cost, df_val]
+    df_list = [df_valstream, df_cost, df_cost_gams, df_val]
 
     if kw['detailed'] == True:
         #Gather national (dist) and ba-level prices (all in $/MWh assuming block generator with full capacity factor and capacity credit). Adjust by inflation
