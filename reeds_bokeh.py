@@ -458,7 +458,7 @@ def build_reeds_report(html_num='one'):
         auto_open = '"no"'
     start_str = 'start python'
     if core.debug:
-        start_str = 'start cmd /K python'
+        start_str = 'start cmd /K python -m pdb '
     sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open + ' ' + data_type, shell=True)
 
 def build_reeds_report_separate():
