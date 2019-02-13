@@ -94,7 +94,7 @@ def CRF(i,n):
 
 def pre_elec_price(df, **kw):
     df = df.pivot_table(index=['n','year'], columns='elem', values='value').reset_index()
-    df.drop(['t2','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13','t14','t15','t16'], axis='columns', inplace=True)
+    df.drop(['t2','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13','t14','t15','t16'], axis='columns', errors='ignore', inplace=True)
     df.columns.name = None
     df.rename(columns={'t1': 'load', 't3': 'Regulated', 't17': 'Competitive'}, inplace=True)
     df = pd.melt(df, id_vars=['n', 'year', 'load'], value_vars=['Competitive', 'Regulated'], var_name='type', value_name= 'Price ($/MWh)')
