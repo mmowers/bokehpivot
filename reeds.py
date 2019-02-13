@@ -109,6 +109,13 @@ def pre_elec_price_components(dfs, **kw):
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
+def pre_dereg_price(dfs, **kw):
+    dfs['requirement_revenue']['$'] = inflate_series(dfs['requirement_revenue']['$'])
+    dfs['annual_energy']['type'] = 'MWh'
+    dfs['annual_energy'].rename(columns={'MWh': '$'}, inplace=True)
+    df = pd.concat([dfs['requirement_revenue'], dfs['annual_energy']], ignore_index=True, sort=False)
+    return df
+
 def pre_marginal_capacity_value(dfs, **kw):
     dfs['new_cap']['Capacity (GW)'] = dfs['new_cap']['Capacity (GW)'] / 1000
     df = pd.merge(left=dfs['cv_mar'], right=dfs['new_cap'], on=['tech','n','year'], how='left', sort=False)
@@ -597,6 +604,19 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('Stacked Components',{'x':'year','y':'value', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'elec_comp_type', 'explode': 'scenario', 'chart_type':'Bar'}),
             ('Scenario Compare',{'x':'year','y':'value', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'elec_comp_type', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+    ('Dereg Elec Price ($/MWh)',
+        {'sources': [
+            {'name': 'annual_energy', 'file': 'MarginalPrices.gdx', 'param': 'AnnualEnergyDemand', 'columns': ['n','year','MWh']},
+            {'name': 'requirement_revenue', 'file': 'MarginalPrices.gdx', 'param': 'RequirementRevenue', 'columns': ['n','type','year','$']},
+        ],
+        'preprocess': [
+            {'func': pre_dereg_price, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'bar_width':'1.75', 'filter': {}}),
         )),
         }
     ),

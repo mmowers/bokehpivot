@@ -28,7 +28,7 @@ import jinja2 as ji
 import reeds_bokeh as rb
 
 #Debug mode
-debug = False
+debug = True
 
 #Defaults to configure:
 DEFAULT_DATA_TYPE = 'ReEDS 1.0'
