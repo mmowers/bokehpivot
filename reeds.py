@@ -156,7 +156,7 @@ def pre_tech_val_streams(dfs, **kw):
         df_valstream_gams['year'] = pd.to_numeric(df_valstream_gams['year'])
         df_valstream_gams = df_valstream_gams[valstream_cols + [valstream_val]]
         df_valstream_gams.loc[df_valstream_gams['type'].isin(raw_costs), 'type'] = 'gams_' + df_valstream_gams.loc[df_valstream_gams['type'].isin(raw_costs), 'type']
-        df_valstream = pd.concat([df_valstream, df_valstream_gams], ignore_index=True)
+        df_valstream = pd.concat([df_valstream, df_valstream_gams], ignore_index=True, sort=False)
         df_valstream = df_valstream.groupby(valstream_cols, sort=False, as_index =False).sum()
         #Apportion 'mixed' streams to old and new, proportional to old and new capacity
         df_mixed = df_valstream[df_valstream['new_old'] == 'mixed']
@@ -179,13 +179,13 @@ def pre_tech_val_streams(dfs, **kw):
         df_mixed_old.rename(columns={'old_$': '$'}, inplace=True)
         df_mixed_new = df_mixed_new[df_mixed_new['$'] != 0]
         df_mixed_old = df_mixed_old[df_mixed_old['$'] != 0]
-        df_valstream = pd.concat([df_valstream, df_mixed_old, df_mixed_new], ignore_index=True)
+        df_valstream = pd.concat([df_valstream, df_mixed_old, df_mixed_new], ignore_index=True, sort=False)
         df_valstream.to_csv('df_valstream.csv',index=False)
         #Create dataframe of capacities
         dfs['new_cap']['new_old'] = 'new'
         dfs['old_cap']['new_old'] = 'old'
         dfs['old_cap'] = dfs['old_cap'][['tech','n','year','kW','new_old']]
-        df_cap = pd.concat([dfs['new_cap'], dfs['old_cap']], ignore_index=True)
+        df_cap = pd.concat([dfs['new_cap'], dfs['old_cap']], ignore_index=True, sort=False)
         df_cap = scale_pv(df_cap, change_column='kW')
         df_cap['kW'] = df_cap['kW'] * 1000 #original data is in MW
 
@@ -230,8 +230,8 @@ def pre_tech_val_streams(dfs, **kw):
         df_price_ba_comb = sum_over_cols(df_price_ba, sum_over_cols=['type'], group_cols=['n','year'])
         df_price_dist_comb['type'] = 'comb'
         df_price_ba_comb['type'] = 'comb'
-        df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True)
-        df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True)
+        df_price_dist = pd.concat([df_price_dist,df_price_dist_comb], ignore_index=True, sort=False)
+        df_price_ba = pd.concat([df_price_ba,df_price_ba_comb], ignore_index=True, sort=False)
 
         #merge df_price into df_load and calculate energy-based block value streams
         df_block_dist = pd.merge(left=df_load, right=df_price_dist, on=['year'], how='left', sort=False)
