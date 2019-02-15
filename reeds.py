@@ -173,7 +173,6 @@ def pre_tech_val_streams(dfs, **kw):
         df_mixed[['new_cap','old_cap']] = df_mixed[['new_cap','old_cap']].fillna(0)
         df_mixed['new_$'] = df_mixed['$'] * df_mixed['new_cap'] / (df_mixed['old_cap'] + df_mixed['new_cap'])
         df_mixed['old_$'] = df_mixed['$'] * df_mixed['old_cap'] / (df_mixed['old_cap'] + df_mixed['new_cap'])
-        df_mixed.to_csv('df_mixed.csv',index=False)
         df_mixed[['new_$','old_$']] = df_mixed[['new_$','old_$']].fillna(0)
         df_mixed_new = df_mixed[valstream_cols + ['new_$']].copy()
         df_mixed_old = df_mixed[valstream_cols + ['old_$']].copy()
@@ -184,7 +183,6 @@ def pre_tech_val_streams(dfs, **kw):
         df_mixed_new = df_mixed_new[df_mixed_new['$'] != 0]
         df_mixed_old = df_mixed_old[df_mixed_old['$'] != 0]
         df_valstream = pd.concat([df_valstream, df_mixed_old, df_mixed_new], ignore_index=True, sort=False)
-        df_valstream.to_csv('df_valstream.csv',index=False)
         #Create dataframe of capacities
         dfs['new_cap']['new_old'] = 'new'
         dfs['old_cap']['new_old'] = 'old'
