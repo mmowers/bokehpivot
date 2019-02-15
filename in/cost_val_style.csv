@@ -1,15 +1,11 @@
 order,color
 Base Price,#1f77b4
-Fixed Cost,#ff7f0e
+Fixed Cost,#c7c7c7
 Capital Cost,#ff7f0e
-GAMS Capital Cost,#ff7f0e
-Fixed O&M Cost,#ff7f0e
-GAMS Fixed O&M Cost,#ff7f0e
+Fixed O&M Cost,#1f77b4
 Variable Cost,#2ca02c
-Variable O&M Cost,#2ca02c
-GAMS Variable O&M Cost,#2ca02c
-Fuel Cost,#2ca02c
-GAMS Fuel Cost,#2ca02c
+Variable O&M Cost,#dbdb8d
+Fuel Cost,#9edae5
 Trans Cost,#d62728
 Ancillary Cost,#9467bd
 Growth Cost,#8c564b
@@ -24,7 +20,6 @@ Profit,#c5b0d5
 Reduced Cost,#c49c94
 Other Value,#f7b6d2
 total cost,#c7c7c7
-total cost gams,#c7c7c7
 total value,#dbdb8d
 cap_fo_po,#dbdb8d
 sys_lcoe_num,#9edae5
