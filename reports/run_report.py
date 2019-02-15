@@ -9,7 +9,7 @@ scenario_filter = 'all' #'all' or string of comma-separated names.
 base = 'Master' #Base case, if applicable. If base case is not needed for this report, simply leave as is.
 report_path = r'\\nrelqnap02\ReEDS\Some Location\some_report.py' #Path to report that is to be run
 html_num = 'one' #'one' or 'multiple'. 'one' will create one html file with all sections, and 'multiple' will create a separate html file for each section
-output_dir = r'\\nrelqnap02\ReEDS\Some Location' #This is the location that will hold the report.
+output_dir = r'\\nrelqnap02\ReEDS\Some Location' #This is the directory that will be created to contain the report. It cannot already exist.
 report_format = 'both' #'html', 'excel', or 'both'
 auto_open = 'yes' #'yes' or 'no'. Automatically open the resulting report excel and html files when they are created.
 
@@ -23,5 +23,4 @@ report_dir = os.path.dirname(report_path)
 sys.path.insert(1, report_dir)
 report_name = os.path.basename(report_path)[:-3]
 report = importlib.import_module(report_name)
-output_dir = output_dir + '/report-' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 rb.reeds_static(data_type, data_source, scenario_filter, base, report.static_presets, report_path, report_format, html_num, output_dir, auto_open)
