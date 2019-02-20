@@ -107,7 +107,7 @@ def pre_elec_price_components(dfs, **kw):
     df = pd.merge(left=df_main, right=df_load, how='inner', on=['n','year'], sort=False)
     return df
 
-def pre_dereg_price(dfs, **kw):
+def pre_allin_price(dfs, **kw):
     dfs['requirement_revenue']['$'] = inflate_series(dfs['requirement_revenue']['$'])
     dfs['annual_energy']['type'] = 'MWh'
     dfs['annual_energy'].rename(columns={'MWh': '$'}, inplace=True)
@@ -596,13 +596,13 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-    ('Dereg Elec Price ($/MWh)',
+    ('All-in Elec Price ($/MWh)',
         {'sources': [
             {'name': 'annual_energy', 'file': 'MarginalPrices.gdx', 'param': 'AnnualEnergyDemand', 'columns': ['n','year','MWh']},
             {'name': 'requirement_revenue', 'file': 'MarginalPrices.gdx', 'param': 'RequirementRevenue', 'columns': ['n','type','year','$']},
         ],
         'preprocess': [
-            {'func': pre_dereg_price, 'args': {}},
+            {'func': pre_allin_price, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars', {'x':'year','y':'$','series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'MWh', 'bar_width':'1.75', 'filter': {}}),
