@@ -156,6 +156,10 @@ def pre_tech_val_streams(dfs, **kw):
         valstream_cols = ['year','tech','new_old','n','type']
         valstream_val = '$'
         load_val = 'MWh'
+        #Combine old and new generation
+        dfs['old_load']['year'] = pd.to_numeric(dfs['old_load']['year'])
+        dfs['old_load']['new_old'] = 'old'
+        df_load = pd.concat([df_load, dfs['old_load']], ignore_index=True, sort=False)
         #Gather separate gams value streams and combine with df_valstream
         df_valstream_gams = dfs['valstream_gams']
         df_valstream_gams['year'] = pd.to_numeric(df_valstream_gams['year'])
@@ -660,6 +664,7 @@ results_meta = collections.OrderedDict((
             {'name': 'valstream', 'file': 'valuestreams/valuestreams_chosen.csv'},
             {'name': 'valstream_gams', 'file': 'valuestreams.gdx', 'param': 'ValueStreams', 'columns': ['tech','new_old', 'year', 'n','type','$']},
             {'name': 'load', 'file': 'valuestreams/load_pca_chosen.csv'},
+            {'name': 'old_load', 'file': 'valuestreams.gdx', 'param': 'OldGeneration', 'columns': ['tech', 'year', 'n', 'MWh']},
             {'name': 'prices_nat', 'file': 'MarginalPrices.gdx', 'param': 'p_block_nat_ann', 'columns': ['type','year','$/MWh']},
             {'name': 'prices_ba', 'file': 'MarginalPrices.gdx', 'param': 'p_block_ba_ann', 'columns': ['n','type','year','$/MWh']},
             {'name': 'new_cap', 'file': 'CONVqn.gdx', 'param': 'CONVqn_newallyears', 'columns': ['tech', 'n', 'year', 'kW']},
