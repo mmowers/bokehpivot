@@ -239,6 +239,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                         if 'columns' in src:
                             df_src.columns = src['columns']
                     df_src.replace('Eps',0, inplace=True)
+                    df_src = df_src.apply(pd.to_numeric, errors='ignore')
                     df_src = df_to_lowercase(df_src)
                     df_scen_result[src['name']] = df_src
             else:
@@ -253,6 +254,7 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                     if 'columns' in result_meta:
                         df_scen_result.columns = result_meta['columns']
                 df_scen_result.replace('Eps',0, inplace=True)
+                df_scen_result = df_scen_result.apply(pd.to_numeric, errors='ignore')
                 df_scen_result = df_to_lowercase(df_scen_result)
             #preprocess and return one dataframe
             if 'preprocess' in result_meta:
