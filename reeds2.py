@@ -77,12 +77,6 @@ def map_i_to_n(df, **kw):
     df.rename(columns={'region': 'n'}, inplace=True)
     return df
 
-def remove_eps(df, **kw):
-    for c in kw['columns']:
-        df[c].replace('eps',0, inplace=True)
-        df[c] = pd.to_numeric(df[c])
-    return df
-
 def remove_n(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
     df['region'] = df['region'].map(lambda x: x.lstrip('s'))
@@ -351,7 +345,6 @@ results_meta = collections.OrderedDict((
         {'file': 'reduced_cost.csv',
         'columns': ['tech', 'vintage', 'region', 'year','PV$/kW'],
         'preprocess': [
-            {'func': remove_eps, 'args': {'columns':['PV$/kW']}},
             {'func': pre_reduced_cost, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': apply_inflation, 'args': {'column': 'PV$/kW'}},
