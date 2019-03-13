@@ -101,16 +101,23 @@ def pre_val_streams(df, **kw):
     return df
 
 def pre_reduced_cost(df, **kw):
-    df['icr'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region']
+    df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
     return df
 
 def pre_lcoe(dfs, **kw):
     #Apply inflation
     dfs['lcoe']['$/MWh'] = inflate_series(dfs['lcoe']['$/MWh'])
-    df = pd.merge(left=dfs['lcoe'], right=dfs['inv'], how='left', on=['tech', 'vintage', 'region', 'year', 'bin'], sort=False)
-    df['MW'].fillna(0, inplace=True)
+    #Merge with available capacity
+    df = pd.merge(left=dfs['lcoe'], right=dfs['avail'], how='left', on=['tech', 'region', 'year', 'bin'], sort=False)
+    df['available MW'].fillna(0, inplace=True)
+    df['available'] = 'no'
+    df.loc[df['available MW'] > 0.001, 'available'] = 'yes'
+    #Merge with chosen capacity
+    df = pd.merge(left=df, right=dfs['inv'], how='left', on=['tech', 'vintage', 'region', 'year', 'bin'], sort=False)
+    df['chosen MW'].fillna(0, inplace=True)
     df['chosen'] = 'no'
-    df.loc[df['MW'] != 0, 'chosen'] = 'yes'
+    df.loc[df['chosen MW'] != 0, 'chosen'] = 'yes'
+    #Add icrb column
     df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
     return df
 
@@ -385,14 +392,15 @@ results_meta = collections.OrderedDict((
 
     ('Reduced Cost ($/kW)',
         {'file': 'reduced_cost.csv',
-        'columns': ['tech', 'vintage', 'region', 'year','$/kW'],
+        'columns': ['tech', 'vintage', 'region', 'year','bin','$/kW'],
         'preprocess': [
             {'func': pre_reduced_cost, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': apply_inflation, 'args': {'column': '$/kW'}},
         ],
         'presets': collections.OrderedDict((
-            ('Final supply curves', {'chart_type':'Dot', 'x':'icr', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
+            ('Final supply curves', {'chart_type':'Dot', 'x':'icrb', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
+            ('Final supply curves p1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'n':['p1']}}),
         )),
         }
     ),
@@ -400,16 +408,18 @@ results_meta = collections.OrderedDict((
     ('LCOE ($/MWh)',
         {'sources': [
             {'name': 'lcoe', 'file': 'lcoe.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'bin','$/MWh']},
-            {'name': 'inv', 'file': 'cap_new_bin_out.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'bin','MW']},
+            {'name': 'inv', 'file': 'cap_new_bin_out.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'bin','chosen MW']},
+            {'name': 'avail', 'file': 'cap_avail.csv', 'columns': ['tech', 'region', 'year', 'bin','available MW']},
         ],
         'preprocess': [
             {'func': pre_lcoe, 'args': {}},
+            {'func': map_i_to_n, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Final supply curves', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
-            ('Final supply curves s1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'region':['s1']}}),
+            ('Final supply curves p1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'n':['p1']}}),
             ('Final supply curves chosen', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'chosen':['yes']}}),
-            ('Final supply curves chosen s1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'chosen':['yes'], 'region':['s1']}}),
+            ('Final supply curves chosen p1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/MWh', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'chosen':['yes'], 'n':['p1']}}),
         )),
         }
     ),
