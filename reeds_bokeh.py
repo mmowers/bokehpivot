@@ -359,10 +359,12 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     #categorize columns
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
-    cols['y-axis'] = [x for x in cols['continuous'] if x not in reeds.columns_meta or reeds.columns_meta[x]['y-allow']]
+    cols['y-axis'] = [x for x in cols['continuous'] if not (x in reeds.columns_meta and 'y-allow' in reeds.columns_meta[x] and reeds.columns_meta[x]['y-allow']==False)]
     cols['x-axis'] = [x for x in cols['all'] if x not in cols['y-axis']]
-    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['filterable']]
-    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['seriesable']]
+    cols['filterable'] = ([x for x in cols['discrete'] if not (x in reeds.columns_meta and 'filterable' in reeds.columns_meta[x] and reeds.columns_meta[x]['filterable']==False)]+
+                         [x for x in cols['continuous'] if x in reeds.columns_meta and 'filterable' in reeds.columns_meta[x] and reeds.columns_meta[x]['filterable']==True])
+    cols['seriesable'] = ([x for x in cols['discrete'] if not (x in reeds.columns_meta and 'seriesable' in reeds.columns_meta[x] and reeds.columns_meta[x]['seriesable']==False)]+
+                         [x for x in cols['continuous'] if x in reeds.columns_meta and 'seriesable' in reeds.columns_meta[x] and reeds.columns_meta[x]['seriesable']==True])
 
     #fill NA depending on column type
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
