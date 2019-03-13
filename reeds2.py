@@ -20,6 +20,8 @@ CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
+costs_orig_inv = ['orig_inv_investment_capacity_costs','orig_inv_investment_refurbishment_capacity']
+costs_pol_inv = ['inv_investment_capacity_costs','inv_investment_refurbishment_capacity','inv_ptc_payments_negative','inv_ptc_payments_negative_refurbishments']
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -42,6 +44,12 @@ def apply_inflation(df, **kw):
 
 def inflate_series(ser_in):
     return ser_in * 1/df_deflator.loc[int(core.GL['widgets']['var_dollar_year'].value),'Deflator']
+
+def discount_costs_bulk(df, **kw):
+    d = 0.069456772
+    y0 = int(core.GL['widgets']['var_pv_year'].value)
+    df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
+    return df
 
 def discount_costs(df, **kw):
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
@@ -333,6 +341,25 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar'}),
             ('2017-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2017}}}),
+        )),
+        }
+    ),
+
+    ('Sys Cost Bulk (Bil $)',
+        {'file': 'systemcost_bulk.csv',
+        'columns': ['cost_cat_bulk', 'year', 'Cost (Bil $)'],
+        'index': ['cost_cat_bulk', 'year'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
+            {'func': discount_costs_bulk, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_pol_inv}}}),
+            ('2017-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}, 'year': {'start':2017}}}),
+            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
+            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
