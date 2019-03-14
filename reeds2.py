@@ -20,8 +20,8 @@ CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 ILR_UPV = 1.3
 ILR_distPV = 1.1
-costs_orig_inv = ['orig_inv_investment_capacity_costs','orig_inv_investment_refurbishment_capacity']
-costs_pol_inv = ['inv_investment_capacity_costs','inv_investment_refurbishment_capacity','inv_ptc_payments_negative','inv_ptc_payments_negative_refurbishments']
+costs_orig_inv = ['Capital no policy']
+costs_pol_inv = ['Capital with policy','PTC']
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -354,38 +354,40 @@ results_meta = collections.OrderedDict((
 
     ('Sys Cost Bulk (Bil $)',
         {'file': 'systemcost_bulk.csv',
-        'columns': ['cost_cat_bulk', 'year', 'Cost (Bil $)'],
-        'index': ['cost_cat_bulk', 'year'],
+        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        'index': ['cost_cat', 'year'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
             {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
             {'func': discount_costs_bulk, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
-            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_pol_inv}}}),
-            ('2018-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}, 'year': {'start':2018}}}),
-            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
-            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('2018-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}, 'year': {'start':2018}}}),
+            ('2018-end Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}, 'year': {'start':2018}}}),
+            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
 
     ('Sys Cost Bulk EW (Bil $)',
         {'file': 'systemcost_bulk_ew.csv',
-        'columns': ['cost_cat_bulk', 'year', 'Cost (Bil $)'],
-        'index': ['cost_cat_bulk', 'year'],
+        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        'index': ['cost_cat', 'year'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
             {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
             {'func': discount_costs_bulk, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
-            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_pol_inv}}}),
-            ('2018-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','chart_type':'Bar', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}, 'year': {'start':2018}}}),
-            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
-            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat_bulk','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat_bulk':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('2018-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}, 'year': {'start':2018}}}),
+            ('2018-end Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}, 'year': {'start':2018}}}),
+            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
