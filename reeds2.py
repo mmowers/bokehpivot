@@ -45,8 +45,11 @@ def apply_inflation(df, **kw):
 def inflate_series(ser_in):
     return ser_in * 1/df_deflator.loc[int(core.GL['widgets']['var_dollar_year'].value),'Deflator']
 
-def discount_costs_bulk(df, **kw):
-    d = 0.069456772
+def discount_costs_bulk(dfs, **kw):
+    df = dfs['sc']
+    #apply inflation and adjust to billion dollars
+    df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
+    d = dfs['d'].iloc[0,0]
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
@@ -91,7 +94,44 @@ def remove_n(df, **kw):
     df.rename(columns={'region': 'i'}, inplace=True)
     return df
 
-def pre_val_streams(df, **kw):
+def pre_val_streams(dfs, **kw):
+    #apply inflation
+    dfs['vs']['$'] = inflate_series(dfs['vs']['$'])
+    #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV)
+    df = pd.merge(left=dfs['vs'], right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
+    df['Bulk $'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfcap']
+    df.drop(['pvfcap', '$'], axis='columns',inplace=True)
+    #Preprocess gen: map i to n, reformat columns to concatenate
+    df_gen = map_i_to_n(dfs['gen'])
+    df_gen =  df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
+    df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
+    df_gen = pd.merge(left=df_gen, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
+    df_gen['MWh'] = df_gen['MWh'] * df_gen['pvfonm'] / df_gen['pvfcap'] #This converts to bulk MWh present value as of data year
+    df_gen.rename(columns={'MWh': 'Bulk $'}, inplace=True) #So we can concatenate
+    df_gen['var_name'] = 'MWh'
+    df_gen['con_name'] = 'MWh'
+    df_gen.drop(['pvfcap', 'pvfonm'], axis='columns',inplace=True)
+    #Preprocess new capacity: map i to n, convert from MW to kW, reformat columns to concatenate
+    df_cap = map_i_to_n(dfs['cap'])
+    df_cap =  df_cap.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
+    df_cap['MW'] = df_cap['MW'] * 1000 #Converting to kW
+    df_cap.rename(columns={'MW': 'Bulk $'}, inplace=True) #So we can concatenate
+    df_cap['var_name'] = 'kW'
+    df_cap['con_name'] = 'kW'
+    df = pd.concat([df, df_gen, df_cap],sort=False,ignore_index=True)
+    #Add discounted $ using interface year
+    d = dfs['d'].iloc[0,0]
+    y0 = int(core.GL['widgets']['var_pv_year'].value)
+    df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
+
+    #adjust capacity of PV???
+
+    df['tech, vintage'] = df['tech'] + ', ' + df['vintage']
+    df['var, con'] = df['var_name'] + ', ' + df['con_name']
+    return df
+
+
+def pre_val_streams_old(df, **kw):
     df_not_dol = df[df['con_name'].isin(['mwh','kw'])].copy()
     df_dol = df[~df['con_name'].isin(['mwh','kw'])].copy()
     #apply inflation and annualize
@@ -353,12 +393,12 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Sys Cost Bulk (Bil $)',
-        {'file': 'systemcost_bulk.csv',
-        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost_bulk.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
+        ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
             {'func': discount_costs_bulk, 'args': {}},
         ],
         'presets': collections.OrderedDict((
@@ -373,12 +413,12 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Sys Cost Bulk EW (Bil $)',
-        {'file': 'systemcost_bulk_ew.csv',
-        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost_bulk_ew.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
+        ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column': 'Cost (Bil $)'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column': 'Cost (Bil $)'}},
             {'func': discount_costs_bulk, 'args': {}},
         ],
         'presets': collections.OrderedDict((
@@ -393,10 +433,32 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Value Streams chosen',
+        {'sources': [
+            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'var_name', 'con_name', '$']},
+            {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MWh']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
+            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
+        ],
+        'preprocess': [
+            {'func': pre_val_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_name', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_name', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+            ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+        )),
+        }
+    ),
+
+    ('Value Streams chosen OLD',
         {'file': 'valuestreams_chosen.csv',
         'columns': ['tech', 'vintage', 'n', 'year','new_old', 'var_name', 'con_name', 'value'],
         'preprocess': [
-            {'func': pre_val_streams, 'args': {}},
+            {'func': pre_val_streams_old, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('$ by type over time', {'x':'year','y':'value','series':'con_name', 'explode': 'scenario', 'explode_group': 'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
