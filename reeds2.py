@@ -323,7 +323,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Operating Reserves (GW-h)',
-        {'file':'opRes_supply.csv',
+        {'file':'opres_supply.csv',
         'columns': ['ortype', 'tech', 'region', 'year', 'Reserves (GW-h)'],
         'index': ['ortype', 'tech', 'year'],
         'preprocess': [
@@ -336,7 +336,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Operating Reserves by Timeslice National (GW)',
-        {'file':'opRes_supply_h.csv',
+        {'file':'opres_supply_h.csv',
         'columns': ['ortype', 'tech', 'region', 'timeslice', 'year', 'Reserves (GW)'],
         'index': ['ortype', 'tech', 'year', 'timeslice'],
         'preprocess': [
@@ -388,7 +388,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Energy Price National ($/MWh)',
-        {'file':'price_nat.csv',
+        {'file':'price_energy_nat.csv',
         'columns': ['year', '$/MWh'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column':'$/MWh'}},
@@ -401,7 +401,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Energy Price by Timeslice National ($/MWh)',
-        {'file':'price_nat_h.csv',
+        {'file':'price_energy_nat_h.csv',
         'columns': ['timeslice', 'year', 'Price ($/MWh)'],
         'index': ['timeslice', 'year'],
         'preprocess': [
@@ -414,20 +414,20 @@ results_meta = collections.OrderedDict((
     ),
 
     ('OpRes Price National ($/MW-h)',
-        {'file':'op_price_nat.csv',
+        {'file':'price_op_nat.csv',
         'columns': ['ortype', 'year', '$/MW-h'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column':'$/MW-h'}},
         ],
         'index': ['ortype', 'year'],
         'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year', 'y':'$/MW-h', 'series':'scenario', 'explode':'ortype', 'chart_type':'Line'}),
+            ('Scenario Lines Over Time',{'x':'year', 'y':'$/MW-h', 'explode':'scenario', 'explode_group':'ortype', 'chart_type':'Line'}),
         )),
         }
     ),
 
     ('OpRes Price by Timeslice National ($/MW-h)',
-        {'file':'op_price_nat_h.csv',
+        {'file':'price_op_nat_h.csv',
         'columns': ['ortype', 'timeslice', 'year', 'Price ($/MW-h)'],
         'index': ['ortype', 'timeslice', 'year'],
         'preprocess': [
@@ -440,7 +440,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Energy Price BA ($/MWh)',
-        {'file':'price_ann.csv',
+        {'file':'price_energy_ann.csv',
         'columns': ['n', 'year', '$/MWh'],
         'preprocess': [
             {'func': apply_inflation, 'args': {'column':'$/MWh'}},
@@ -453,7 +453,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Seasonal Capacity Price National ($/kW-yr)',
-        {'file':'cap_price_nat_szn.csv',
+        {'file':'price_cap_nat_szn.csv',
         'columns': ['season', 'year', 'Price ($/kW-yr)'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Price ($/kW-yr)'}},
@@ -467,7 +467,7 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Annual Capacity Price National ($/kW-yr)',
-        {'file':'cap_price_nat.csv',
+        {'file':'price_cap_nat.csv',
         'columns': ['year', 'Price ($/kW-yr)'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Price ($/kW-yr)'}},
