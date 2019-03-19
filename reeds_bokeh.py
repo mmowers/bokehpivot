@@ -20,7 +20,7 @@ if sys.version_info[0] == 2:
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 DEFAULT_DOLLAR_YEAR = 2018
-DEFAULT_PV_YEAR = 2017
+DEFAULT_PV_YEAR = 2018
 DEFAULT_END_YEAR = 2050
 
 #ReEDS globals
@@ -229,29 +229,10 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
                 #function (which is necessary) will accept a dict of dataframes and return a combined dataframe.
                 df_scen_result = {}
                 for src in result_meta['sources']:
-                    filepath = scenarios[i]['path'] + GLRD['output_subdir'] + src['file']
-                    if src['file'].endswith('.gdx'):
-                        data = gdx2py.par2list(filepath, src['param'])
-                        df_src = pd.DataFrame(data)
-                        df_src.columns = src['columns']
-                    elif src['file'].endswith('.csv'):
-                        df_src = pd.read_csv(filepath, low_memory=False)
-                        if 'columns' in src:
-                            df_src.columns = src['columns']
-                    df_src = df_to_lowercase(df_src)
-                    df_scen_result[src['name']] = df_src
+                    df_scen_result[src['name']] = get_src(scenarios[i], src)
             else:
                 #else we have only one parameter as a data source
-                filepath = scenarios[i]['path'] + GLRD['output_subdir'] + result_meta['file']
-                if result_meta['file'].endswith('.gdx'):
-                    data = gdx2py.par2list(filepath, result_meta['param'])
-                    df_scen_result = pd.DataFrame(data)
-                    df_scen_result.columns = result_meta['columns']
-                elif result_meta['file'].endswith('.csv'):
-                    df_scen_result = pd.read_csv(filepath, low_memory=False)
-                    if 'columns' in result_meta:
-                        df_scen_result.columns = result_meta['columns']
-                df_scen_result = df_to_lowercase(df_scen_result)
+                df_scen_result = get_src(scenarios[i], result_meta)
             #preprocess and return one dataframe
             if 'preprocess' in result_meta:
                 for preprocess in result_meta['preprocess']:
@@ -276,6 +257,33 @@ def get_reeds_data(topwdg, scenarios, result_dfs):
         full_idx = pd.MultiIndex.from_product([df[col].unique().tolist() for col in idx_cols], names=idx_cols)
         result_dfs[result] = df.set_index(idx_cols).reindex(full_idx).reset_index()
     print('***Done fetching ' + str(result) + ': ' + str(datetime.datetime.now() - startTime))
+
+def get_src(scen, src):
+    '''
+    For a given scenario and data source, fetch gdx or csv data and do common
+    pre-processing (remove Eps, coerce numeric columns to numeric, and lowercase everything)
+
+    Args:
+        scen (dict): Scenario dictionary. Keys are 'name' and 'path'.
+        src (dict): Source Dictionary. Keys are 'file', 'param' (for gdx sources), and 'columns' (optional for csv sources)
+
+    Returns:
+        df_src (pandas dataframe): A dataframe of the source
+    '''
+    filepath = scen['path'] + GLRD['output_subdir'] + src['file']
+    if src['file'].endswith('.gdx'):
+        data = gdx2py.par2list(filepath, src['param'])
+        df_src = pd.DataFrame(data)
+        df_src.columns = src['columns']
+    elif src['file'].endswith('.csv'):
+        df_src = pd.read_csv(filepath, low_memory=False)
+        if 'columns' in src:
+            df_src.columns = src['columns']
+    df_src.replace('Eps',0, inplace=True)
+    df_src = df_src.apply(pd.to_numeric, errors='ignore')
+    df_src = df_to_lowercase(df_src)
+    return df_src
+
 
 def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     '''
@@ -351,10 +359,12 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     #categorize columns
     cols['discrete'] = [x for x in cols['all'] if df[x].dtype == object]
     cols['continuous'] = [x for x in cols['all'] if x not in cols['discrete']]
-    cols['y-axis'] = [x for x in cols['continuous'] if x not in reeds.columns_meta or reeds.columns_meta[x]['y-allow']]
+    cols['y-axis'] = [x for x in cols['continuous'] if not (x in reeds.columns_meta and 'y-allow' in reeds.columns_meta[x] and reeds.columns_meta[x]['y-allow']==False)]
     cols['x-axis'] = [x for x in cols['all'] if x not in cols['y-axis']]
-    cols['filterable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['filterable']]
-    cols['seriesable'] = cols['discrete']+[x for x in cols['continuous'] if x in reeds.columns_meta and reeds.columns_meta[x]['seriesable']]
+    cols['filterable'] = ([x for x in cols['discrete'] if not (x in reeds.columns_meta and 'filterable' in reeds.columns_meta[x] and reeds.columns_meta[x]['filterable']==False)]+
+                         [x for x in cols['continuous'] if x in reeds.columns_meta and 'filterable' in reeds.columns_meta[x] and reeds.columns_meta[x]['filterable']==True])
+    cols['seriesable'] = ([x for x in cols['discrete'] if not (x in reeds.columns_meta and 'seriesable' in reeds.columns_meta[x] and reeds.columns_meta[x]['seriesable']==False)]+
+                         [x for x in cols['continuous'] if x in reeds.columns_meta and 'seriesable' in reeds.columns_meta[x] and reeds.columns_meta[x]['seriesable']==True])
 
     #fill NA depending on column type
     df[cols['discrete']] = df[cols['discrete']].fillna('{BLANK}')
