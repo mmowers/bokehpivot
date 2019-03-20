@@ -122,10 +122,11 @@ def pre_val_streams(dfs, **kw):
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
 
-    #adjust capacity of PV???
-
     df['tech, vintage'] = df['tech'] + ', ' + df['vintage']
     df['var, con'] = df['var_name'] + ', ' + df['con_name']
+    #Make adjusted con_name column where all _obj are replaced with var_name, _obj
+    df['con_adj'] = df['con_name']
+    df.loc[df['con_name'] == '_obj', 'con_adj'] = df.loc[df['con_name'] == '_obj', 'var, con']
     return df
 
 
@@ -550,8 +551,8 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_name', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
-            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_name', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
             ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
             ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
         )),
