@@ -101,7 +101,7 @@ def pre_val_streams(dfs, **kw):
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
     #Preprocess gen: map i to n, reformat columns to concatenate
     df_gen = map_i_to_n(dfs['gen'])
-    df_gen =  df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
+    df_gen = df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
     df_gen['MWh'] = df_gen['MWh'] * df_gen['pvfonm'] / df_gen['pvfcap'] #This converts to bulk MWh present value as of data year
