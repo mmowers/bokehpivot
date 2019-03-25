@@ -56,16 +56,29 @@ def reeds_static(data_type, data_source, scenario_filter, diff, base, static_pre
     set_globs_by_type(data_type)
     core_presets = []
 
-    #First, add difference sections to static_presets if diff is 'Yes' and 'modify' is not already set for that preset
-    if diff == 'Yes':
+    #First, add difference sections to static_presets if diff is not 'No' and 'modify' is not already set for that preset
+    if diff != 'No':
         i = 0
         while i < len(static_presets):
             if 'modify' not in static_presets[i]:
-                diff_preset = copy.deepcopy(static_presets[i])
-                diff_preset['name'] = diff_preset['name'] + ' - difference from ' + base
-                diff_preset['modify'] = 'diff'
-                static_presets.insert(i+1,diff_preset)
-                i = i + 2
+                if diff == 'Yes':
+                    diff_preset = copy.deepcopy(static_presets[i])
+                    diff_preset['name'] = diff_preset['name'] + ' - difference from ' + base
+                    diff_preset['modify'] = 'diff'
+                    static_presets.insert(i+1,diff_preset)
+                    i = i + 2
+                elif diff == 'Base + Diff':
+                    diff_preset = copy.deepcopy(static_presets[i])
+                    static_presets[i]['name'] = static_presets[i]['name'] + ' - base'
+                    static_presets[i]['modify'] = 'base_only'
+                    diff_preset['name'] = diff_preset['name'] + ' - difference from ' + base
+                    diff_preset['modify'] = 'diff'
+                    static_presets.insert(i+1,diff_preset)
+                    i = i + 2
+                elif diff == 'Diff Only':
+                    static_presets[i]['name'] = static_presets[i]['name'] + ' - difference from ' + base
+                    static_presets[i]['modify'] = 'diff'
+                    i = i + 1
             else:
                 i = i + 1
 
@@ -184,7 +197,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
         topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
         topwdg['report_options'] = bmw.Select(title='Report', value=options[0], options=options, css_classes=['report-drop'])
         topwdg['report_custom'] = bmw.TextInput(title='If custom, enter path to file', value='', css_classes=['report-drop'])
-        topwdg['report_diff'] = bmw.Select(title='Add Differences', value='No', options=['No','Yes'], css_classes=['report-drop'])
+        topwdg['report_diff'] = bmw.Select(title='Add Differences', value='No', options=['No','Yes','Base + Diff','Diff Only'], css_classes=['report-drop'])
         topwdg['report_base'] = bmw.Select(title='Base Case For Differences', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
         topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
