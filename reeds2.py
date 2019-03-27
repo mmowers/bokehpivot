@@ -692,4 +692,13 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+
+    ('Error Check',
+        {'file':'error_check.csv',
+        'columns': ['type', 'Value'],
+        'presets': collections.OrderedDict((
+            ('Errors',{'x':'type', 'y':'Value', 'explode':'scenario', 'chart_type':'Bar'}),
+        )),
+        }
+    ),
 ))
