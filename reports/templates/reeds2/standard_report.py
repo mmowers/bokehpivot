@@ -1,4 +1,5 @@
 static_presets = [
+    {'name': 'Error Check', 'result': 'Error Check', 'preset': 'Errors'},
     {'name': 'Generation (TWh)', 'result': 'Generation BA (TWh)', 'preset': 'Stacked Bars'},
     {'name': 'Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'Stacked Bars'},
     {'name': 'New Annual Capacity (GW)', 'result': 'New Annual Capacity BA (GW)', 'preset': 'Stacked Bars'},
@@ -9,5 +10,4 @@ static_presets = [
     {'name': 'CO2 Emissions National (MMton)', 'result': 'CO2 Emissions National (MMton)', 'preset': 'Scenario Lines Over Time'},
     {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RR Map Final Wind'},
     {'name': 'Final Regional Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Final BA Map ($/MWh)'},
-    {'name': 'Error Check', 'result': 'Error Check', 'preset': 'Errors'},
 ]

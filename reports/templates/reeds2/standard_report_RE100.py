@@ -1,4 +1,5 @@
 static_presets = [
+    {'name': 'Error Check', 'result': 'Error Check', 'preset': 'Errors'},
     {'name': 'Generation (TWh)', 'result': 'Generation BA (TWh)', 'preset': 'Stacked Bars'},
     {'name': 'Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'Stacked Bars'},
     {'name': 'New Annual Capacity (GW)', 'result': 'New Annual Capacity BA (GW)', 'preset': 'Stacked Bars'},
@@ -31,5 +32,4 @@ static_presets = [
     {'name': 'Hydro and Canadian Import Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['hydro','Canada']}}},
     {'name': 'Pumped-hydro Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['pumped-hydro']}}},
     {'name': 'Battery Storage Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['battery']}}},
-    {'name': 'Error Check', 'result': 'Error Check', 'preset': 'Errors'},
 ]
