@@ -114,6 +114,29 @@ def pre_allin_price(dfs, **kw):
     df = pd.concat([dfs['requirement_revenue'], dfs['annual_energy']], ignore_index=True, sort=False)
     return df
 
+def pre_capacity_factor(dfs, **kw):
+    df_hours = pd.read_csv(this_dir_path + '/in/hours.csv')
+    df_gen = pd.merge(left=dfs['gen'], right=df_hours, how='left', on=['m'], sort=False)
+    df_gen['value'] = df_gen['gen'] * df_gen['hours']
+    df_gen.drop(['gen','hours'], axis='columns', inplace=True)
+
+    df_hours['tmp'] = 1
+    dfs['cap']['tmp'] = 1
+    df_cap = pd.merge(left=dfs['cap'], right=df_hours, how='left', on=['tmp'], sort=False)
+    df_cap['value'] = df_cap['cap'] * df_cap['hours']
+    df_cap.drop(['tmp','cap','hours'], axis='columns', inplace=True)
+
+    df_gen = pd.merge(left=df_gen, right=df_cap, how='outer',on=['tech', 'n', 'year', 'm'], sort=False)
+    df_gen.drop(['value_y'], axis='columns', inplace=True)
+    df_gen.rename(columns={'value_x': 'value'}, inplace=True)
+    df_gen['value']=df_gen['value'].fillna(0)
+
+    df_gen['type'] = 'MWh'
+    df_cap['type'] = 'max_MWh'
+
+    df = pd.concat([df_cap, df_gen], ignore_index=True, sort=False)
+    return df
+
 def pre_marginal_capacity_value(dfs, **kw):
     dfs['new_cap']['Capacity (GW)'] = dfs['new_cap']['Capacity (GW)'] / 1000
     df = pd.merge(left=dfs['cv_mar'], right=dfs['new_cap'], on=['tech','n','year'], how='left', sort=False)
@@ -571,6 +594,19 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+    ('Capacity Factor',
+        {'sources': [
+            {'name': 'gen', 'file': 'CONVqn.gdx', 'param': 'CONVqmnallm', 'columns': ['tech', 'n', 'year', 'm', 'gen']},
+            {'name': 'cap', 'file': 'CONVqn.gdx', 'param': 'CONVqnallyears', 'columns': ['tech', 'n', 'year', 'cap']},
+        ],
+        'preprocess': [
+            {'func': pre_capacity_factor, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('CF by tech', {'x':'year','y':'value','series':'scenario', 'explode': 'tech', 'explode_group': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'max_MWh', 'filter': {}}),
+        )),
+        }
+    ),    
     ('Elec Price ($/MWh)',
         {'file': 'Reporting.gdx',
         'param': 'ElecPriceOut',
