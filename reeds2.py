@@ -101,7 +101,7 @@ def pre_val_streams(dfs, **kw):
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
     #Preprocess gen: map i to n, reformat columns to concatenate
     df_gen = map_i_to_n(dfs['gen'])
-    df_gen =  df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
+    df_gen = df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
     df_gen['MWh'] = df_gen['MWh'] * df_gen['pvfonm'] / df_gen['pvfcap'] #This converts to bulk MWh present value as of data year
@@ -160,6 +160,22 @@ def pre_lcoe(dfs, **kw):
     df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
     return df
 
+def pre_prices(dfs, **kw):
+    #Apply inflation
+    dfs['p']['p'] = inflate_series(dfs['p']['p'])
+    #Join prices and quantities
+    df = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['type', 'subtype', 'n', 'timeslice', 'year'], sort=False)
+    df['p'].fillna(0, inplace=True)
+    #Calculate $
+    df['$'] = df['p'] * df['q']
+    df.drop(['p', 'q'], axis='columns',inplace=True)
+    #Concatenate quantities
+    df_q = dfs['q']
+    df_q.rename(columns={'q':'$'}, inplace=True)
+    df_q['type'] = 'q_' + df_q['type']
+    df = pd.concat([df, df_q],sort=False,ignore_index=True)
+    return df
+
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 
@@ -188,8 +204,8 @@ columns_meta = {
     },
     'timeslice':{
         'type':'string',
-        'map': this_dir_path + '/in/m_map.csv',
-        'style': this_dir_path + '/in/m_style.csv',
+        'map': this_dir_path + '/in/reeds2/m_map.csv',
+        'style': this_dir_path + '/in/reeds2/m_style.csv',
     },
     'year':{
         'type':'number',
@@ -323,15 +339,15 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Operating Reserves (GW-h)',
+    ('Operating Reserves (TW-h)',
         {'file':'opres_supply.csv',
-        'columns': ['ortype', 'tech', 'region', 'year', 'Reserves (GW-h)'],
+        'columns': ['ortype', 'tech', 'region', 'year', 'Reserves (TW-h)'],
         'index': ['ortype', 'tech', 'year'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Reserves (GW-h)'}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Reserves (TW-h)'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year', 'y':'Reserves (GW-h)', 'series':'tech', 'explode':'scenario', 'explode_group':'ortype', 'chart_type':'Bar', }),
+            ('Stacked Bars',{'x':'year', 'y':'Reserves (TW-h)', 'series':'tech', 'explode':'scenario', 'explode_group':'ortype', 'chart_type':'Bar', }),
         )),
         }
     ),
@@ -388,95 +404,23 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Energy Price National ($/MWh)',
-        {'file':'price_energy_nat.csv',
-        'columns': ['year', '$/MWh'],
-        'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'$/MWh'}},
+    ('Requirement Prices and Quantities',
+        {'sources': [
+            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'p']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'q']},
         ],
-        'index': ['year'],
-        'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year', 'y':'$/MWh', 'series':'scenario', 'chart_type':'Line'}),
-        )),
-        }
-    ),
-
-    ('Energy Price by Timeslice National ($/MWh)',
-        {'file':'price_energy_nat_h.csv',
-        'columns': ['timeslice', 'year', 'Price ($/MWh)'],
-        'index': ['timeslice', 'year'],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'Price ($/MWh)'}},
+            {'func': pre_prices, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars Final',{'x':'timeslice', 'y':'Price ($/MWh)', 'explode':'scenario', 'chart_type':'Bar', 'filter': {'year':'last'}}),
-        )),
-        }
-    ),
-
-    ('OpRes Price National ($/MW-h)',
-        {'file':'price_op_nat.csv',
-        'columns': ['ortype', 'year', '$/MW-h'],
-        'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'$/MW-h'}},
-        ],
-        'index': ['ortype', 'year'],
-        'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year', 'y':'$/MW-h', 'explode':'scenario', 'explode_group':'ortype', 'chart_type':'Line'}),
-        )),
-        }
-    ),
-
-    ('OpRes Price by Timeslice National ($/MW-h)',
-        {'file':'price_op_nat_h.csv',
-        'columns': ['ortype', 'timeslice', 'year', 'Price ($/MW-h)'],
-        'index': ['ortype', 'timeslice', 'year'],
-        'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'Price ($/MW-h)'}},
-        ],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars Final',{'x':'timeslice', 'y':'Price ($/MW-h)', 'series':'scenario', 'explode':'ortype', 'chart_type':'Bar', 'filter': {'year':'last'}}),
-        )),
-        }
-    ),
-
-    ('Energy Price BA ($/MWh)',
-        {'file':'price_energy_ann.csv',
-        'columns': ['n', 'year', '$/MWh'],
-        'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'$/MWh'}},
-        ],
-        'index': ['n', 'year'],
-        'presets': collections.OrderedDict((
-            ('Final BA Map',{'x':'n', 'y':'$/MWh', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
-        )),
-        }
-    ),
-
-    ('Seasonal Capacity Price National ($/kW-yr)',
-        {'file':'price_cap_nat_szn.csv',
-        'columns': ['season', 'year', 'Price ($/kW-yr)'],
-        'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Price ($/kW-yr)'}},
-            {'func': apply_inflation, 'args': {'column':'Price ($/kW-yr)'}},
-        ],
-        'index': ['season', 'year'],
-        'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year', 'y':'Price ($/kW-yr)', 'series':'scenario', 'explode':'season', 'chart_type':'Line'}),
-        )),
-        }
-    ),
-
-    ('Annual Capacity Price National ($/kW-yr)',
-        {'file':'price_cap_nat.csv',
-        'columns': ['year', 'Price ($/kW-yr)'],
-        'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Price ($/kW-yr)'}},
-            {'func': apply_inflation, 'args': {'column':'Price ($/kW-yr)'}},
-        ],
-        'index': ['year'],
-        'presets': collections.OrderedDict((
-            ('Scenario Lines Over Time',{'x':'year', 'y':'Price ($/kW-yr)', 'series':'scenario', 'chart_type':'Line'}),
+            ('Energy Price Lines ($/MWh)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load']}}),
+            ('OpRes Price Lines ($/MW-h)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'subtype', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res']}}),
+            ('ResMarg Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Annual']}}),
+            ('ResMarg Season Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'timeslice', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Summer','Fall','Winter','Spring']}}),
+            ('Energy Price by Timeslice Final ($/MWh)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
+            ('OpRes Price by Timeslice Final ($/MW-h)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'subtype', 'explode_group':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res'], 'year':'last'}}),
+            ('Energy Price Final BA Map ($/MWh)',{'x':'n', 'y':'$', 'explode': 'scenario', 'explode_group': 'type', 'chart_type':'Map', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
+            ('All-in Price ($/MWh)',{'x':'year', 'y':'$', 'series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','res_marg','oper_res','q_load'], 'timeslice':{'exclude': ['Annual']}}}),
         )),
         }
     ),
@@ -745,6 +689,15 @@ results_meta = collections.OrderedDict((
         'index': ['n', 'season', 'year'],
         'presets': collections.OrderedDict((
             ('RE Cap Price by BA',{'x':'n', 'y':'Price ($/kW-yr)', 'explode':'scenario', 'explode_group':'season', 'chart_type':'Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+    ('Error Check',
+        {'file':'error_check.csv',
+        'columns': ['type', 'Value'],
+        'presets': collections.OrderedDict((
+            ('Errors',{'x':'type', 'y':'Value', 'explode':'scenario', 'chart_type':'Bar'}),
         )),
         }
     ),

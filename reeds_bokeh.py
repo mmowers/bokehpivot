@@ -31,12 +31,13 @@ GLRD = {}
 GLDT = ''
 reeds = None
 
-def reeds_static(data_type, data_source, scenario_filter, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
+def reeds_static(data_type, data_source, scenario_filter, diff, base, static_presets, report_path, report_format, html_num, output_dir, auto_open):
     '''
     Build static html and excel reports based on specified ReEDS presets
     Args:
         data_source (string): Path to ReEDS runs that will be included in report
         scenario_filter (string): either 'all' or a string of indices of chosen scenarios in scenario filter
+        diff (string): 'Yes' or 'No'. 'Yes' means create additional sections for differences, 'No' means don't
         base (string): Identifier for base scenario, if making comparison charts
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name' (required): Displayed name of the result 
@@ -54,6 +55,34 @@ def reeds_static(data_type, data_source, scenario_filter, base, static_presets, 
     '''
     set_globs_by_type(data_type)
     core_presets = []
+
+    #First, add difference sections to static_presets if diff is not 'No' and 'modify' is not already set for that preset
+    if diff != 'No':
+        i = 0
+        while i < len(static_presets):
+            if 'modify' not in static_presets[i]:
+                if diff == 'Yes':
+                    diff_preset = copy.deepcopy(static_presets[i])
+                    diff_preset['name'] = diff_preset['name'] + ' - difference from ' + base
+                    diff_preset['modify'] = 'diff'
+                    static_presets.insert(i+1,diff_preset)
+                    i = i + 2
+                elif diff == 'Base + Diff':
+                    diff_preset = copy.deepcopy(static_presets[i])
+                    static_presets[i]['name'] = static_presets[i]['name'] + ' - base'
+                    static_presets[i]['modify'] = 'base_only'
+                    diff_preset['name'] = diff_preset['name'] + ' - difference from ' + base
+                    diff_preset['modify'] = 'diff'
+                    static_presets.insert(i+1,diff_preset)
+                    i = i + 2
+                elif diff == 'Diff Only':
+                    static_presets[i]['name'] = static_presets[i]['name'] + ' - difference from ' + base
+                    static_presets[i]['modify'] = 'diff'
+                    i = i + 1
+            else:
+                i = i + 1
+
+    #Now convert each static_preset into a core_preset for use in core.static_report()
     for static_preset in static_presets:
         #build the full widget configuration for each preset.
         config = {'filter':{}}
@@ -77,6 +106,7 @@ def reeds_static(data_type, data_source, scenario_filter, base, static_presets, 
                 else:
                     config.update({key: static_preset['config'][key]})
         core_presets.append({'name': static_preset['name'], 'config': config})
+
     #Now add variant wdg configurations:
     variant_wdg_config = []
     if scenario_filter != 'all':
@@ -167,7 +197,8 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
         topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
         topwdg['report_options'] = bmw.Select(title='Report', value=options[0], options=options, css_classes=['report-drop'])
         topwdg['report_custom'] = bmw.TextInput(title='If custom, enter path to file', value='', css_classes=['report-drop'])
-        topwdg['report_base'] = bmw.Select(title='Base Case', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
+        topwdg['report_diff'] = bmw.Select(title='Add Differences', value='No', options=['No','Yes','Base + Diff','Diff Only'], css_classes=['report-drop'])
+        topwdg['report_base'] = bmw.Select(title='Base Case For Differences', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
         topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
 
@@ -450,6 +481,7 @@ def build_reeds_report(html_num='one'):
         html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
     '''
     data_type = '"' + GLDT + '"'
+    diff = '"' + core.GL['widgets']['report_diff'].value + '"'
     base = '"' + core.GL['widgets']['report_base'].value + '"'
     if core.GL['widgets']['report_options'].value == 'custom':
         report_path = core.GL['widgets']['report_custom'].value
@@ -469,7 +501,7 @@ def build_reeds_report(html_num='one'):
     start_str = 'start python'
     if core.debug:
         start_str = 'start cmd /K python -m pdb '
-    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_source + ' ' + scenario_filter_str + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open + ' ' + data_type, shell=True)
+    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_type + ' ' + data_source + ' ' + scenario_filter_str + ' ' + diff + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 
 def build_reeds_report_separate():
     '''
