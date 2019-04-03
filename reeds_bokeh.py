@@ -201,6 +201,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
         topwdg['report_base'] = bmw.Select(title='Base Case For Differences', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
         topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
+        topwdg['report_debug'] = bmw.Select(title='Debug', value='No', options=['Yes','No'], css_classes=['report-drop'])
 
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults
@@ -499,7 +500,7 @@ def build_reeds_report(html_num='one'):
     else:
         auto_open = '"no"'
     start_str = 'start python'
-    if core.debug:
+    if core.GL['widgets']['report_debug'].value == 'Yes':
         start_str = 'start cmd /K python -m pdb '
     sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_type + ' ' + data_source + ' ' + scenario_filter_str + ' ' + diff + ' ' + base +' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
 

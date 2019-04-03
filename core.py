@@ -27,9 +27,6 @@ import subprocess as sp
 import jinja2 as ji
 import reeds_bokeh as rb
 
-#Debug mode
-debug = False
-
 #Defaults to configure:
 DEFAULT_DATA_TYPE = 'ReEDS 1.0'
 DATA_TYPE_OPTIONS = ['ReEDS 1.0', 'ReEDS 2.0', 'RPM', 'CSV']
