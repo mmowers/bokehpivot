@@ -384,7 +384,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg = collections.OrderedDict()
     wdg['chart_type_dropdown'] = bmw.Div(text='Chart', css_classes=['chart-dropdown'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'chart-drop'])
-    wdg['range'] = bmw.Select(title='Add Ranges (Line and Dot only)', value='No', options=['No', 'Within Series', 'Between Series'], css_classes=['wdgkey-range', 'chart-drop'])
+    wdg['range'] = bmw.Select(title='Add Ranges (Line and Dot only)', value='No', options=['No', 'Within Series', 'Between Series', 'Boxplot'], css_classes=['wdgkey-range', 'chart-drop'])
     wdg['x_dropdown'] = bmw.Div(text='X-Axis (required)', css_classes=['x-dropdown'])
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'])
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'])
@@ -996,6 +996,36 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         ys_around = y_bases + ys[::-1]
         source = bms.ColumnDataSource({'x': [xs_around], 'y': [ys_around], 'x_legend': [wdg['x'].value], 'y_legend': [wdg['y'].value], 'ser_legend': [series]})
         p.patches('x', 'y', source=source, alpha=alpha, fill_color=c, line_color=None, line_width=None)
+
+    #Add boxplots
+    if wdg['range'].value == 'Boxplot':
+        df = pd.DataFrame({'x':xs,'y':ys})
+        groups = df.groupby('x')
+        q1 = groups.quantile(q=0.25)
+        q2 = groups.quantile(q=0.5)
+        q3 = groups.quantile(q=0.75)
+        iqr = q3 - q1
+        up = q3 + 1.5*iqr
+        lo = q1 - 1.5*iqr
+        box_centers = (q1 + q3)/2
+        x_range = q2.index.tolist()
+        quartile_legend = ['q1: ' + str(q1['y'][r]) + ', q2: ' + str(q2['y'][r]) + ', q3: ' + str(q3['y'][r]) for r in x_range]
+        lw = float(wdg['line_width'].value)
+        width = float(wdg['bar_width'].value)
+        ser_box = ['None']*len(x_range) if series is None else [series]*len(x_range)
+        #boxes
+        src_q2 = bms.ColumnDataSource({'x': x_range, 'y': q2['y'].tolist(), 'x_legend': x_range, 'y_legend': q2['y'].tolist(), 'ser_legend': ser_box})
+        p.rect('x', 'y', source=src_q2, height=lw, width=width, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        src_box = bms.ColumnDataSource({'x': x_range, 'y': box_centers['y'].tolist(), 'h': iqr['y'].tolist(), 'x_legend': x_range, 'y_legend': quartile_legend, 'ser_legend': ser_box})
+        p.rect('x', 'y', source=src_box, height='h', width=width, color=None, line_alpha=alpha, line_color=c, line_width=lw)
+        #whiskers
+        src_lo = bms.ColumnDataSource({'x': x_range, 'y': lo['y'].tolist(), 'x_legend': x_range, 'y_legend': lo['y'].tolist(), 'ser_legend': ser_box})
+        p.rect('x', 'y', source=src_lo, height=lw, width=width/4, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        src_up = bms.ColumnDataSource({'x': x_range, 'y': up['y'].tolist(), 'x_legend': x_range, 'y_legend': up['y'].tolist(), 'ser_legend': ser_box})
+        p.rect('x', 'y', source=src_up, height=lw, width=width/4, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        #stems
+        p.segment(x_range, up['y'], x_range, q3['y'], line_color=c, line_width=lw, line_alpha=alpha)
+        p.segment(x_range, lo['y'], x_range, q1['y'], line_color=c, line_width=lw, line_alpha=alpha)
 
 def create_maps(df, wdg, cols):
     '''
