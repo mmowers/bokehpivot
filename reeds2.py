@@ -735,6 +735,19 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('CO2 Price exxon ($/tonne)',
+        {'file':'co2_price.csv',
+        'columns': ['year', '$/tonne'],
+        'preprocess': [
+            {'func': apply_inflation, 'args': {'column':'$/tonne'}},
+        ],
+        'index': ['year'],
+        'presets': collections.OrderedDict((
+            ('CO2 price over time',{'chart_type':'Line', 'x':'year', 'y':'$/tonne', 'series':'scenario', }),
+        )),
+        }
+    ),
+
     ('Error Check',
         {'file':'error_check.csv',
         'columns': ['type', 'Value'],
