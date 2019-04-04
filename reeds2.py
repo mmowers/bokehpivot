@@ -160,6 +160,18 @@ def pre_lcoe(dfs, **kw):
     df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
     return df
 
+def pre_curt(dfs, **kw):
+    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
+    df['MWh']=df['MWh'].fillna(0)
+    df['Curt Rate'] = 1 - df['MWh']/df['MWh uncurt']
+    return df
+
+def pre_cf(dfs, **kw):
+    df = pd.merge(left=dfs['cap'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
+    df['MWh']=df['MWh'].fillna(0)
+    df['CF'] = df['MWh']/(df['MW']*8760)
+    return df
+
 def pre_prices(dfs, **kw):
     #Apply inflation
     dfs['p']['p'] = inflate_series(dfs['p']['p'])
@@ -634,6 +646,36 @@ results_meta = collections.OrderedDict((
         'index': ['year'],
         'presets': collections.OrderedDict((
             ('Curt Rate Over Time',{'x':'year', 'y':'Curt Rate', 'series':'scenario', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+
+    ('Curtailment Rate icrt',
+        {'sources': [
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
+            {'name': 'gen_uncurt', 'file': 'gen_icrt_uncurt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh uncurt']},
+        ],
+        'preprocess': [
+            {'func': pre_curt, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'4', 'bar_width':r'1.75', }),
+            ('Curt Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
+        )),
+        }
+    ),
+
+    ('Capacity Factor icrt',
+        {'sources': [
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
+            {'name': 'cap', 'file': 'cap_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MW']},
+        ],
+        'preprocess': [
+            {'func': pre_cf, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('CF Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CF', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'y_min':'0','y_max':'1', 'circle_size':r'4', 'bar_width':r'1.75', }),
+            ('CF weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CF', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'tech', 'series':'scenario', 'y_min':'0','y_max':'1', }),
         )),
         }
     ),
