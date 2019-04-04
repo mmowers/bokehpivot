@@ -1017,9 +1017,9 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         p.rect('x', 'y', source=src_box, height='h', width=width, color=None, line_alpha=alpha, line_color=c, line_width=lw)
         #whiskers
         src_lo = bms.ColumnDataSource({'x': x_range, 'y': lo['y'].tolist(), 'x_legend': x_range, 'y_legend': lo['y'].tolist(), 'ser_legend': ser_box})
-        p.rect('x', 'y', source=src_lo, height=lw, width=width/4, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        p.rect('x', 'y', source=src_lo, height=lw, width=width/2, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
         src_up = bms.ColumnDataSource({'x': x_range, 'y': up['y'].tolist(), 'x_legend': x_range, 'y_legend': up['y'].tolist(), 'ser_legend': ser_box})
-        p.rect('x', 'y', source=src_up, height=lw, width=width/4, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        p.rect('x', 'y', source=src_up, height=lw, width=width/2, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
         #stems
         p.segment(x_range, up['y'], x_range, q3['y'], line_color=c, line_width=lw, line_alpha=alpha)
         p.segment(x_range, lo['y'], x_range, q1['y'], line_color=c, line_width=lw, line_alpha=alpha)
