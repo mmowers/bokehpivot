@@ -1002,11 +1002,11 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         q2 = groups.quantile(q=0.5)
         q3 = groups.quantile(q=0.75)
         iqr = q3 - q1
-        up = q3 + 1.5*iqr
-        lo = q1 - 1.5*iqr
+        up = groups.quantile(q=0.95)
+        lo = groups.quantile(q=0.05)
         box_centers = (q1 + q3)/2
         x_range = q2.index.tolist()
-        quartile_legend = ['q1: ' + str(q1['y'][r]) + ', q2: ' + str(q2['y'][r]) + ', q3: ' + str(q3['y'][r]) for r in x_range]
+        quartile_legend = ['q1: ' + '{:.2e}'.format(q1['y'][r]) + ', q2: ' + '{:.2e}'.format(q2['y'][r]) + ', q3: ' + '{:.2e}'.format(q3['y'][r]) for r in x_range]
         lw = float(wdg['line_width'].value)
         width = float(wdg['bar_width'].value)
         ser_box = ['None']*len(x_range) if series is None else [series]*len(x_range)
@@ -1017,9 +1017,9 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         p.rect('x', 'y', source=src_box, height='h', width=width, color=None, line_alpha=alpha, line_color=c, line_width=lw)
         #whiskers
         src_lo = bms.ColumnDataSource({'x': x_range, 'y': lo['y'].tolist(), 'x_legend': x_range, 'y_legend': lo['y'].tolist(), 'ser_legend': ser_box})
-        p.rect('x', 'y', source=src_lo, height=lw, width=width/2, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        p.rect('x', 'y', source=src_lo, height=lw, width=0.9*width, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
         src_up = bms.ColumnDataSource({'x': x_range, 'y': up['y'].tolist(), 'x_legend': x_range, 'y_legend': up['y'].tolist(), 'ser_legend': ser_box})
-        p.rect('x', 'y', source=src_up, height=lw, width=width/2, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
+        p.rect('x', 'y', source=src_up, height=lw, width=0.9*width, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
         #stems
         p.segment(x_range, up['y'], x_range, q3['y'], line_color=c, line_width=lw, line_alpha=alpha)
         p.segment(x_range, lo['y'], x_range, q1['y'], line_color=c, line_width=lw, line_alpha=alpha)

@@ -659,7 +659,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_curt, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'4', 'bar_width':r'1.75', }),
+            ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
             ('Curt Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
         )),
         }
@@ -674,7 +674,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_cf, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('CF Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CF', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'y_min':'0','y_max':'1', 'circle_size':r'4', 'bar_width':r'1.75', }),
+            ('CF Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CF', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'y_min':'0','y_max':'1', 'circle_size':r'3', 'bar_width':r'1.75', }),
             ('CF weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CF', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'tech', 'series':'scenario', 'y_min':'0','y_max':'1', }),
         )),
         }
