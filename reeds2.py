@@ -164,6 +164,17 @@ def pre_curt(dfs, **kw):
     df = pd.merge(left=dfs['gen_uncurt'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
     df['MWh']=df['MWh'].fillna(0)
     df['Curt Rate'] = 1 - df['MWh']/df['MWh uncurt']
+    df_re_n = sum_over_cols(dfs['gen_uncurt'], group_cols=['n','year'], sum_over_cols=['tech','vintage'])
+    df_re_nat = sum_over_cols(dfs['gen_uncurt'], group_cols=['year'], sum_over_cols=['tech','vintage','n'])
+    df_load_nat = sum_over_cols(dfs['load'], group_cols=['year'], sum_over_cols=['n'])
+    df_vrepen_n = pd.merge(left=dfs['load'], right=df_re_n, how='left',on=['n', 'year'], sort=False)
+    df_vrepen_n['VRE penetration n'] = df_vrepen_n['MWh uncurt'] / df_vrepen_n['MWh load']
+    df_vrepen_n = df_vrepen_n[['n','year','VRE penetration n']]
+    df_vrepen_nat = pd.merge(left=df_load_nat, right=df_re_nat, how='left',on=['year'], sort=False)
+    df_vrepen_nat['VRE penetration nat'] = df_vrepen_nat['MWh uncurt'] / df_vrepen_nat['MWh load']
+    df_vrepen_nat = df_vrepen_nat[['year','VRE penetration nat']]
+    df = pd.merge(left=df, right=df_vrepen_n, how='left',on=['n', 'year'], sort=False)
+    df = pd.merge(left=df, right=df_vrepen_nat, how='left',on=['year'], sort=False)
     return df
 
 def pre_cf(dfs, **kw):
@@ -654,6 +665,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
             {'name': 'gen_uncurt', 'file': 'gen_icrt_uncurt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh uncurt']},
+            {'name': 'load', 'file': 'load.csv', 'columns': ['n', 'year','MWh load']},
         ],
         'preprocess': [
             {'func': pre_curt, 'args': {}},
@@ -661,6 +673,8 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
             ('Curt Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
+            ('Curt Rate weighted ave vs penetration',{'chart_type':'Line', 'x':'VRE penetration nat', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
+            ('VRE penetration',{'chart_type':'Line', 'x':'year', 'y':'VRE penetration nat', 'y_agg':'Ave','series':'scenario', 'sync_axes':'No', }),
         )),
         }
     ),
