@@ -4,6 +4,7 @@ Pivot chart maker core functionality and csv, gdx applications
 '''
 from __future__ import division
 import os
+import traceback
 import shutil
 import re
 import math
@@ -189,32 +190,36 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
     #and gather data into separate sheets of excel report
     sec_i = 1
     for static_preset in static_presets:
-        name = static_preset['name']
-        print('***Building report section: ' + name + '...')
-        preset = static_preset['config']
-        preset_wdg(preset)
-        if report_format in ['html', 'both']:
-            title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
-            legend = bmw.Div(text=GL['widgets']['legend'].text)
-            title_row = bl.row(title)
-            content_row = bl.row(GL['plots'].children + [legend])
-            if html_num == 'one':
-                static_plots.append(title_row)
-                static_plots.append(content_row)
-            elif html_num == 'multiple':
-                html = be.file_html([header_row, title_row, content_row], resources=resources, template=template)
-                html_file_name = str(sec_i) + '_' + name
-                html_file_name = re.sub(r'[\\/:"*?<>|]', '-', html_file_name) #replace disallowed file name characters with dash
-                html_path = output_dir + html_file_name + '.html'
-                with open(html_path, 'w') as f:
-                    f.write(html)
-                if auto_open == 'yes':
-                    sp.Popen(os.path.abspath(html_path), shell=True)
-        if report_format in ['excel', 'both']:
-            excel_sheet_name = str(sec_i) + '_' + name
-            excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
-            excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
-            GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+        try:
+            name = static_preset['name']
+            print('***Building report section: ' + name + '...')
+            preset = static_preset['config']
+            preset_wdg(preset)
+            if report_format in ['html', 'both']:
+                title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
+                legend = bmw.Div(text=GL['widgets']['legend'].text)
+                title_row = bl.row(title)
+                content_row = bl.row(GL['plots'].children + [legend])
+                if html_num == 'one':
+                    static_plots.append(title_row)
+                    static_plots.append(content_row)
+                elif html_num == 'multiple':
+                    html = be.file_html([header_row, title_row, content_row], resources=resources, template=template)
+                    html_file_name = str(sec_i) + '_' + name
+                    html_file_name = re.sub(r'[\\/:"*?<>|]', '-', html_file_name) #replace disallowed file name characters with dash
+                    html_path = output_dir + html_file_name + '.html'
+                    with open(html_path, 'w') as f:
+                        f.write(html)
+                    if auto_open == 'yes':
+                        sp.Popen(os.path.abspath(html_path), shell=True)
+            if report_format in ['excel', 'both']:
+                excel_sheet_name = str(sec_i) + '_' + name
+                excel_sheet_name = re.sub(r"[\\/*\[\]:?]", '-', excel_sheet_name) #replace disallowed sheet name characters with dash
+                excel_sheet_name = excel_sheet_name[:31] #excel sheet names can only be 31 characters long
+                GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
+        except Exception as e:
+            print('***Error in section ' + str(sec_i) + '...\n' + traceback.format_exc())
+            static_plots.append(bl.row(bmw.Div(text='<h2 class="error">Error in section ' + str(sec_i) + '</h2>')))
         sec_i += 1
     if report_format in ['excel', 'both']:
         excel_report.save()

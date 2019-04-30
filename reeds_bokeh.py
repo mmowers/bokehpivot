@@ -199,9 +199,9 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
         topwdg['report_custom'] = bmw.TextInput(title='If custom, enter path to file', value='', css_classes=['report-drop'])
         topwdg['report_diff'] = bmw.Select(title='Add Differences', value='No', options=['No','Yes','Base + Diff','Diff Only'], css_classes=['report-drop'])
         topwdg['report_base'] = bmw.Select(title='Base Case For Differences', value=scenario_names[0], options=scenario_names, css_classes=['report-drop'])
+        topwdg['report_debug'] = bmw.Select(title='Debug Mode', value='No', options=['Yes','No'], css_classes=['report-drop'])
         topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'])
         topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'])
-        topwdg['report_debug'] = bmw.Select(title='Debug Mode', value='No', options=['Yes','No'], css_classes=['report-drop'])
 
         topwdg['result'] = bmw.Select(title='Result', value='None', options=['None']+list(reeds.results_meta.keys()), css_classes=['wdgkey-result'])
     #save defaults

@@ -8,6 +8,10 @@ body {
 .description{
     font-size: 90%;
 }
+.error{
+    color: red;
+    text-decoration: underline;
+}
 .full_layout{
     width: auto !important;
     height: auto !important;
