@@ -158,6 +158,9 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
             GL['widgets'][vwc['name']].active = vwc['val']
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = output_dir + '/'
+    #First remove directory if it already exists
+    if os.path.isdir(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir)
     #copy report file to output_dir
     if report_path != '':
