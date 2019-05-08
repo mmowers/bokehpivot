@@ -217,6 +217,10 @@ columns_meta = {
     'region':{
         'type':'string',
     },
+    'rr':{
+        'type':'string',
+        'join': this_dir_path + '/in/reeds2/hierarchy_rr.csv',
+    },
     'i':{
         'type':'string',
         'join': this_dir_path + '/in/hierarchy.csv',
@@ -235,6 +239,9 @@ columns_meta = {
         'filterable': True,
         'seriesable': True,
         'y-allow': False,
+    },
+    'iter':{
+        'type':'string',
     },
     'icrb':{
         'type': 'string',
@@ -767,6 +774,22 @@ results_meta = collections.OrderedDict((
         'columns': ['type', 'Value'],
         'presets': collections.OrderedDict((
             ('Errors',{'x':'type', 'y':'Value', 'explode':'scenario', 'chart_type':'Bar'}),
+        )),
+        }
+    ),
+
+    ('Capacity Iteration (GW)',
+        {'file':'cap_iter.csv',
+        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Capacity (GW)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'n', 'y':'Capacity (GW)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Capacity (GW)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
         )),
         }
     ),
