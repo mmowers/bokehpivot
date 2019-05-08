@@ -1,5 +1,3 @@
-import datetime
-
 #This file allows reports to be run directly from this python script (without need for the bokeh server and bokehpivot UI).
 #Don't edit this file directly. Make a copy (to any location), edit the copy, and run the copy as a python script in a command prompt.
 
@@ -12,7 +10,7 @@ diff = 'No' #'Yes' if adding difference sections
 base = 'Master' #Base case, if applicable. If base case is not needed for this report, simply leave as is.
 report_path = r'\\nrelqnap02\ReEDS\Some Location\some_report.py' #Path to report that is to be run
 html_num = 'one' #'one' or 'multiple'. 'one' will create one html file with all sections, and 'multiple' will create a separate html file for each section
-output_dir = r'\\nrelqnap02\ReEDS\Some Location ' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")#This is the directory that will be created to contain the report. It will overwrite a directory with the same name.
+output_dir = r'\\nrelqnap02\ReEDS\Some Location' #This is the directory that will be created to contain the report. It cannot already exist.
 report_format = 'both' #'html', 'excel', or 'both'
 auto_open = 'yes' #'yes' or 'no'. Automatically open the resulting report excel and html files when they are created.
 
