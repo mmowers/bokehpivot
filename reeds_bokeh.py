@@ -98,7 +98,7 @@ def reeds_static(data_type, data_source, scenario_filter, diff, base, static_pre
                 config['filter'].update({'scenario': [base]})
             elif static_preset['modify'] == 'diff':
                 #find differences with base. First set x to 'None' to prevent updating, then reset x at the end of the widget updates.
-                config.update({'adv_op': 'Difference', 'adv_col': 'scenario', 'adv_col_base': base})
+                config.update({'adv_op2': 'Difference', 'adv_col2': 'scenario', 'adv_col_base2': base})
         if 'config' in static_preset:
             for key in static_preset['config']:
                 if key == 'filter':
