@@ -191,6 +191,12 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         for vwc in variant_wdg_config:
             header += '<li>' + vwc['name'] + ': ' + str(vwc['val']) + '</li>'
         header += '</ul>'
+        header += '<h3>Section Links:</h3><ol>'
+        sec_i = 1
+        for static_preset in static_presets:
+            header += '<li><a href="#section-' + str(sec_i) + '">' + static_preset['name'] + '</a></li>'
+            sec_i += 1
+        header += '</ol>'
         header_row = bl.row(bmw.Div(text=header))
         if html_num == 'one':
             static_plots = []
@@ -199,13 +205,13 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
     #and gather data into separate sheets of excel report
     sec_i = 1
     for static_preset in static_presets:
+        name = static_preset['name']
         try:
-            name = static_preset['name']
             print('***Building report section: ' + name + '...')
             preset = static_preset['config']
             preset_wdg(preset)
             if report_format in ['html', 'both']:
-                title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
+                title = bmw.Div(text='<h2 id="section-' + str(sec_i) + '">' + str(sec_i) + '. ' + name + '</h2>')
                 legend = bmw.Div(text=GL['widgets']['legend'].text)
                 display_config = bmw.Div(text=GL['widgets']['display_config'].text)
                 title_row = bl.row(title)
@@ -229,7 +235,7 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
                 GL['df_plots'].to_excel(excel_report, excel_sheet_name, index=False)
         except Exception as e:
             print('***Error in section ' + str(sec_i) + '...\n' + traceback.format_exc())
-            static_plots.append(bl.row(bmw.Div(text='<h2 class="error">Error in section ' + str(sec_i) + '</h2>')))
+            static_plots.append(bl.row(bmw.Div(text='<h2 id="section-' + str(sec_i) + '" class="error">' + str(sec_i) + '. ' + name + '. ERROR!</h2>')))
         sec_i += 1
     if report_format in ['excel', 'both']:
         excel_report.save()
