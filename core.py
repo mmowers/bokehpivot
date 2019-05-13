@@ -207,8 +207,9 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
             if report_format in ['html', 'both']:
                 title = bmw.Div(text='<h2>' + str(sec_i) + '. ' + name + '</h2>')
                 legend = bmw.Div(text=GL['widgets']['legend'].text)
+                display_config = bmw.Div(text=GL['widgets']['display_config'].text)
                 title_row = bl.row(title)
-                content_row = bl.row(GL['plots'].children + [legend])
+                content_row = bl.row(GL['plots'].children + [legend] + [display_config])
                 if html_num == 'one':
                     static_plots.append(title_row)
                     static_plots.append(content_row)
