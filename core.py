@@ -1746,9 +1746,10 @@ def download_html(dir_path='', auto_open=True):
         html_path = dir_path + '/view.html'
     static_plots = []
     legend = bmw.Div(text=GL['widgets']['legend'].text)
+    display_config = bmw.Div(text=GL['widgets']['display_config'].text)
     plots = GL['plots'].children
     GL['plots'].children = []
-    static_plots.append(bl.row(plots + [legend]))
+    static_plots.append(bl.row(plots + [legend] + [display_config]))
     with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
         template_string=template_file.read()
     template = ji.Template(template_string)
