@@ -156,6 +156,8 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
     for vwc in variant_wdg_config:
         if vwc['type'] == 'active':
             GL['widgets'][vwc['name']].active = vwc['val']
+        elif vwc['type'] == 'value':
+            GL['widgets'][vwc['name']].value = vwc['val']
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_dir = output_dir + '/'
     os.makedirs(output_dir)
@@ -171,6 +173,9 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         excel_meta.append('Data Source(s):')
         for ds in data_sources:
             excel_meta.append(ds)
+        excel_meta.append('Default Config:')
+        for vwc in variant_wdg_config:
+            excel_meta.append(vwc['name'] + ': ' + str(vwc['val']))
         pd.Series(excel_meta).to_excel(excel_report, 'meta', index=False, header=False)
     if report_format in ['html', 'both']:
         with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
@@ -181,6 +186,10 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         header += '<h3>Data Source(s):</h3><ul>'
         for ds in data_sources:
             header += '<li>' + ds + '</li>'
+        header += '</ul>'
+        header += '<h3>Default Config:</h3><ul>'
+        for vwc in variant_wdg_config:
+            header += '<li>' + vwc['name'] + ': ' + str(vwc['val']) + '</li>'
         header += '</ul>'
         header_row = bl.row(bmw.Div(text=header))
         if html_num == 'one':

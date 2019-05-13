@@ -109,6 +109,9 @@ def reeds_static(data_type, data_source, scenario_filter, diff, base, static_pre
 
     #Now add variant wdg configurations:
     variant_wdg_config = []
+    variant_wdg_config.append({'name':'var_dollar_year', 'val': str(DEFAULT_DOLLAR_YEAR), 'type': 'value'})
+    variant_wdg_config.append({'name':'var_pv_year', 'val': str(DEFAULT_PV_YEAR), 'type': 'value'})
+    variant_wdg_config.append({'name':'var_end_year', 'val': str(DEFAULT_END_YEAR), 'type': 'value'})
     if scenario_filter != 'all':
         scenarios = list(map(int, scenario_filter.split(',')))
         variant_wdg_config.append({'name':'scenario_filter', 'val': scenarios, 'type': 'active'})
