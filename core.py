@@ -29,8 +29,8 @@ import jinja2 as ji
 import reeds_bokeh as rb
 
 #Defaults to configure:
-DEFAULT_DATA_TYPE = 'ReEDS 1.0'
-DATA_TYPE_OPTIONS = ['ReEDS 1.0', 'ReEDS 2.0', 'RPM', 'CSV']
+DEFAULT_DATA_TYPE = 'ReEDS 2.0'
+DATA_TYPE_OPTIONS = ['ReEDS 2.0', 'ReEDS 1.0', 'RPM', 'CSV']
 PLOT_WIDTH = 300
 PLOT_HEIGHT = 300
 PLOT_FONT_SIZE = 10
