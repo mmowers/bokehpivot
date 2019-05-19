@@ -157,6 +157,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     scenarios = []
     runs_paths = path.split('|')
     for runs_path in runs_paths:
+        runs_path = runs_path.replace('"', '')
         runs_path = runs_path.strip()
         #if the path is pointing to a csv file, gather all scenarios from that file
         if os.path.isfile(runs_path) and runs_path.lower().endswith('.csv'):
