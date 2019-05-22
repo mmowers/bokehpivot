@@ -177,6 +177,29 @@ def pre_curt(dfs, **kw):
     df = pd.merge(left=df, right=df_vrepen_nat, how='left',on=['year'], sort=False)
     return df
 
+def pre_curt_iter(dfs, **kw):
+    df_gen = dfs['gen_uncurt']
+    df_curt = dfs['curt']
+    df_gen = df_gen[df_gen['tech'].isin(df_curt['tech'].unique())].copy()
+    df_gen['type'] = 'gen'
+    df_curt['type'] = 'curt'
+    df = pd.concat([df_gen, df_curt],sort=False,ignore_index=True)
+    return df
+
+def pre_cc_iter(dfs, **kw):
+    df_cap = dfs['cap']
+    df_cap_firm = dfs['cap_firm']
+    df_cap = df_cap[df_cap['tech'].isin(df_cap_firm['tech'].unique())].copy()
+    df_cap['type'] = 'cap'
+    df_cap_firm['type'] = 'cap_firm'
+    seasons = list(df_cap_firm['season'].unique())
+    df_season = pd.DataFrame({'season':seasons,'temp':[1]*len(seasons)})
+    df_cap['temp'] = 1
+    df_cap = pd.merge(left=df_cap, right=df_season, how='left',on=['temp'], sort=False)
+    df_cap.drop(['temp'], axis='columns',inplace=True)
+    df = pd.concat([df_cap, df_cap_firm],sort=False,ignore_index=True)
+    return df
+
 def pre_cf(dfs, **kw):
     df = pd.merge(left=dfs['cap'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
     df['MWh']=df['MWh'].fillna(0)
@@ -807,15 +830,33 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Curtailment Iteration (TWh)',
-        {'file':'curt_tot_iter.csv',
-        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Curtailment (TWh)'],
+    ('Capacity Credit Iteration (GW)',
+        {'sources': [
+            {'name': 'cap_firm', 'file': 'cap_firm_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'season', 'year', 'iter', 'GW']},
+            {'name': 'cap', 'file': 'cap_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'GW']},
+        ],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Curtailment (TWh)'}},
+            {'func': pre_cc_iter, 'args': {}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'GW'}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year', 'y':'Curtailment (TWh)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Bar'}),
-            ('Explode By Tech',{'x':'year', 'y':'Curtailment (TWh)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Line'}),
+            ('Stacked Bars',{'x':'year', 'y':'GW', 'series':'tech', 'explode':'iter', 'explode_group':'type', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cap'}),
+            ('Explode By Tech',{'x':'year', 'y':'GW', 'series':'iter', 'explode':'tech', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'cap'}),
+        )),
+        }
+    ),
+
+    ('Curtailment Iteration (TWh)',
+        {'sources': [
+            {'name': 'curt', 'file': 'curt_tot_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'TWh']},
+            {'name': 'gen_uncurt', 'file': 'gen_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'TWh']},
+        ],
+        'preprocess': [
+            {'func': pre_curt_iter, 'args': {}},
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'TWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Explode By Tech',{'x':'year', 'y':'TWh', 'series':'iter', 'explode':'tech', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'gen', }),
         )),
         }
     ),
