@@ -793,4 +793,30 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
+
+    ('Firm Capacity Iteration (GW)',
+        {'file':'cap_firm_iter.csv',
+        'columns': ['tech', 'vintage', 'rr', 'season', 'year', 'iter', 'Capacity (GW)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Bar'}),
+            ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+
+    ('Curtailment Iteration (TWh)',
+        {'file':'curt_tot_iter.csv',
+        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Curtailment (TWh)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Curtailment (TWh)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Bars',{'x':'year', 'y':'Curtailment (TWh)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Bar'}),
+            ('Explode By Tech',{'x':'year', 'y':'Curtailment (TWh)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Line'}),
+        )),
+        }
+    ),
 ))
