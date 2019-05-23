@@ -1,5 +1,6 @@
 static_presets = [
     {'name': 'Error Check', 'result': 'Error Check', 'preset': 'Errors'},
+    {'name': 'Intertemporal Capacity by Iteration (GW)', 'result': 'Capacity Iteration (GW)', 'preset': 'Explode By Tech'},
     {'name': 'Generation (TWh)', 'result': 'Generation BA (TWh)', 'preset': 'Stacked Bars'},
     {'name': 'Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'Stacked Bars'},
     {'name': 'New Annual Capacity (GW)', 'result': 'New Annual Capacity BA (GW)', 'preset': 'Stacked Bars'},
