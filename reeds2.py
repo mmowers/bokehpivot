@@ -817,6 +817,22 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Generation Iteration (TWh)',
+        {'file':'gen_iter.csv',
+        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Gen (TWh)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Gen (TWh)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Gen (TWh)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Gen (TWh)', 'series':'tech', 'explode':'iter', 'explode_group':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Gen (TWh)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'n', 'y':'Gen (TWh)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Gen (TWh)', 'series':'iter', 'explode':'tech', 'explode_group':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
     ('Firm Capacity Iteration (GW)',
         {'file':'cap_firm_iter.csv',
         'columns': ['tech', 'vintage', 'rr', 'season', 'year', 'iter', 'Capacity (GW)'],
