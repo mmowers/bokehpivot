@@ -478,6 +478,27 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Requirement Prices and Quantities OLD',
+        {'sources': [
+            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'p']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'q']},
+        ],
+        'preprocess': [
+            {'func': pre_prices, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Energy Price Lines ($/MWh)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load']}}),
+            ('OpRes Price Lines ($/MW-h)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'subtype', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res']}}),
+            ('ResMarg Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Annual']}}),
+            ('ResMarg Season Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'timeslice', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Summer','Fall','Winter','Spring']}}),
+            ('Energy Price by Timeslice Final ($/MWh)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
+            ('OpRes Price by Timeslice Final ($/MW-h)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'subtype', 'explode_group':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res'], 'year':'last'}}),
+            ('Energy Price Final BA Map ($/MWh)',{'x':'n', 'y':'$', 'explode': 'scenario', 'explode_group': 'type', 'chart_type':'Map', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
+            ('All-in Price ($/MWh)',{'x':'year', 'y':'$', 'series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','res_marg','oper_res','q_load'], 'timeslice':{'exclude': ['Annual']}}}),
+        )),
+        }
+    ),
+
     ('Sys Cost (Bil $)',
         {'file':'systemcost.csv',
         'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
