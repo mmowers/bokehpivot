@@ -191,12 +191,13 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         for vwc in variant_wdg_config:
             header += '<li>' + vwc['name'] + ': ' + str(vwc['val']) + '</li>'
         header += '</ul>'
-        header += '<h3>Section Links:</h3><ol>'
-        sec_i = 1
-        for static_preset in static_presets:
-            header += '<li><a href="#section-' + str(sec_i) + '">' + static_preset['name'] + '</a></li>'
-            sec_i += 1
-        header += '</ol>'
+        if html_num == 'one':
+            header += '<h3>Section Links:</h3><ol>'
+            sec_i = 1
+            for static_preset in static_presets:
+                header += '<li><a href="#section-' + str(sec_i) + '">' + static_preset['name'] + '</a></li>'
+                sec_i += 1
+            header += '</ol>'
         header_row = bl.row(bmw.Div(text=header))
         if html_num == 'one':
             static_plots = []
