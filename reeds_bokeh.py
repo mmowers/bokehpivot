@@ -21,6 +21,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2018
+DEFAULT_DISCOUNT_RATE = 2018
 DEFAULT_END_YEAR = 2050
 
 #ReEDS globals
@@ -110,6 +111,7 @@ def reeds_static(data_type, data_source, scenario_filter, diff, base, static_pre
     #Now add variant wdg configurations:
     variant_wdg_config = []
     variant_wdg_config.append({'name':'var_dollar_year', 'val': str(DEFAULT_DOLLAR_YEAR), 'type': 'value'})
+    variant_wdg_config.append({'name':'var_discount_rate', 'val': str(DEFAULT_DISCOUNT_RATE), 'type': 'value'})
     variant_wdg_config.append({'name':'var_pv_year', 'val': str(DEFAULT_PV_YEAR), 'type': 'value'})
     variant_wdg_config.append({'name':'var_end_year', 'val': str(DEFAULT_END_YEAR), 'type': 'value'})
     if scenario_filter != 'all':
@@ -140,6 +142,7 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     #Model Variables
     topwdg['reeds_vars'] = bmw.Div(text='Model Variables', css_classes=['reeds-vars-dropdown'])
     topwdg['var_dollar_year'] = bmw.TextInput(title='Dollar Year', value=str(DEFAULT_DOLLAR_YEAR), css_classes=['wdgkey-dollar_year', 'reeds-vars-drop'])
+    topwdg['var_discount_rate'] = bmw.TextInput(title='Discount Rate', value=str(DEFAULT_DISCOUNT_RATE), css_classes=['wdgkey-discount_rate', 'reeds-vars-drop'])
     topwdg['var_pv_year'] = bmw.TextInput(title='Present Value Reference Year', value=str(DEFAULT_PV_YEAR), css_classes=['wdgkey-pv_year', 'reeds-vars-drop'])
     topwdg['var_end_year'] = bmw.TextInput(title='Present Value End Year', value=str(DEFAULT_END_YEAR), css_classes=['wdgkey-end_year', 'reeds-vars-drop'])
 

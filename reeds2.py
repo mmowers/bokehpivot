@@ -47,7 +47,7 @@ def discount_costs_bulk(dfs, **kw):
     df = dfs['sc']
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
-    d = .07
+    d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
@@ -118,7 +118,7 @@ def pre_val_streams(dfs, **kw):
     df_cap['con_name'] = 'kW'
     df = pd.concat([df, df_gen, df_cap],sort=False,ignore_index=True)
     #Add discounted $ using interface year
-    d = .07
+    d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
 
