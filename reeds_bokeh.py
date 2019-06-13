@@ -21,7 +21,7 @@ this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2018
-DEFAULT_DISCOUNT_RATE = 2018
+DEFAULT_DISCOUNT_RATE = .07
 DEFAULT_END_YEAR = 2050
 
 #ReEDS globals
