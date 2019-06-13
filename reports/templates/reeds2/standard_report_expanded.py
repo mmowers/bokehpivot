@@ -20,7 +20,7 @@ static_presets = [
     {'name': 'Final Regional Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Final BA Map ($/MWh)'},
     {'name': 'National Seasonal Capacity Price ($/kW-yr)', 'result': 'Requirement Prices and Quantities', 'preset': 'ResMarg Season Price Lines ($/kW-yr)'},
     {'name': 'National Annual Capacity Price ($/kW-yr)', 'result': 'Requirement Prices and Quantities', 'preset': 'ResMarg Price Lines ($/kW-yr)'},
-    {'name': 'System Cost (Bil $)', 'result': 'Sys Cost Bulk EW (Bil $)', 'preset': '2018-end Discounted'},
+    {'name': 'System Cost (Bil $)', 'result': 'Sys Cost Bulk EW (Bil $)', 'preset': 'Total Discounted'},
     {'name': 'CO2 Emissions National (MMton)', 'result': 'CO2 Emissions National (MMton)', 'preset': 'Scenario Lines Over Time'},
     {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RR Map Final Wind'},
     {'name': 'PV Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['upv','dupv','distpv']}}},
