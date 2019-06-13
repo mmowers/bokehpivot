@@ -47,7 +47,7 @@ def discount_costs_bulk(dfs, **kw):
     df = dfs['sc']
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
-    d = dfs['d'].iloc[0,0]
+    d = .07
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
@@ -118,7 +118,7 @@ def pre_val_streams(dfs, **kw):
     df_cap['con_name'] = 'kW'
     df = pd.concat([df, df_gen, df_cap],sort=False,ignore_index=True)
     #Add discounted $ using interface year
-    d = dfs['d'].iloc[0,0]
+    d = .07
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
 
@@ -518,7 +518,6 @@ results_meta = collections.OrderedDict((
     ('Sys Cost Bulk (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
-            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
@@ -540,7 +539,6 @@ results_meta = collections.OrderedDict((
     ('Sys Cost Bulk EW (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk_ew.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
-            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
@@ -566,7 +564,6 @@ results_meta = collections.OrderedDict((
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MWh']},
             {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
             {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
-            {'name': 'd', 'file': 'discount_rate.csv', 'columns': ['d']},
             {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
         ],
         'preprocess': [
