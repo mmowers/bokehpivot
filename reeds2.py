@@ -43,41 +43,20 @@ def apply_inflation(df, **kw):
 def inflate_series(ser_in):
     return ser_in * 1/df_deflator.loc[int(core.GL['widgets']['var_dollar_year'].value), 'Deflator']
 
-def discount_costs_bulk(dfs, **kw):
+def pre_systemcost(dfs, **kw):
     df = dfs['sc']
+    if 'annualize' in kw:
+        df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
+        df = pd.merge(left=df, right=df_cost_type, how='left', on=['cost_cat'], sort=False)
+        df_capital = df[df['type'] == 'Capital'].copy()
+        df_operation = df[df['type'] == 'Operation'].copy()
+
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
-
-def discount_costs(df, **kw):
-    #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
-    cost_cat_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
-    df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
-    #make new column that is the pv multiplier
-    df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
-    df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] * df['pv_mult']
-    return df
-
-#Return present value multiplier
-def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20):
-    refyear = int(core.GL['widgets']['var_pv_year'].value)
-    lastyear = int(core.GL['widgets']['var_end_year'].value)
-    if type == "Operation":
-        pv_mult = 1 / (1 + dsocial)**(year - refyear)
-    elif type == "Capital":
-        pv_mult = CRF(dinvest, lifetime) / CRF(dinvest, min(lifetime, lastyear + 1 - year)) * 1 / (1 + dsocial)**(year - refyear)
-    return pv_mult
-
-#Capital recovery factor
-def CRF(i,n):
-    tempn = n
-    if tempn == 0:
-        tempn = 1
-        print('Data goes beyond Present Value End Year. Filter out data beyond this year for proper system cost calculation.')
-    return i/(1-(1/(1+i)**tempn))
 
 def map_i_to_n(df, **kw):
     df_hier = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
@@ -500,17 +479,22 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Sys Cost (Bil $)',
-        {'file':'systemcost.csv',
-        'columns': ['cost_cat', 'year', 'Cost (Bil $)'],
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+        ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
-            {'func': apply_inflation, 'args': {'column':'Cost (Bil $)'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column':'Cost (Bil $)'}},
-            {'func': discount_costs, 'args': {}},
+            {'func': pre_systemcost, 'args': {'annualize':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'scenario', 'y':'Discounted Cost (Bil $)', 'series':'cost_cat', 'chart_type':'Bar'}),
-            ('2018-end Stacked Bars',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'year': {'start':2018}}}),
+            ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Total Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('2018-end Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}, 'year': {'start':2018}}}),
+            ('2018-end Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}, 'year': {'start':2018}}}),
+            ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Discounted by Year No Pol',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Undiscounted by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
         )),
         }
     ),
@@ -521,7 +505,7 @@ results_meta = collections.OrderedDict((
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
-            {'func': discount_costs_bulk, 'args': {}},
+            {'func': pre_systemcost, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
@@ -542,7 +526,7 @@ results_meta = collections.OrderedDict((
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
-            {'func': discount_costs_bulk, 'args': {}},
+            {'func': pre_systemcost, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Total Discounted',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
