@@ -240,8 +240,6 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         sec_i += 1
     if report_format in ['excel', 'both']:
         excel_report.save()
-        if auto_open == 'yes':
-            sp.Popen(os.path.abspath(excel_report_path), shell=True)
     if report_format in ['html', 'both'] and html_num == 'one':
         html = be.file_html(static_plots, resources=resources, template=template)
         html_path = output_dir + 'report.html'
