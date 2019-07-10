@@ -454,7 +454,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('NG Price ($/MBtu)',
+    ('Natural Gas Price ($/MMBtu)',
         {'sources': [
             {'name': 'p', 'file': 'repgasprice.csv', 'columns': ['census', 'year', 'p']},
             {'name': 'q', 'file': 'repgasquant.csv', 'columns': ['census', 'year', 'q']},
@@ -464,7 +464,7 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'p', 'y_agg':'None', 'range':'Boxplot', 'explode':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
-            ('Weighted ave',{'chart_type':'Line', 'x':'year', 'y':'p', 'y_agg':'Weighted Ave', 'y_weight':'q', 'series':'scenario', 'sync_axes':'No', }),
+            ('Weighted Ave',{'chart_type':'Line', 'x':'year', 'y':'p', 'y_agg':'Weighted Ave', 'y_weight':'q', 'series':'scenario', 'sync_axes':'No', }),
         )),
         }
     ),
