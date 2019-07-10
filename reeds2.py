@@ -139,8 +139,18 @@ def pre_lcoe(dfs, **kw):
     df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
     return df
 
+def pre_curt_new(dfs, **kw):
+    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt_rate'], how='left',on=['tech', 'rr', 'timeslice', 'year'], sort=False)
+    df['Curt Rate']=df['Curt Rate'].fillna(0)
+    return df
+
+def pre_cc_new(dfs, **kw):
+    df = pd.merge(left=dfs['cap'], right=dfs['cc'], how='left',on=['tech', 'rr', 'season', 'year'], sort=False)
+    df['CC Rate']=df['CC Rate'].fillna(0)
+    return df
+
 def pre_curt(dfs, **kw):
-    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
+    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
     df['MWh']=df['MWh'].fillna(0)
     df['Curt Rate'] = 1 - df['MWh']/df['MWh uncurt']
     df_re_n = sum_over_cols(dfs['gen_uncurt'], group_cols=['n','year'], sum_over_cols=['tech','vintage'])
@@ -199,6 +209,14 @@ def pre_prices(dfs, **kw):
     df_q.rename(columns={'q':'$'}, inplace=True)
     df_q['type'] = 'q_' + df_q['type']
     df = pd.concat([df, df_q],sort=False,ignore_index=True)
+    return df
+
+def pre_ng_price(dfs, **kw):
+    #Apply inflation
+    dfs['p']['p'] = inflate_series(dfs['p']['p'])
+    #Join prices and quantities
+    df = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['census', 'year'], sort=False)
+    df['p'].fillna(0, inplace=True)
     return df
 
 #---------------------------------------------------------------------------------------------------------
@@ -432,6 +450,21 @@ results_meta = collections.OrderedDict((
         'index': ['n', 'year'],
         'presets': collections.OrderedDict((
             ('Final BA Map',{'x':'n', 'y':'CO2 (MMton)', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+    ('NG Price ($/MBtu)',
+        {'sources': [
+            {'name': 'p', 'file': 'repgasprice.csv', 'columns': ['census', 'year', 'p']},
+            {'name': 'q', 'file': 'repgasquant.csv', 'columns': ['census', 'year', 'q']},
+        ],
+        'preprocess': [
+            {'func': pre_ng_price, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'p', 'y_agg':'None', 'range':'Boxplot', 'explode':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
+            ('Weighted ave',{'chart_type':'Line', 'x':'year', 'y':'p', 'y_agg':'Weighted Ave', 'y_weight':'q', 'series':'scenario', 'sync_axes':'No', }),
         )),
         }
     ),
@@ -711,6 +744,36 @@ results_meta = collections.OrderedDict((
             ('Curt Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
             ('Curt Rate weighted ave vs penetration',{'chart_type':'Line', 'x':'VRE penetration nat', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
             ('VRE penetration',{'chart_type':'Line', 'x':'year', 'y':'VRE penetration nat', 'y_agg':'Ave','series':'scenario', 'sync_axes':'No', }),
+        )),
+        }
+    ),
+
+    ('New Tech Curtailment Rate',
+        {'sources': [
+            {'name': 'gen_uncurt', 'file': 'gen_new_uncurt.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'MWh uncurt']},
+            {'name': 'curt_rate', 'file': 'curt_new.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'Curt Rate']},
+        ],
+        'preprocess': [
+            {'func': pre_curt_new, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
+            ('Curt Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'Curt Rate', 'y_agg':'Weighted Ave', 'y_weight':'MWh uncurt', 'explode':'tech', 'series':'scenario', 'sync_axes':'No', }),
+        )),
+        }
+    ),
+
+    ('New Tech Capacity Credit',
+        {'sources': [
+            {'name': 'cap', 'file': 'cap_new_vre.csv', 'columns': ['tech', 'rr', 'season', 'year', 'MW']},
+            {'name': 'cc', 'file': 'cc_new.csv', 'columns': ['tech', 'rr', 'season', 'year', 'CC Rate']},
+        ],
+        'preprocess': [
+            {'func': pre_cc_new, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('CC Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CC Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'season', 'explode_group':'tech', 'series':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
+            ('CC Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CC Rate', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'season', 'explode_group':'tech', 'series':'scenario', 'sync_axes':'No', }),
         )),
         }
     ),
