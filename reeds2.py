@@ -511,7 +511,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('<DO NOT USE> Sys Cost (Bil $)',
+    ('<DO NOT USE - INCOMPLETE> Sys Cost (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
         ],
