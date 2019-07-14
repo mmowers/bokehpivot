@@ -315,7 +315,12 @@ def get_src(scen, src):
         df_src = pd.DataFrame(data)
         df_src.columns = src['columns']
     elif src['file'].endswith('.csv'):
-        df_src = pd.read_csv(filepath, low_memory=False)
+        if 'header' in src and src['header'] == None:
+            df_src = pd.read_csv(filepath, low_memory=False, header=None)
+        else:
+            df_src = pd.read_csv(filepath, low_memory=False)
+        if 'transpose' in src and src['transpose'] == True:
+            df_src = df_src.T
         if 'columns' in src:
             df_src.columns = src['columns']
     df_src.replace('Eps',0, inplace=True)
