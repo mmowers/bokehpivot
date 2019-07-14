@@ -45,14 +45,34 @@ def inflate_series(ser_in):
 
 def pre_systemcost(dfs, **kw):
     df = dfs['sc']
-    if 'annualize' in kw:
-        df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
-        df = pd.merge(left=df, right=df_cost_type, how='left', on=['cost_cat'], sort=False)
-        df_capital = df[df['type'] == 'Capital'].copy()
-        df_operation = df[df['type'] == 'Operation'].copy()
-
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
+
+    #Annualize if specified
+    if 'annualize' in kw:
+        #Add rows for all years (including 19 years after end year) and fill
+        import pdb; pdb.set_trace()
+        full_yrs = list(range(dfs['yrs']['year'].min(), dfs['yrs']['year'].max() + 20))
+        full_idx = pd.MultiIndex.from_product([full_yrs, df['cost_cat'].unique().tolist()], names=['year','cost_cat'])
+        df = df.set_index(['year','cost_cat']).reindex(full_idx).reset_index()
+        df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
+        df = pd.merge(left=df, right=df_cost_type, how='left', on=['cost_cat'], sort=False)
+        if df['type'].isnull().values.any():
+            print('WARNING: Not all cost categories have been mapped!!!')
+        #For capital costs, multiply by CRF to annualize, and then sum over previous 20 years
+        df_capital = df[df['type'] == 'Capital'].copy()
+        df_capital['Cost (Bil $)'].fillna(0, inplace=True)
+        df_capital = pd.merge(left=df_capital, right=dfs['crf'], how='left', on=['year'], sort=False)
+        df_capital['Cost (Bil $) ann'] = df_capital['Cost (Bil $)'] * df_capital['crf']
+        #sum previous 20 years of new annual payments
+        df_capital['Cost (Bil $)'] = df_capital['Cost (Bil $) ann'].rolling(20).sum()
+        df_capital.drop(['crf', 'Cost (Bil $) ann'], axis='columns',inplace=True)
+        #For operation costs, simply fill missing years with model year values
+        df_operation = df[df['type'] == 'Operation'].copy()
+        df_operation['Cost (Bil $)'].fillna(method='ffill')
+        df = pd.concat([df_capital, df_operation],sort=False,ignore_index=True)
+
+    #Add Dicounted Cost column
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
@@ -511,9 +531,11 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('<DO NOT USE - INCOMPLETE> Sys Cost (Bil $)',
+    ('Sys Cost Annualized (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
+            {'name': 'yrs', 'file': '../inputs_case/modeledyears.csv', 'header': None, 'transpose': True,'columns': ['year']},
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
