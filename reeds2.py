@@ -47,7 +47,8 @@ def pre_systemcost(dfs, **kw):
     df = dfs['sc']
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
-
+    d = float(core.GL['widgets']['var_discount_rate'].value)
+    y0 = int(core.GL['widgets']['var_pv_year'].value)
     #Annualize if specified
     if 'annualize' in kw:
         cost_cats_df = df['cost_cat'].unique().tolist()
@@ -58,29 +59,29 @@ def pre_systemcost(dfs, **kw):
             print('WARNING: Not all cost categories have been mapped!!!')
         cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
         op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
-        #Multiply capital costs by CRF to annualize
-        df = pd.merge(left=df, right=dfs['crf'], how='left', on=['year'], sort=False)
-        cap_cond = df['cost_cat'].isin(cap_type_ls)
-        df.loc[cap_cond, 'Cost (Bil $)'] = df.loc[cap_cond, 'Cost (Bil $)'] * df.loc[cap_cond, 'crf']
-        df.drop(['crf'], axis='columns',inplace=True)
         #Turn each cost category into a column
         df = df.pivot_table(index=['year'], columns='cost_cat', values='Cost (Bil $)')
-        #Add rows for all years (including 19 years after end year) and fill
-        full_yrs = list(range(df.index.min() - 19, df.index.max() + 20))
+        #Add rows for all years (including 20 years after end year) and fill
+        full_yrs = list(range(df.index.min() - 19, df.index.max() + 21))
         df = df.reindex(full_yrs)
-        #For capital costs, sum over previous 20 years. This requires 20 years before 2010 to sum properly.
-        df[cap_type_ls] = df[cap_type_ls].fillna(0)
+        #For capital costs, multiply by CRF to annualize, and sum over previous 20 years.
+        #This requires 20 years before 2010 to sum properly, and we need to shift capital dataframe down
+        #so that capital payments start in the year after the investment was made
+        CRF = d*(1+d)**20/((1+d)**20 - 1)
+        df[cap_type_ls] = df[cap_type_ls].shift().fillna(0)*CRF
         df[cap_type_ls] = df[cap_type_ls].rolling(20).sum()
         #Remove years before 2010
         full_yrs = list(range(df.index.min() + 19, df.index.max() + 1))
         df = df.reindex(full_yrs)
-        #For operation costs, simply fill missing years with model year values
+        #For operation costs, simply fill missing years with model year values.
         df[op_type_ls] = df[op_type_ls].fillna(method='ffill')
+        #The final year should only include capital payments because operation payments last for 20 yrs starting
+        #in the model year, whereas capital payments last for 20 yrs starting in the year after the model year.
+        df.loc[df.index.max(), op_type_ls] = 0
+        df = df.fillna(0)
         df = pd.melt(df.reset_index(), id_vars=['year'], value_vars=cap_type_ls + op_type_ls, var_name='cost_cat', value_name= 'Cost (Bil $)')
 
     #Add Dicounted Cost column
-    d = float(core.GL['widgets']['var_discount_rate'].value)
-    y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
 
@@ -540,7 +541,6 @@ results_meta = collections.OrderedDict((
     ('Sys Cost Annualized (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
-            {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
