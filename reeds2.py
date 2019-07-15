@@ -50,27 +50,33 @@ def pre_systemcost(dfs, **kw):
 
     #Annualize if specified
     if 'annualize' in kw:
-        #Add rows for all years (including 19 years after end year) and fill
-        import pdb; pdb.set_trace()
-        full_yrs = list(range(dfs['yrs']['year'].min(), dfs['yrs']['year'].max() + 20))
-        full_idx = pd.MultiIndex.from_product([full_yrs, df['cost_cat'].unique().tolist()], names=['year','cost_cat'])
-        df = df.set_index(['year','cost_cat']).reindex(full_idx).reset_index()
+        cost_cats_df = df['cost_cat'].unique().tolist()
+        #Gather lists of capital and operation labels
         df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
-        df = pd.merge(left=df, right=df_cost_type, how='left', on=['cost_cat'], sort=False)
-        if df['type'].isnull().values.any():
+        #Make sure all cost categories in df are in df_cost_type and throw error if not!!
+        if not set(cost_cats_df).issubset(df_cost_type['cost_cat'].values.tolist()):
             print('WARNING: Not all cost categories have been mapped!!!')
-        #For capital costs, multiply by CRF to annualize, and then sum over previous 20 years
-        df_capital = df[df['type'] == 'Capital'].copy()
-        df_capital['Cost (Bil $)'].fillna(0, inplace=True)
-        df_capital = pd.merge(left=df_capital, right=dfs['crf'], how='left', on=['year'], sort=False)
-        df_capital['Cost (Bil $) ann'] = df_capital['Cost (Bil $)'] * df_capital['crf']
-        #sum previous 20 years of new annual payments
-        df_capital['Cost (Bil $)'] = df_capital['Cost (Bil $) ann'].rolling(20).sum()
-        df_capital.drop(['crf', 'Cost (Bil $) ann'], axis='columns',inplace=True)
+        cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
+        op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
+        #Multiply capital costs by CRF to annualize
+        df = pd.merge(left=df, right=dfs['crf'], how='left', on=['year'], sort=False)
+        cap_cond = df['cost_cat'].isin(cap_type_ls)
+        df.loc[cap_cond, 'Cost (Bil $)'] = df.loc[cap_cond, 'Cost (Bil $)'] * df.loc[cap_cond, 'crf']
+        df.drop(['crf'], axis='columns',inplace=True)
+        #Turn each cost category into a column
+        df = df.pivot_table(index=['year'], columns='cost_cat', values='Cost (Bil $)')
+        #Add rows for all years (including 19 years after end year) and fill
+        full_yrs = list(range(df.index.min() - 19, df.index.max() + 20))
+        df = df.reindex(full_yrs)
+        #For capital costs, sum over previous 20 years. This requires 20 years before 2010 to sum properly.
+        df[cap_type_ls] = df[cap_type_ls].fillna(0)
+        df[cap_type_ls] = df[cap_type_ls].rolling(20).sum()
+        #Remove years before 2010
+        full_yrs = list(range(df.index.min() + 19, df.index.max() + 1))
+        df = df.reindex(full_yrs)
         #For operation costs, simply fill missing years with model year values
-        df_operation = df[df['type'] == 'Operation'].copy()
-        df_operation['Cost (Bil $)'].fillna(method='ffill')
-        df = pd.concat([df_capital, df_operation],sort=False,ignore_index=True)
+        df[op_type_ls] = df[op_type_ls].fillna(method='ffill')
+        df = pd.melt(df.reset_index(), id_vars=['year'], value_vars=cap_type_ls + op_type_ls, var_name='cost_cat', value_name= 'Cost (Bil $)')
 
     #Add Dicounted Cost column
     d = float(core.GL['widgets']['var_discount_rate'].value)
@@ -535,7 +541,6 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
             {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
-            {'name': 'yrs', 'file': '../inputs_case/modeledyears.csv', 'header': None, 'transpose': True,'columns': ['year']},
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
