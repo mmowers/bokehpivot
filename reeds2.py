@@ -90,6 +90,8 @@ def map_i_to_n(df, **kw):
     dict_hier = dict(zip(df_hier['s'], df_hier['n']))
     df.loc[df['region'].isin(dict_hier.keys()), 'region'] = df['region'].map(dict_hier)
     df.rename(columns={'region':'n'}, inplace=True)
+    if 'groupsum' in kw:
+        df = df.groupby(kw['groupsum'], sort=False, as_index=False).sum()
     return df
 
 def remove_n(df, **kw):
@@ -174,6 +176,21 @@ def pre_curt_new(dfs, **kw):
 def pre_cc_new(dfs, **kw):
     df = pd.merge(left=dfs['cap'], right=dfs['cc'], how='left',on=['tech', 'rr', 'season', 'year'], sort=False)
     df['CC Rate']=df['CC Rate'].fillna(0)
+    return df
+
+def pre_firm_cap(dfs, **kw):
+    #aggregate capacity to ba-level
+    df_cap = map_i_to_n(dfs['cap'], groupsum=['tech','n','year'])
+    #Add seasons to capacity dataframe
+    dftemp = pd.DataFrame({'season':dfs['firmcap']['season'].unique().tolist()})
+    dftemp['temp'] = 1
+    df_cap['temp'] = 1
+    df_cap = pd.merge(left=df_cap, right=dftemp, how='left',on=['temp'], sort=False)
+    df_cap.drop(columns=['temp'],inplace=True)
+    df = pd.merge(left=df_cap, right=dfs['firmcap'], how='left',on=['tech', 'n', 'year','season'], sort=False)
+    df = df.fillna(0)
+    df[['Capacity (GW)','Firm Capacity (GW)']] = df[['Capacity (GW)','Firm Capacity (GW)']] * 1e-3
+    df['Capacity Credit'] = df['Firm Capacity (GW)'] / df['Capacity (GW)']
     return df
 
 def pre_curt(dfs, **kw):
@@ -443,14 +460,17 @@ results_meta = collections.OrderedDict((
     ),
 
     ('Firm Capacity (GW)',
-        {'file':'cap_firm.csv',
-        'columns': ['tech', 'region', 'season', 'year', 'Capacity (GW)'],
-        'index': ['tech', 'year', 'season'],
+        {'sources': [
+            {'name': 'firmcap', 'file': 'cap_firm.csv', 'columns': ['tech', 'n', 'season', 'year', 'Firm Capacity (GW)']},
+            {'name': 'cap', 'file': 'cap.csv', 'columns': ['tech', 'region', 'year', 'Capacity (GW)']},
+        ],
+        'index': ['tech', 'n', 'season', 'year'],
         'preprocess': [
-            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
+            {'func': pre_firm_cap, 'args': {}},
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'explode_group':'season', 'chart_type':'Bar'}),
+            ('Average Capacity Credit',{'x':'year', 'y':'Capacity Credit', 'y_agg':'Weighted Ave', 'y_weight':'Capacity (GW)', 'series':'scenario', 'explode':'season', 'explode_group':'tech', 'chart_type':'Line'}),
         )),
         }
     ),
