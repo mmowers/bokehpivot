@@ -148,7 +148,7 @@ def pre_val_streams_old(df, **kw):
     return df
 
 def pre_reduced_cost(df, **kw):
-    df['icrb'] = df['tech'] + ' | ' + df['vintage'] + ' | ' + df['region'] + ' | ' + df['bin']
+    df['irbv'] = df['tech'] + ' | ' + df['region'] + ' | ' + df['bin'] + ' | ' + df['variable']
     return df
 
 def pre_lcoe(dfs, **kw):
@@ -308,6 +308,11 @@ columns_meta = {
         'type':'string',
     },
     'icrb':{
+        'type': 'string',
+        'filterable': False,
+        'seriesable': False,
+    },
+    'irbv':{
         'type': 'string',
         'filterable': False,
         'seriesable': False,
@@ -663,15 +668,15 @@ results_meta = collections.OrderedDict((
 
     ('Reduced Cost ($/kW)',
         {'file':'reduced_cost.csv',
-        'columns': ['tech', 'vintage', 'region', 'year','bin','$/kW'],
+        'columns': ['tech', 'vintage', 'region', 'year','bin','variable','$/kW'],
         'preprocess': [
             {'func': pre_reduced_cost, 'args': {}},
             {'func': map_i_to_n, 'args': {}},
             {'func': apply_inflation, 'args': {'column': '$/kW'}},
         ],
         'presets': collections.OrderedDict((
-            ('Final supply curves', {'chart_type':'Dot', 'x':'icrb', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
-            ('Final supply curves p1', {'chart_type':'Dot', 'x':'icrb', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'n':['p1']}}),
+            ('Final supply curves', {'chart_type':'Dot', 'x':'irbv', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', }}),
+            ('Final supply curves p1', {'chart_type':'Dot', 'x':'irbv', 'y':'$/kW', 'explode':'scenario','explode_group':'tech', 'sync_axes':'No', 'cum_sort': 'Ascending', 'plot_width':'600', 'plot_height':'600', 'filter': {'year':'last', 'n':['p1']}}),
         )),
         }
     ),
@@ -812,7 +817,7 @@ results_meta = collections.OrderedDict((
 
     ('New Tech Capacity Credit',
         {'sources': [
-            {'name': 'cap', 'file': 'cap_new_vre.csv', 'columns': ['tech', 'rr', 'season', 'year', 'MW']},
+            {'name': 'cap', 'file': 'cap_new_cc.csv', 'columns': ['tech', 'rr', 'season', 'year', 'MW']},
             {'name': 'cc', 'file': 'cc_new.csv', 'columns': ['tech', 'rr', 'season', 'year', 'CC Rate']},
         ],
         'preprocess': [
