@@ -20,6 +20,7 @@ CRF_reeds = 0.077
 df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 costs_orig_inv = ['Capital no policy']
 costs_pol_inv = ['Capital with policy','PTC']
+coststreams = ['_obj','eq_bioused','eq_gasused']
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -101,15 +102,52 @@ def remove_n(df, **kw):
     return df
 
 def pre_val_streams(dfs, **kw):
+    if 'investment_only' in kw:
+        #Analyze only investment years
+        #The first attempt of this was to use the ratio of new vs cumulative capacity in a vintage, but this has issues
+        #because of the mismatch in regionality between capacity and generation, meaning ba-level capacity ratio may not
+        #even out value streams.
+        #First, use the capacity/investment linking equations with the investment and capacity variables to find the
+        #scaling factors between investment and capacity value streams
+        cols = ['tech', 'vintage', 'n', 'year']
+        inv_vars = ['inv','invrefurb']
+        cum_vars = ['gen','cap','opres','storage_in']
+        linking_eqs = ['eq_cap_new_noret','eq_cap_new_retub','eq_cap_new_retmo'] #eq_cap_new_retmo also includes previous year's CAP, is this bad?!
+        df_vs_links = dfs['vs'][dfs['vs']['con_name'].isin(linking_eqs)].copy()
+        df_vs_inv = df_vs_links[df_vs_links['var_name'].isin(inv_vars)].copy()
+        df_vs_cap = df_vs_links[df_vs_links['var_name'] == 'cap'].copy()
+        df_vs_inv = sum_over_cols(df_vs_inv, group_cols=cols, sum_over_cols=['var_name','con_name'])
+        df_vs_cap = sum_over_cols(df_vs_cap, group_cols=cols, sum_over_cols=['var_name','con_name'])
+        #merge left with df_vs_inv so that we're only looking at cumulative value streams in investment years.
+        df_scale = pd.merge(left=df_vs_inv, right=df_vs_cap, how='left', on=cols, sort=False)
+        df_scale['mult'] = df_scale['$_x'] / df_scale['$_y'] * -1
+        df_scale = df_scale[cols + ['mult']]
+        #Gather cumulative value streams. NEED TO ADD TRANSMISSION
+        df_cum = dfs['vs'][dfs['vs']['var_name'].isin(cum_vars)].copy()
+        #Left merge with df_scale to keep only the cumulative streams in investment years
+        df_cum = pd.merge(left=df_scale, right=df_cum, how='left', on=cols, sort=False)
+        #Scale the cumulative value streams
+        df_cum['$'] = df_cum['$'] * df_cum['mult']
+        df_cum.drop(['mult'], axis='columns',inplace=True)
+        #Concatenate modified cumulative value streams with the rest of the value streams
+        dfs['vs'] = dfs['vs'][~dfs['vs']['var_name'].isin(cum_vars)].copy()
+        dfs['vs'] = pd.concat([dfs['vs'], df_cum],sort=False,ignore_index=True)
+        #Adjust generation based on the same scaling factor. Not sure this is exactly right, but if
+        #value streams for GEN have scaled, it makes sense to attribute this to quantity of energy being scaled,
+        #rather than prices changing.
+        dfs['gen'] = pd.merge(left=df_scale, right=dfs['gen'], how='left', on=cols, sort=False)
+        dfs['gen']['MWh'] = dfs['gen']['MWh'] * dfs['gen']['mult']
+        dfs['gen'].drop(['mult'], axis='columns',inplace=True)
+
     #apply inflation
     dfs['vs']['$'] = inflate_series(dfs['vs']['$'])
-    #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV)
+    #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV,
+    #although i suppose certain equations, e.g. eq_cap_new_retmo also include previous year's CAP).
     df = pd.merge(left=dfs['vs'], right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df['Bulk $'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfcap']
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
-    #Preprocess gen: map i to n, reformat columns to concatenate
-    df_gen = map_i_to_n(dfs['gen'])
-    df_gen = df_gen.groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
+    #Preprocess gen: convert from annual MWh to bulk MWh present value as of data year
+    df_gen = dfs['gen'].groupby(['tech','vintage','n','year'], sort=False, as_index =False).sum()
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
     df_gen['MWh'] = df_gen['MWh'] * df_gen['pvfonm'] / df_gen['pvfcap'] #This converts to bulk MWh present value as of data year
@@ -626,11 +664,33 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Value Streams inv only',
+        {'sources': [
+            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'var_name', 'con_name', '$']},
+            {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'MWh']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
+        ],
+        'preprocess': [
+            {'func': pre_val_streams, 'args': {'investment_only':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+            ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+            ('LCOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'y_scale':'-1', 'filter': {'con_name':coststreams+['MWh']}}),
+        )),
+        }
+    ),
+
     ('Value Streams chosen',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'var_name', 'con_name', '$']},
             {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
-            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MWh']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'MWh']},
             {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
             {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
             {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
