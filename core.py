@@ -1071,20 +1071,40 @@ def create_maps(df, wdg, cols):
     print('***Building Maps...')
     maps = []
     breakpoints = []
-    regions = ['i','n','r','rnew','rto','st']
     x_axis = df.iloc[:,-2]
     y_axis = df.iloc[:,-1]
-    if x_axis.name not in regions or y_axis.dtype == object:
-        print('***Error. Did you make sure to set x-axis to a region?')
+    if y_axis.dtype == object:
+        print('***Error, your y-axis is a string.')
         return (maps, breakpoints) #empty list
+    if os.path.isfile(this_dir_path + '/in/gis_' + x_axis.name + '.csv'):
+        map_type = 'area'
+        reg_name = x_axis.name
+        full_rgs = x_axis.unique().tolist()
+        centroids = None
+    else:
+        #Check if this is a line map
+        reg_name = x_axis.name.split('-')[0]
+        if os.path.isfile(this_dir_path + '/in/gis_' + reg_name + '.csv') and os.path.isfile(this_dir_path + '/in/gis_centroid_' + reg_name + '.csv'):
+            map_type = 'line'
+            centroids = pd.read_csv(this_dir_path + '/in/gis_centroid_' + reg_name + '.csv', sep=',', dtype={'id': object})
+            #Add x and y columns to centroids and find x and y ranges
+            centroids['x'] = centroids['long']*53
+            centroids['y'] = centroids['lat']*69
+            centroids = centroids[['id','x','y']]
+            full_joint = x_axis.unique().tolist()
+            full_rgs = [i.split('-')[0] for i in full_joint] + [i.split('-')[1] for i in full_joint]
+            full_rgs = list(set(full_rgs))
+        else:
+            print('***Error. X-axis is not a supported map region.')
+            return (maps, breakpoints) #empty list
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
-    filepath = this_dir_path + '/in/gis_' + x_axis.name + '.csv'
+    filepath = this_dir_path + '/in/gis_' + reg_name + '.csv'
     region_boundaries = pd.read_csv(filepath, sep=',', dtype={'id': object, 'group': object})
     #Remove holes
     region_boundaries = region_boundaries[region_boundaries['hole'] == False]
     #keep only regions that are in df
-    region_boundaries = region_boundaries[region_boundaries['id'].isin(x_axis.unique())]
+    region_boundaries = region_boundaries[region_boundaries['id'].isin(full_rgs)]
     #Add x and y columns to region_boundaries and find x and y ranges
     region_boundaries['x'] = region_boundaries['long']*53
     region_boundaries['y'] = region_boundaries['lat']*69
@@ -1143,40 +1163,29 @@ def create_maps(df, wdg, cols):
         for col in df_unique:
             df_map = df_map[df_map[col] == row[col]]
             title = title + col + '=' + str(row[col]) + ', '
-        reg_bound = reg_bound[reg_bound['id'].isin(df_map[x_axis.name].unique())]
-        #Use filtered regions to set map ranges
-        ranges = {
-            'x_max': reg_bound['x'].max(),
-            'x_min': reg_bound['x'].min(),
-            'y_max': reg_bound['y'].max(),
-            'y_min': reg_bound['y'].min(),
-        }
         #preserve just x axis, y axis, and bin index
         df_map = df_map[df_map.columns[-3:]]
         #remove final comma of title
         title = title[:-2]
-        maps.append(create_map(df_map, ranges, reg_bound, wdg, colors_full, title))
+        maps.append(create_map(map_type, df_map, ranges, reg_bound, centroids, wdg, colors_full, title))
     print('***Done building maps.')
     return (maps, breakpoints) #multiple maps
 
-def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
+def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_full, title=''):
     '''
-    Create map based on an input dataframe.The third-to-last column of this
-    dataframe is assumed to be the column of regions that are to be mapped.
-    The second-to-last column is assumed to be the values that are to be mapped.
-    The last column is the bin number that determines the color that is applied
-    to each region.
+    Create either a line or area map.
 
     Args:
-        df (pandas dataframe): input dataframe described above
+        map_type (string): 'area' or 'line'
+        df (pandas dataframe): Input dataframe. First column is regions, second column is values, third column is bin indexes that have been assigned to values.
         region_boundaries (pandas dataframe): This dataframe has columns for region id, group (if the region has non-contiguous pieces), and x and y values of all boundary points.
+        centroids (pandas dataframe): Only relevant for a line map, this df has the centroids of all the regions.
         wdg (ordered dict): Dictionary of bokeh model widgets.
         colors_full (list of strings): Colors to shade the map
         title (string): The displayed title for this map
     Returns:
         fig_map (bokeh.plotting.figure): the bokeh figure for the map.
     '''
-
     df_regions = df.iloc[:,0].tolist()
     df_values = df.iloc[:,1].tolist()
     df_bins = df.iloc[:,2].tolist()
@@ -1192,7 +1201,7 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         ys.append(region_boundary['y'].values.tolist())
         reg = region_boundary['id'].iloc[0]
         regions.append(reg)
-        if reg in df_regions:
+        if map_type == 'area' and reg in df_regions:
             index = df_regions.index(reg)
             value = df_values[index]
             values.append(value)
@@ -1245,6 +1254,24 @@ def create_map(df, ranges, region_boundaries, wdg, colors_full, title=''):
         fig_map.toolbar_location = None
     fig_map.grid.grid_line_color = None
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
+
+    if map_type == 'line':
+        df[['from','to']] = df.iloc[:,0].str.split('-',expand=True)
+        df = df.merge(centroids, how='left', left_on='from', right_on='id', sort=False)
+        df.rename(columns={'x':'from_x','y':'from_y'}, inplace=True)
+        df = df.merge(centroids, how='left', left_on='to', right_on='id', sort=False)
+        df.rename(columns={'x':'to_x','y':'to_y'}, inplace=True)
+        xs = df[['from_x','to_x']].values.tolist()
+        ys = df[['from_y','to_y']].values.tolist()
+        colors = [colors_full[i] for i in df_bins]
+        source = bms.ColumnDataSource(data=dict(
+            x=xs,
+            y=ys,
+            region=df_regions,
+            value=df_values,
+            color=colors,
+        ))
+        fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value)*20)
     return fig_map
 
 def get_map_bin_index(val, breakpoints):
