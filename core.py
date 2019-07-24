@@ -67,7 +67,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
-    'circle_size', 'bar_width', 'cum_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
+    'circle_size', 'bar_width', 'cum_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_nozeros', 'map_min', 'map_max', 'map_manual',
     'map_width', 'map_font_size', 'map_boundary_width', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
@@ -463,6 +463,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_adjustments'] = bmw.Div(text='Map Adjustments', css_classes=['map-dropdown'])
     wdg['map_bin'] = bmw.Select(title='Bin Type', value='Auto Equal Num', options=['Auto Equal Num', 'Auto Equal Width', 'Manual'], css_classes=['wdgkey-map_bin', 'map-drop'])
     wdg['map_num'] = bmw.TextInput(title='# of bins (Auto Only)', value=str(MAP_NUM_BINS), css_classes=['wdgkey-map_num', 'map-drop'])
+    wdg['map_nozeros'] = bmw.Select(title='Ignore Zeros', value='Yes', options=['Yes', 'No'], css_classes=['wdgkey-map_nozeros', 'map-drop'])
     wdg['map_palette'] = bmw.TextInput(title='Map Palette', value=MAP_PALETTE, css_classes=['wdgkey-map_palette', 'map-drop'])
     wdg['map_palette_desc'] = bmw.Div(text='See <a href="https://bokeh.pydata.org/en/latest/docs/reference/palettes.html" target="_blank">palette options</a> or all_red, all_blue, all_green, all_gray. Palette must accommodate # of bins', css_classes=['map-drop', 'description'])
     wdg['map_palette_2'] = bmw.TextInput(title='Map Palette 2 (Optional)', value='', css_classes=['wdgkey-map_palette_2', 'map-drop'])
@@ -1079,6 +1080,7 @@ def create_maps(df, wdg, cols):
         print('***Error, your y-axis is a string.')
         return (maps, breakpoints) #empty list
     if os.path.isfile(this_dir_path + '/in/gis_' + x_axis.name + '.csv'):
+        #This means we are doing an area map
         map_type = 'area'
         reg_name = x_axis.name
         full_rgs = x_axis.unique().tolist()
@@ -1116,6 +1118,12 @@ def create_maps(df, wdg, cols):
         'y_max': region_boundaries['y'].max(),
         'y_min': region_boundaries['y'].min(),
     }
+
+    #Ignore zeros (happens after region_boundaries have been gathered to keep regions with zero)
+    if wdg['map_nozeros'].value == 'Yes':
+        df = df[y_axis != 0].copy()
+        y_axis = df.iloc[:,-1]
+
     #set breakpoints depending on the binning strategy
     if wdg['map_bin'].value == 'Auto Equal Num': #an equal number of data ponts in each bin
         map_num_bins = int(wdg['map_num'].value)
