@@ -54,7 +54,8 @@ MAP_FONT_SIZE = 10
 MAP_NUM_BINS = 9
 MAP_WIDTH = 500
 MAP_OPACITY = 1
-MAP_LINE_WIDTH = 0.1
+MAP_BOUNDARY_WIDTH = 0.1
+MAP_LINE_WIDTH = 2
 RANGE_OPACITY_MULT = 0.3
 RANGE_GLYPH_MAP = {'Line': 'Area', 'Dot': 'Bar'}
 
@@ -67,7 +68,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'cum_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_min', 'map_max', 'map_manual',
-    'map_width', 'map_font_size', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
+    'map_width', 'map_font_size', 'map_boundary_width', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
@@ -474,6 +475,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_manual_desc'] = bmw.Div(text='Comma separated list of values (e.g. -10,0,0.5,6), with one fewer value than # of bins', css_classes=['map-drop', 'description'])
     wdg['map_width'] = bmw.TextInput(title='Map Width (px)', value=str(MAP_WIDTH), css_classes=['wdgkey-map_width', 'map-drop'])
     wdg['map_font_size'] = bmw.TextInput(title='Title Font Size', value=str(MAP_FONT_SIZE), css_classes=['wdgkey-map_font_size', 'map-drop'])
+    wdg['map_boundary_width'] = bmw.TextInput(title='Boundary Line Width', value=str(MAP_BOUNDARY_WIDTH), css_classes=['wdgkey-map_boundary_width', 'map-drop'])
     wdg['map_line_width'] = bmw.TextInput(title='Line Width', value=str(MAP_LINE_WIDTH), css_classes=['wdgkey-map_line_width', 'map-drop'])
     wdg['map_opacity'] = bmw.TextInput(title='Opacity (0-1)', value=str(MAP_OPACITY), css_classes=['wdgkey-map_opacity', 'map-drop'])
     wdg['auto_update_dropdown'] = bmw.Div(text='Auto/Manual Update', css_classes=['update-dropdown'])
@@ -1253,7 +1255,7 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
         fig_map.toolbar.logo = None
         fig_map.toolbar_location = None
     fig_map.grid.grid_line_color = None
-    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_line_width'].value))
+    fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_boundary_width'].value))
 
     if map_type == 'line':
         df[['from','to']] = df.iloc[:,0].str.split('-',expand=True)
@@ -1271,7 +1273,7 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
             value=df_values,
             color=colors,
         ))
-        lines = fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value)*20)
+        lines = fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value))
         hover_tool.renderers = [lines]
     return fig_map
 
