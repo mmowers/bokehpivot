@@ -1271,7 +1271,8 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
             value=df_values,
             color=colors,
         ))
-        fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value)*20)
+        lines = fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value)*20)
+        hover_tool.renderers = [lines]
     return fig_map
 
 def get_map_bin_index(val, breakpoints):
