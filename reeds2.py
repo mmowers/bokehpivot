@@ -512,7 +512,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_firm_cap, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'explode_group':'season', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Stacked Bars',{'x':'year', 'y':'Firm Capacity (GW)', 'series':'tech', 'explode':'scenario', 'explode_group':'season', 'chart_type':'Bar', 'bar_width':'1.75'}),
             ('Average Capacity Credit',{'x':'year', 'y':'Capacity Credit', 'y_agg':'Weighted Ave', 'y_weight':'Capacity (GW)', 'series':'scenario', 'explode':'season', 'explode_group':'tech', 'chart_type':'Line'}),
         )),
         }
