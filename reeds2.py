@@ -301,6 +301,9 @@ def pre_ng_price(dfs, **kw):
     df['p'].fillna(0, inplace=True)
     return df
 
+def add_joint_locations_col(df, **kw):
+    df[kw['new']] = df[kw['col1']] + '-' + df[kw['col2']]
+    return df
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 
@@ -917,6 +920,22 @@ results_meta = collections.OrderedDict((
         'index': ['type', 'year'],
         'presets': collections.OrderedDict((
             ('Transmission Capacity',{'x':'year', 'y':'Amount (GW-mi)', 'series':'scenario', 'explode':'type', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+
+    ('Transmission Capacity Network (GW)',
+        {'file':'tran_out.csv',
+        'columns': ['n_out', 'n_in', 'year', 'type', 'Amount (GW)'],
+        'preprocess': [
+            {'func': add_joint_locations_col, 'args': {'col1':'n_out','col2':'n_in','new':'n-n'}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Amount (GW)'}},
+        ],
+        'index': ['n-n', 'year', 'type'],
+        'presets': collections.OrderedDict((
+            ('Map Final', {'x':'n-n', 'y':'Amount (GW)', 'series':'scenario', 'explode':'year', 'chart_type':'Map', 'filter': {'year': 'last'}}),
+            ('Map Final AC/DC', {'x':'n-n', 'y':'Amount (GW)', 'series':'scenario', 'explode':'type', 'explode_group':'year', 'chart_type':'Map', 'filter': {'year': 'last'}}),
+            ('Map minus 2018', {'x':'n-n', 'y':'Amount (GW)', 'series':'scenario', 'explode':'year', 'chart_type':'Map', 'adv_op':'Difference', 'adv_col':'year', 'adv_col_base':'2018', 'filter': {'year': ['2018','2050']}}),
         )),
         }
     ),
