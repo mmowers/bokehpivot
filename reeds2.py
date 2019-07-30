@@ -33,7 +33,7 @@ def scale_column_filtered(df, **kw):
     return df
 
 def sum_over_cols(df, **kw):
-    df = df.drop(kw['sum_over_cols'], axis='columns')
+    df = df.drop(kw['drop_cols'], axis='columns')
     df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
     return df
 
@@ -116,8 +116,8 @@ def pre_val_streams(dfs, **kw):
         df_vs_links = dfs['vs'][dfs['vs']['con_name'].isin(linking_eqs)].copy()
         df_vs_inv = df_vs_links[df_vs_links['var_name'].isin(inv_vars)].copy()
         df_vs_cap = df_vs_links[df_vs_links['var_name'] == 'cap'].copy()
-        df_vs_inv = sum_over_cols(df_vs_inv, group_cols=cols, sum_over_cols=['var_name','con_name'])
-        df_vs_cap = sum_over_cols(df_vs_cap, group_cols=cols, sum_over_cols=['var_name','con_name'])
+        df_vs_inv = sum_over_cols(df_vs_inv, group_cols=cols, drop_cols=['var_name','con_name'])
+        df_vs_cap = sum_over_cols(df_vs_cap, group_cols=cols, drop_cols=['var_name','con_name'])
         #merge left with df_vs_inv so that we're only looking at cumulative value streams in investment years.
         df_scale = pd.merge(left=df_vs_inv, right=df_vs_cap, how='left', on=cols, sort=False)
         df_scale['mult'] = df_scale['$_x'] / df_scale['$_y'] * -1
@@ -235,9 +235,9 @@ def pre_curt(dfs, **kw):
     df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
     df['MWh']=df['MWh'].fillna(0)
     df['Curt Rate'] = 1 - df['MWh']/df['MWh uncurt']
-    df_re_n = sum_over_cols(dfs['gen_uncurt'], group_cols=['n','year'], sum_over_cols=['tech','vintage'])
-    df_re_nat = sum_over_cols(dfs['gen_uncurt'], group_cols=['year'], sum_over_cols=['tech','vintage','n'])
-    df_load_nat = sum_over_cols(dfs['load'], group_cols=['year'], sum_over_cols=['n'])
+    df_re_n = sum_over_cols(dfs['gen_uncurt'], group_cols=['n','year'], drop_cols=['tech','vintage'])
+    df_re_nat = sum_over_cols(dfs['gen_uncurt'], group_cols=['year'], drop_cols=['tech','vintage','n'])
+    df_load_nat = sum_over_cols(dfs['load'], group_cols=['year'], drop_cols=['n'])
     df_vrepen_n = pd.merge(left=dfs['load'], right=df_re_n, how='left',on=['n', 'year'], sort=False)
     df_vrepen_n['VRE penetration n'] = df_vrepen_n['MWh uncurt'] / df_vrepen_n['MWh load']
     df_vrepen_n = df_vrepen_n[['n','year','VRE penetration n']]
@@ -470,7 +470,7 @@ results_meta = collections.OrderedDict((
         'index': ['tech', 'year', 'timeslice'],
         'preprocess': [
             {'func': map_i_to_n, 'args': {}},
-            {'func': sum_over_cols, 'args': {'sum_over_cols': ['n'], 'group_cols': ['tech', 'year', 'timeslice']}},
+            {'func': sum_over_cols, 'args': {'drop_cols': ['n'], 'group_cols': ['tech', 'year', 'timeslice']}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Generation (GW)'}},
         ],
         'presets': collections.OrderedDict((
