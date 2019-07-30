@@ -86,6 +86,25 @@ def pre_systemcost(dfs, **kw):
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
 
+def pre_abatement_cost(dfs, **kW):
+    d = float(core.GL['widgets']['var_discount_rate'].value)
+    y0 = int(core.GL['widgets']['var_pv_year'].value)
+
+    df_sc = pre_systemcost(dfs)
+    df_sc = sum_over_cols(df_sc, group_cols=['year'], drop_cols=['cost_cat','Discounted Cost (Bil $)'])
+    df_sc['type'] = 'Cost (Bil $)'
+    df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
+
+    df_co2 = dfs['emit']
+    df_co2.rename(columns={'CO2 (MMton)':'val'}, inplace=True)
+    df_co2['val'] = df_co2['val'] * 1e-9 #converting from million to billion metric tons
+    df_co2['type'] = 'CO2 (Bil metric ton)'
+
+    df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
+    df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
+    return df
+
+
 def map_i_to_n(df, **kw):
     df_hier = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
     dict_hier = dict(zip(df_hier['s'], df_hier['n']))
@@ -621,6 +640,20 @@ results_meta = collections.OrderedDict((
             ('Discounted by Year No Pol',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
             ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Undiscounted by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+        )),
+        }
+    ),
+
+    ('CO2 Abatement Cost ($/metric ton)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
+        ],
+        'index': ['year','type'],
+        'preprocess': [
+            {'func': pre_abatement_cost, 'args': {'annualize':True}},
+        ],
+        'presets': collections.OrderedDict((
         )),
         }
     ),
