@@ -251,7 +251,7 @@ def pre_firm_cap(dfs, **kw):
     return df
 
 def pre_curt(dfs, **kw):
-    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
+    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
     df['MWh']=df['MWh'].fillna(0)
     df['Curt Rate'] = 1 - df['MWh']/df['MWh uncurt']
     df_re_n = sum_over_cols(dfs['gen_uncurt'], group_cols=['n','year'], drop_cols=['tech','vintage'])
@@ -881,11 +881,11 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Curtailment Rate icrt',
+    ('Curtailment Rate icrt (Realized)',
         {'sources': [
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
             {'name': 'gen_uncurt', 'file': 'gen_icrt_uncurt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh uncurt']},
-            {'name': 'load', 'file': 'load.csv', 'columns': ['n', 'year','MWh load']},
+            {'name': 'load', 'file': 'load_rt.csv', 'columns': ['n', 'year','MWh load']},
         ],
         'preprocess': [
             {'func': pre_curt, 'args': {}},
@@ -899,7 +899,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('New Tech Curtailment Rate',
+    ('New Tech Curtailment Frac (Caused)',
         {'sources': [
             {'name': 'gen_uncurt', 'file': 'gen_new_uncurt.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'MWh uncurt']},
             {'name': 'curt_rate', 'file': 'curt_new.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'Curt Rate']},
