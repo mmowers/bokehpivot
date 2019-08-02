@@ -38,13 +38,15 @@ def reeds_static(data_type, data_source, scenario_filter, diff, base, static_pre
     Args:
         data_source (string): Path to ReEDS runs that will be included in report
         scenario_filter (string): either 'all' or a string of indices of chosen scenarios in scenario filter
-        diff (string): 'Yes' or 'No'. 'Yes' means create additional sections for differences, 'No' means don't
+        diff (string): Anything but 'No' will make additions/changes all results that lack the 'modify' key.
+            E.g. 'Yes' means create additional sections for differences (for all results that lack the 'modify' key.)
         base (string): Identifier for base scenario, if making comparison charts
         static_presets (list of dicts): List of presets for which to make report. Each preset has these keys:
             'name' (required): Displayed name of the result 
             'result': ReEDS result name in reeds.py.
             'preset': ReEDS result preset as defined in reeds.py
-            'modify': Preset modifications, either 'base_only' or 'diff'.
+            'modify': Preset modifications. 'base_only' will show only the base case results, 'diff' will show the difference
+                between each case and the base case, and any other string will simply leave the result as is (ignoring the diff argument)
             'config': Custom widget configuration. This configuration will be added on top of 'result', 'preset', 'modify', if they are present.
         report_path (string): The path to the report file.
         report_format (string): 'html', 'excel', or 'both', specifying which reports to make
