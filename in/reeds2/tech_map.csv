@@ -15,6 +15,11 @@ lfill-gas,lfill-gas
 nuclear,nuclear
 o-g-s,o-g-s
 battery,battery
+battery_2,battery_2
+battery_4,battery_4
+battery_6,battery_6
+battery_8,battery_8
+battery_10,battery_10
 caes,caes
 pumped-hydro,pumped-hydro
 upv_1,upv
