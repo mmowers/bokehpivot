@@ -871,7 +871,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Curtailment Rate',
+    ('Average VRE Curtailment',
         {'file':'curt_rate.csv',
         'columns': ['year', 'Curt Rate'],
         'index': ['year'],

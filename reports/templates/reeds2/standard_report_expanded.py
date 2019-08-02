@@ -9,7 +9,7 @@ static_presets = [
     {'name': 'Operating Reserves (TW-h)', 'result': 'Operating Reserves (TW-h)', 'preset': 'Stacked Bars'},
     {'name': 'Final OpRes by timeslice (GW)', 'result': 'Operating Reserves by Timeslice National (GW)', 'preset': 'Stacked Bars Final'},
     {'name': 'Firm Capacity (GW)', 'result': 'Firm Capacity (GW)', 'preset': 'Stacked Bars'},
-    {'name': 'Curtailment Rate', 'result': 'Curtailment Rate', 'preset': 'Curt Rate Over Time'},
+    {'name': 'Curtailment Rate', 'result': 'Average VRE Curtailment', 'preset': 'Curt Rate Over Time'},
     {'name': 'Losses (fraction of load)', 'result': 'Losses (TWh)', 'preset': 'Fractional Losses by Type Over Time'},
     {'name': 'Transmission (GW-mi)', 'result': 'Transmission (GW-mi)', 'preset': 'Transmission Capacity'},
     {'name': 'All-in Electricity Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'All-in Price ($/MWh)'},
