@@ -509,6 +509,18 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Storage Charge/Discharge (TWh)',
+        {'file':'stor_inout.csv',
+        'columns': ['tech', 'vintage', 'region', 'year', 'type', 'TWh'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'TWh'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Explode By Tech',{'x':'year', 'y':'TWh', 'series':'scenario', 'explode':'type', 'explode_group':'tech', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+
     ('Operating Reserves (TW-h)',
         {'file':'opres_supply.csv',
         'columns': ['ortype', 'tech', 'region', 'year', 'Reserves (TW-h)'],
