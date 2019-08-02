@@ -51,7 +51,7 @@ def pre_systemcost(dfs, **kw):
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     #Annualize if specified
-    if 'annualize' in kw:
+    if 'annualize' in kw and kw['annualize'] == True:
         cost_cats_df = df['cost_cat'].unique().tolist()
         #Gather lists of capital and operation labels
         df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
@@ -86,24 +86,35 @@ def pre_systemcost(dfs, **kw):
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
 
-def pre_abatement_cost(dfs, **kW):
-    d = float(core.GL['widgets']['var_discount_rate'].value)
-    y0 = int(core.GL['widgets']['var_pv_year'].value)
-
-    df_sc = pre_systemcost(dfs)
-    df_sc = sum_over_cols(df_sc, group_cols=['year'], drop_cols=['cost_cat','Discounted Cost (Bil $)'])
+def pre_abatement_cost(dfs, **kw):
+    #Preprocess costs
+    df_sc = pre_systemcost(dfs, annualize=True)
+    df_sc = sum_over_cols(df_sc, group_cols=['year','cost_cat'], drop_cols=['Discounted Cost (Bil $)'])
     df_sc['type'] = 'Cost (Bil $)'
-    df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
+    df_sc.rename(columns={'Cost (Bil $)':'val', 'cost_cat':'subtype'}, inplace=True)
 
+    #Preprocess emissions
     df_co2 = dfs['emit']
     df_co2.rename(columns={'CO2 (MMton)':'val'}, inplace=True)
-    df_co2['val'] = df_co2['val'] * 1e-9 #converting from million to billion metric tons
+    df_co2['val'] = df_co2['val'] * 1e-9 #converting to billion metric tons
+    full_yrs = list(range(df_sc['year'].min(), df_sc['year'].max() + 1))
+    df_co2 = df_co2.set_index('year').reindex(full_yrs).reset_index()
+    df_co2['val'] = df_co2['val'].fillna(method='ffill')
     df_co2['type'] = 'CO2 (Bil metric ton)'
+    df_co2['subtype'] = 'CO2 (Bil metric ton)'
 
+    #Concatenate costs and emissions
     df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
-    df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
-    return df
 
+    #Add discounted value column
+    d = float(core.GL['widgets']['var_discount_rate'].value)
+    y0 = int(core.GL['widgets']['var_pv_year'].value)
+    df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
+
+    #Add cumulative columns
+    df['cum val'] = df.groupby('subtype')['val'].cumsum()
+    df['cum disc val'] = df.groupby('subtype')['disc val'].cumsum()
+    return df
 
 def map_i_to_n(df, **kw):
     df_hier = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
@@ -638,6 +649,7 @@ results_meta = collections.OrderedDict((
             ('2018-end Discounted No Pol',{'x':'scenario','y':'Discounted Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}, 'year': {'start':2018}}}),
             ('Discounted by Year',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Discounted by Year No Pol',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('Total Undiscounted',{'x':'scenario','y':'Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Undiscounted by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
         )),
@@ -649,11 +661,13 @@ results_meta = collections.OrderedDict((
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
             {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
         ],
-        'index': ['year','type'],
         'preprocess': [
-            {'func': pre_abatement_cost, 'args': {'annualize':True}},
+            {'func': pre_abatement_cost, 'args': {}},
         ],
         'presets': collections.OrderedDict((
+            #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
+            ('Cumulative Undiscounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_orig_inv}}}),
+            ('Cumulative Discounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
