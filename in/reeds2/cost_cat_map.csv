@@ -1,8 +1,8 @@
 raw,display
-inv_investment_capacity_costs,Capital with policy
-inv_investment_refurbishment_capacity,Capital with policy
-orig_inv_investment_capacity_costs,Capital no policy
-orig_inv_investment_refurbishment_capacity,Capital no policy
+inv_investment_capacity_costs,Capital
+inv_investment_refurbishment_capacity,Capital
+inv_investment_capacity_costs_noitc,Capital no ITC
+inv_investment_refurbishment_capacity_noitc,Capital no ITC
 inv_ptc_payments_negative,PTC
 inv_investment_spurline_costs_rsc_technologies,Trans
 inv_ptc_payments_negative_refurbishments,PTC
