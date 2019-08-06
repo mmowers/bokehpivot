@@ -17,5 +17,5 @@ op_fuelcosts_objfn,Fuel
 op_fom_costs,O&M
 op_international_hurdle_rate,Trans
 op_acp_compliance_costs,Other
-op_emissions_taxes,Other
+op_emissions_taxes,Emissions Tax
 op_gen_pol_costs,Other
