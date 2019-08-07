@@ -252,6 +252,11 @@ def pre_lcoe(dfs, **kw):
 def pre_curt_new(dfs, **kw):
     df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt_rate'], how='left',on=['tech', 'rr', 'timeslice', 'year'], sort=False)
     df['Curt Rate']=df['Curt Rate'].fillna(0)
+    if 'annual' in kw:
+        df['MWh curt'] = df['Curt Rate'] * df['MWh uncurt']
+        df = sum_over_cols(df, group_cols=['tech', 'rr', 'year'], drop_cols=['timeslice','Curt Rate'])
+        df['Curt Rate'] = df['MWh curt'] / df['MWh uncurt']
+        df['Curt Rate']=df['Curt Rate'].fillna(0)
     return df
 
 def pre_cc_new(dfs, **kw):
@@ -972,7 +977,7 @@ results_meta = collections.OrderedDict((
             {'name': 'curt_rate', 'file': 'curt_new.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'Curt Rate']},
         ],
         'preprocess': [
-            {'func': pre_curt_new, 'args': {}},
+            {'func': pre_curt_new, 'args': {'annual':True}},
         ],
         'presets': collections.OrderedDict((
             ('Curt Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'Curt Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
