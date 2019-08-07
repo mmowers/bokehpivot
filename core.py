@@ -1038,7 +1038,7 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         lo = groups.quantile(q=0.05)
         box_centers = (q1 + q3)/2
         x_range = q2.index.tolist()
-        quartile_legend = ['q1: ' + '{:.2e}'.format(q1['y'][r]) + ', q2: ' + '{:.2e}'.format(q2['y'][r]) + ', q3: ' + '{:.2e}'.format(q3['y'][r]) for r in x_range]
+        quartile_legend = ['5%: ' + '{:.2e}'.format(lo['y'][r]) + ', 25%: ' + '{:.2e}'.format(q1['y'][r]) + ', 50%: ' + '{:.2e}'.format(q2['y'][r]) + ', 75%: ' + '{:.2e}'.format(q3['y'][r]) + ', 95%: ' + '{:.2e}'.format(up['y'][r]) for r in x_range]
         lw = float(wdg['line_width'].value)
         width = float(wdg['bar_width'].value)
         ser_box = ['None']*len(x_range) if series is None else [series]*len(x_range)
@@ -1053,8 +1053,10 @@ def add_glyph(glyph_type, wdg, p, xs, ys, c, y_bases=None, series=None, opacity_
         src_up = bms.ColumnDataSource({'x': x_range, 'y': up['y'].tolist(), 'x_legend': x_range, 'y_legend': up['y'].tolist(), 'ser_legend': ser_box})
         p.rect('x', 'y', source=src_up, height=lw, width=0.9*width, color=c, fill_alpha=alpha, line_color=None, line_width=None, height_units="screen")
         #stems
-        p.segment(x_range, up['y'], x_range, q3['y'], line_color=c, line_width=lw/2, line_alpha=alpha)
-        p.segment(x_range, lo['y'], x_range, q1['y'], line_color=c, line_width=lw/2, line_alpha=alpha)
+        src_upstem = bms.ColumnDataSource({'x0': x_range, 'y0': up['y'].tolist(), 'x1': x_range, 'y1': q3['y'].tolist(), 'x_legend': x_range, 'y_legend': quartile_legend, 'ser_legend': ser_box})
+        src_lostem = bms.ColumnDataSource({'x0': x_range, 'y0': lo['y'].tolist(), 'x1': x_range, 'y1': q1['y'].tolist(), 'x_legend': x_range, 'y_legend': quartile_legend, 'ser_legend': ser_box})
+        p.segment('x0', 'y0', 'x1', 'y1', source=src_upstem, line_color=c, line_width=lw/2, line_alpha=alpha)
+        p.segment('x0', 'y0', 'x1', 'y1', source=src_lostem, line_color=c, line_width=lw/2, line_alpha=alpha)
 
 def create_maps(df, wdg, cols):
     '''
