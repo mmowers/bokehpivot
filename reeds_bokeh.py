@@ -369,11 +369,9 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     for col in df.columns.values.tolist():
         if 'meta_map_'+col in topwdg and topwdg['meta_map_'+col].value != '':
             df_map = pd.read_csv(topwdg['meta_map_'+col].value.replace('"',''), dtype=object)
-            #filter out values that aren't in raw column
-            df = df[df[col].isin(df_map['raw'].values.tolist())]
             #now map from raw to display
             map_dict = dict(zip(list(df_map['raw']), list(df_map['display'])))
-            df[col] = df[col].map(map_dict)
+            df[col] = df[col].replace(map_dict)
 
     #apply custom styling
     non_scen_col = [c for c in df.columns.values.tolist() if c != 'scenario']
