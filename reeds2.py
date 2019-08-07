@@ -92,7 +92,7 @@ def pre_abatement_cost(dfs, **kw):
     df_sc = pre_systemcost(dfs, annualize=True)
     df_sc = sum_over_cols(df_sc, group_cols=['year','cost_cat'], drop_cols=['Discounted Cost (Bil $)'])
     df_sc['type'] = 'Cost (Bil $)'
-    df_sc.rename(columns={'Cost (Bil $)':'val', 'cost_cat':'subtype'}, inplace=True)
+    df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
 
     #Preprocess emissions
     df_co2 = dfs['emit']
@@ -102,7 +102,7 @@ def pre_abatement_cost(dfs, **kw):
     df_co2 = df_co2.set_index('year').reindex(full_yrs).reset_index()
     df_co2['val'] = df_co2['val'].fillna(method='ffill')
     df_co2['type'] = 'CO2 (Bil metric ton)'
-    df_co2['subtype'] = 'CO2 (Bil metric ton)'
+    df_co2['cost_cat'] = 'CO2 (Bil metric ton)'
 
     #Concatenate costs and emissions
     df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
@@ -113,8 +113,8 @@ def pre_abatement_cost(dfs, **kw):
     df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
 
     #Add cumulative columns
-    df['cum val'] = df.groupby('subtype')['val'].cumsum()
-    df['cum disc val'] = df.groupby('subtype')['disc val'].cumsum()
+    df['cum val'] = df.groupby('cost_cat')['val'].cumsum()
+    df['cum disc val'] = df.groupby('cost_cat')['disc val'].cumsum()
     return df
 
 def map_i_to_n(df, **kw):
@@ -681,10 +681,10 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
-            ('Cumulative Undiscounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_orig_inv}}}),
-            ('Cumulative Undiscounted Over Time No Pol',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_pol_inv}}}),
-            ('Cumulative Discounted Over Time',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_orig_inv}}}),
-            ('Cumulative Discounted Over Time No Pol',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'subtype':{'exclude':costs_pol_inv}}}),
+            ('Cumulative Undiscounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Cumulative Undiscounted Over Time No Pol',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('Cumulative Discounted Over Time',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Cumulative Discounted Over Time No Pol',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
         )),
         }
     ),
