@@ -141,7 +141,7 @@ def pre_val_streams(dfs, **kw):
         #First, use the capacity/investment linking equations with the investment and capacity variables to find the
         #scaling factors between investment and capacity value streams
         cols = ['tech', 'vintage', 'n', 'year']
-        inv_vars = ['inv','invrefurb']
+        inv_vars = ['inv','inv_refurb']
         cum_vars = ['gen','cap','opres','storage_in']
         linking_eqs = ['eq_cap_new_noret','eq_cap_new_retub','eq_cap_new_retmo'] #eq_cap_new_retmo also includes previous year's CAP, is this bad?!
         df_vs_links = dfs['vs'][dfs['vs']['con_name'].isin(linking_eqs)].copy()
