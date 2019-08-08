@@ -688,24 +688,6 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('CO2 Abatement Cost ($/metric ton)',
-        {'sources': [
-            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
-            {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
-        ],
-        'preprocess': [
-            {'func': pre_abatement_cost, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
-            ('Cumulative Undiscounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
-            ('Cumulative Undiscounted Over Time No Pol',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
-            ('Cumulative Discounted Over Time',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
-            ('Cumulative Discounted Over Time No Pol',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
-        )),
-        }
-    ),
-
     ('Sys Cost Bulk (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
@@ -727,7 +709,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Sys Cost Bulk EW (Bil $)',
+    ('Sys Cost Bulk but truncated final year (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk_ew.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
         ],
@@ -744,6 +726,24 @@ results_meta = collections.OrderedDict((
             ('Discounted by Year No Pol',{'x':'year','y':'Discounted Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
             ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Undiscounted by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+        )),
+        }
+    ),
+
+    ('CO2 Abatement Cost ($/metric ton)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
+        ],
+        'preprocess': [
+            {'func': pre_abatement_cost, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
+            ('Cumulative Undiscounted Over Time',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Cumulative Undiscounted Over Time No Pol',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+            ('Cumulative Discounted Over Time',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Cumulative Discounted Over Time No Pol',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
         )),
         }
     ),
