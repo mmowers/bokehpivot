@@ -48,20 +48,36 @@ def inflate_series(ser_in):
 
 def pre_systemcost(dfs, **kw):
     df = dfs['sc']
+
     #apply inflation and adjust to billion dollars
     df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
+
+    #Gather lists of capital and operation labels
+    cost_cats_df = df['cost_cat'].unique().tolist()
+    df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
+    #Make sure all cost categories in df are in df_cost_type and throw error if not!!
+    if not set(cost_cats_df).issubset(df_cost_type['cost_cat'].values.tolist()):
+        print('WARNING: Not all cost categories have been mapped!!!')
+    cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
+    op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
+
+    #Calculate objective function system costs
+    if 'objective' in kw and kw['objective'] == True:
+        #Multiply all capital costs by pvf_capital and operation by pvf_onm
+        df = pd.merge(left=df, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
+        df = pd.merge(left=df, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
+        cap_cond = df['cost_cat'].isin(cap_type_ls)
+        onm_cond = df['cost_cat'].isin(op_type_ls)
+        df.loc[cap_cond, 'Cost (Bil $)'] = df.loc[cap_cond, 'Cost (Bil $)'] * df.loc[cap_cond, 'pvfcap']
+        df.loc[onm_cond, 'Cost (Bil $)'] = df.loc[onm_cond, 'Cost (Bil $)'] * df.loc[onm_cond, 'pvfonm']
+        df.drop(['pvfcap','pvfonm'], axis='columns',inplace=True)
+        #We don't add a discounted cost column
+        return df
+
     #Annualize if specified
     if 'annualize' in kw and kw['annualize'] == True:
-        cost_cats_df = df['cost_cat'].unique().tolist()
-        #Gather lists of capital and operation labels
-        df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
-        #Make sure all cost categories in df are in df_cost_type and throw error if not!!
-        if not set(cost_cats_df).issubset(df_cost_type['cost_cat'].values.tolist()):
-            print('WARNING: Not all cost categories have been mapped!!!')
-        cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
-        op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
         #Turn each cost category into a column
         df = df.pivot_table(index=['year'], columns='cost_cat', values='Cost (Bil $)')
         #Add rows for all years (including 20 years after end year) and fill
@@ -84,38 +100,55 @@ def pre_systemcost(dfs, **kw):
         df = df.fillna(0)
         df = pd.melt(df.reset_index(), id_vars=['year'], value_vars=cap_type_ls + op_type_ls, var_name='cost_cat', value_name= 'Cost (Bil $)')
 
-    #Add Dicounted Cost column
+    #Add Dicounted Cost column (including for annualized)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
 
 def pre_abatement_cost(dfs, **kw):
-    #Preprocess costs
-    df_sc = pre_systemcost(dfs, annualize=True)
-    df_sc = sum_over_cols(df_sc, group_cols=['year','cost_cat'], drop_cols=['Discounted Cost (Bil $)'])
-    df_sc['type'] = 'Cost (Bil $)'
-    df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
+    if 'objective' in kw and kw['objective'] == True:
+        #Preprocess costs
+        df_sc = pre_systemcost(dfs, objective=True)
+        df_sc['type'] = 'Cost (Bil $)'
+        df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
+        #Preprocess emissions
+        df_co2 = dfs['emit']
+        df_co2.rename(columns={'CO2 (MMton)':'val'}, inplace=True)
+        df_co2['val'] = df_co2['val'] * 1e-9 #converting to billion metric tons
+        #Multiply by pvfonm to convert to total objective level of emissions for that year
+        df_co2 = pd.merge(left=df_co2, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
+        df_co2['val'] = df_co2['val'] * df_co2['pvfonm']
+        df_co2.drop(['pvfonm'], axis='columns',inplace=True)
+        #Add type and cost_cat columns so we can concatenate
+        df_co2['type'] = 'CO2 (Bil metric ton)'
+        df_co2['cost_cat'] = 'CO2 (Bil metric ton)'
+        #Concatenate costs and emissions
+        df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
 
-    #Preprocess emissions
-    df_co2 = dfs['emit']
-    df_co2.rename(columns={'CO2 (MMton)':'val'}, inplace=True)
-    df_co2['val'] = df_co2['val'] * 1e-9 #converting to billion metric tons
-    full_yrs = list(range(df_sc['year'].min(), df_sc['year'].max() + 1))
-    df_co2 = df_co2.set_index('year').reindex(full_yrs).reset_index()
-    df_co2['val'] = df_co2['val'].fillna(method='ffill')
-    df_co2['type'] = 'CO2 (Bil metric ton)'
-    df_co2['cost_cat'] = 'CO2 (Bil metric ton)'
+    elif 'annualize' in kw and kw['annualize'] == True:
+        #Preprocess costs
+        df_sc = pre_systemcost(dfs, annualize=True)
+        df_sc = sum_over_cols(df_sc, group_cols=['year','cost_cat'], drop_cols=['Discounted Cost (Bil $)'])
+        df_sc['type'] = 'Cost (Bil $)'
+        df_sc.rename(columns={'Cost (Bil $)':'val'}, inplace=True)
+        #Preprocess emissions
+        df_co2 = dfs['emit']
+        df_co2.rename(columns={'CO2 (MMton)':'val'}, inplace=True)
+        df_co2['val'] = df_co2['val'] * 1e-9 #converting to billion metric tons
+        full_yrs = list(range(df_sc['year'].min(), df_sc['year'].max() + 1))
+        df_co2 = df_co2.set_index('year').reindex(full_yrs).reset_index()
+        df_co2['val'] = df_co2['val'].fillna(method='ffill')
+        df_co2['type'] = 'CO2 (Bil metric ton)'
+        df_co2['cost_cat'] = 'CO2 (Bil metric ton)'
+        #Concatenate costs and emissions
+        df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
+        #Add discounted value column
+        d = float(core.GL['widgets']['var_discount_rate'].value)
+        y0 = int(core.GL['widgets']['var_pv_year'].value)
+        df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
+        #Add cumulative columns
+        df['cum val'] = df.groupby('cost_cat')['val'].cumsum()
+        df['cum disc val'] = df.groupby('cost_cat')['disc val'].cumsum()
 
-    #Concatenate costs and emissions
-    df = pd.concat([df_sc, df_co2],sort=False,ignore_index=True)
-
-    #Add discounted value column
-    d = float(core.GL['widgets']['var_discount_rate'].value)
-    y0 = int(core.GL['widgets']['var_pv_year'].value)
-    df['disc val'] = df['val'] / (1 + d)**(df['year'] - y0)
-
-    #Add cumulative columns
-    df['cum val'] = df.groupby('cost_cat')['val'].cumsum()
-    df['cum disc val'] = df.groupby('cost_cat')['disc val'].cumsum()
     return df
 
 def map_i_to_n(df, **kw):
@@ -665,6 +698,23 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Sys Cost Objective (Bil $)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+        ],
+        'index': ['cost_cat', 'year'],
+        'preprocess': [
+            {'func': pre_systemcost, 'args': {'objective':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Cost by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Cost by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+        )),
+        }
+    ),
+
     ('Sys Cost beyond final year (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
@@ -736,7 +786,7 @@ results_meta = collections.OrderedDict((
             {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
         ],
         'preprocess': [
-            {'func': pre_abatement_cost, 'args': {}},
+            {'func': pre_abatement_cost, 'args': {'annualize':True}},
         ],
         'presets': collections.OrderedDict((
             #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
@@ -744,6 +794,23 @@ results_meta = collections.OrderedDict((
             ('Cumulative Undiscounted Over Time No Pol',{'x':'year','y':'cum val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
             ('Cumulative Discounted Over Time',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Cumulative Discounted Over Time No Pol',{'x':'year','y':'cum disc val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+        )),
+        }
+    ),
+
+    ('CO2 Abatement Cost Objective ($/metric ton)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'emit', 'file': 'emit_nat.csv', 'columns': ['year', 'CO2 (MMton)']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+        ],
+        'preprocess': [
+            {'func': pre_abatement_cost, 'args': {'objective':True}},
+        ],
+        'presets': collections.OrderedDict((
+            #To work properly, these presets require selecting the correct scenario for the Advanced Operation base.
+            ('Abatement Cost By Year',{'x':'year','y':'val','series':'scenario','chart_type':'Line', 'explode':'type', 'adv_op':'Difference', 'adv_col':'scenario', 'adv_col_base':'None', 'adv_op2': 'Ratio', 'adv_col2': 'type', 'adv_col_base2': 'CO2 (Bil metric ton)', 'y_scale':'-1', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
