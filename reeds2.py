@@ -665,7 +665,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Sys Cost (Bil $)',
+    ('Sys Cost beyond final year (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_bulk.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
         ],
