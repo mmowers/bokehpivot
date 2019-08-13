@@ -45,6 +45,11 @@ LINE_WIDTH = 2
 #colors taken from bpa.all_palettes['Category20'][20] and rearranged so that pairs are split
 COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
           '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5']*1000
+#here are the colors from bpa.all_palettes['Category20c'][20] and rearranged so that quads are split
+COLORS_QUAD = ['#3182bd','#e6550d','#31a354','#756bb1','#636363',
+               '#6baed6','#fd8d3c','#74c476','#9e9ac8','#969696',
+               '#9ecae1','#fdae6b','#a1d99b','#bcbddc','#bdbdbd',
+               '#c6dbef','#fdd0a2','#c7e9c0','#dadaeb','#d9d9d9']*1000
 MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
