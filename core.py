@@ -1163,7 +1163,7 @@ def create_maps(df, wdg, cols):
     df_maps['bin_index'] = y_axis.apply(get_map_bin_index, args=(breakpoints,))
     #If there are only 3 columns (x_axis, y_axis, and bin_index), that means we aren't exploding:
     if len(df_maps.columns) == 3:
-        maps.append(create_map(df_maps, ranges, region_boundaries, wdg, colors_full))
+        maps.append(create_map(map_type, df_maps, ranges, region_boundaries, centroids, wdg, colors_full))
         print('***Done building map.')
         return (maps, breakpoints) #single map
     #Otherwise we are exploding.
@@ -1175,8 +1175,7 @@ def create_maps(df, wdg, cols):
     #Loop through rows of df_unique, filter df_maps based on values in each row,
     #and send filtered dataframe to mapping function
     for i, row in df_unique.iterrows():
-        reg_bound = region_boundaries
-        df_map = df_maps
+        df_map = df_maps.copy()
         title = ''
         for col in df_unique:
             df_map = df_map[df_map[col] == row[col]]
@@ -1185,7 +1184,7 @@ def create_maps(df, wdg, cols):
         df_map = df_map[df_map.columns[-3:]]
         #remove final comma of title
         title = title[:-2]
-        maps.append(create_map(map_type, df_map, ranges, reg_bound, centroids, wdg, colors_full, title))
+        maps.append(create_map(map_type, df_map, ranges, region_boundaries, centroids, wdg, colors_full, title))
     print('***Done building maps.')
     return (maps, breakpoints) #multiple maps
 
