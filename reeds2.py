@@ -508,6 +508,21 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Exogenous capacity (GW)',
+        {'file':'m_capacity_exog.csv',
+        'columns': ['tech', 'vintage', 'region', 'year', 'Capacity (GW)'],
+        'preprocess': [
+            {'func': map_i_to_n, 'args': {}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+        )),
+        }
+    ),
+
     ('Capacity Resource Region (GW)',
         {'file':'cap.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
