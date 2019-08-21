@@ -801,7 +801,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Value Streams inv only',
+    ('Value Streams Sequential New Techs',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'var_name', 'con_name', '$']},
             {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
@@ -831,7 +831,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('LCOE ($/MWh) inv only',
+    ('LCOE ($/MWh) Sequential New Techs',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'n', 'year', 'var_name', 'con_name', '$']},
             {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
