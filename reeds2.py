@@ -251,16 +251,6 @@ def pre_val_streams(dfs, **kw):
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
     return df
 
-
-def pre_val_streams_old(df, **kw):
-    df_not_dol = df[df['con_name'].isin(['mwh', 'kw'])].copy()
-    df_dol = df[~df['con_name'].isin(['mwh', 'kw'])].copy()
-    #apply inflation and annualize
-    df_dol['value'] = inflate_series(df_dol['value']) * CRF_reeds
-    #adjust capacity of PV???
-    df = pd.concat([df_not_dol, df_dol],sort=False,ignore_index=True)
-    return df
-
 def pre_reduced_cost(df, **kw):
     df['irbv'] = df['tech'] + ' | ' + df['region'] + ' | ' + df['bin'] + ' | ' + df['variable']
     return df
@@ -694,27 +684,6 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('Requirement Prices and Quantities OLD',
-        {'sources': [
-            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'p']},
-            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'n', 'timeslice', 'year', 'q']},
-        ],
-        'preprocess': [
-            {'func': pre_prices, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('Energy Price Lines ($/MWh)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load']}}),
-            ('OpRes Price Lines ($/MW-h)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'subtype', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res']}}),
-            ('ResMarg Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Annual']}}),
-            ('ResMarg Season Price Lines ($/kW-yr)',{'x':'year', 'y':'$', 'series':'scenario', 'explode': 'timeslice', 'explode_group':'type', 'chart_type':'Line', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_res_marg', 'filter': {'type':['res_marg','q_res_marg'], 'timeslice':['Summer','Fall','Winter','Spring']}}),
-            ('Energy Price by Timeslice Final ($/MWh)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
-            ('OpRes Price by Timeslice Final ($/MW-h)',{'x':'timeslice', 'y':'$', 'series':'type', 'explode':'subtype', 'explode_group':'scenario', 'chart_type':'Bar', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_oper_res', 'filter': {'type':['oper_res','q_oper_res'], 'year':'last'}}),
-            ('Energy Price Final BA Map ($/MWh)',{'x':'n', 'y':'$', 'explode': 'scenario', 'explode_group': 'type', 'chart_type':'Map', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','q_load'], 'year':'last'}}),
-            ('All-in Price ($/MWh)',{'x':'year', 'y':'$', 'series':'type', 'explode': 'scenario', 'chart_type':'Bar', 'bar_width':'1.75', 'adv_op':'Ratio', 'adv_col':'type', 'adv_col_base':'q_load', 'filter': {'type':['load','res_marg','oper_res','q_load'], 'timeslice':{'exclude': ['Annual']}}}),
-        )),
-        }
-    ),
-
     ('Sys Cost Objective (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
@@ -898,25 +867,6 @@ results_meta = collections.OrderedDict((
             ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
             ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
             ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
-        )),
-        }
-    ),
-
-    ('Value Streams chosen OLD',
-        {'file':'valuestreams_chosen.csv',
-        'columns': ['tech', 'vintage', 'n', 'year', 'new_old', 'var_name', 'con_name', 'value'],
-        'preprocess': [
-            {'func': pre_val_streams_old, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('$ by type over time', {'x':'year', 'y':'value', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'new_old':['new']}}),
-            ('$ by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort':'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['mwh', 'kw']}, 'year':'last', }}),
-
-            ('$/kW by type over time', {'x':'year', 'y':'value', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kw', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'con_name':{'exclude':['mwh']}, 'new_old':['new']}}),
-            ('$/kW by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'kw', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort':'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['mwh']}, 'year':'last', }}),
-
-            ('$/MWh by type over time', {'x':'year', 'y':'value', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'mwh', 'chart_type':'Bar', 'bar_width':'1.75', 'sync_axes':'No', 'filter': {'con_name':{'exclude':['kw']}, 'new_old':['new']}}),
-            ('$/MWh by type final', {'chart_type':'Bar', 'x':'tech', 'y':'value', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'mwh', 'sync_axes':'No', 'bar_width':r'.9', 'cum_sort':'Descending', 'plot_width':'600', 'plot_height':'600', 'filter': {'new_old':['new'], 'con_name':{'exclude':['kw']}, 'year':'last', }}),
         )),
         }
     ),
