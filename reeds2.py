@@ -352,7 +352,10 @@ def pre_cc_iter(dfs, **kw):
     return df
 
 def pre_cf(dfs, **kw):
-    df = pd.merge(left=dfs['cap'], right=dfs['gen'], how='left',on=['tech', 'vintage', 'n', 'year'], sort=False)
+    index_cols = ['tech', 'vintage', 'n', 'year']
+    dfs['cap'] = map_i_to_n(dfs['cap'])
+    dfs['cap'] =  dfs['cap'].groupby(index_cols, sort=False, as_index =False).sum()
+    df = pd.merge(left=dfs['cap'], right=dfs['gen'], how='left',on=index_cols, sort=False)
     df['MWh']=df['MWh'].fillna(0)
     df['CF'] = df['MWh']/(df['MW']*8760)
     return df
@@ -570,6 +573,21 @@ results_meta = collections.OrderedDict((
         ],
         'presets': collections.OrderedDict((
             ('Stacked Bars Final',{'x':'timeslice', 'y':'Generation (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+    ('Capacity Factor icrt',
+        {'sources': [
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
+            {'name': 'cap', 'file': 'cap_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year','MW']},
+        ],
+        'preprocess': [
+            {'func': pre_cf, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('CF Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CF', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'y_min':'0','y_max':'1', 'circle_size':r'3', 'bar_width':r'1.75', }),
+            ('CF weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CF', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'tech', 'series':'scenario', 'y_min':'0','y_max':'1', }),
         )),
         }
     ),
@@ -1112,21 +1130,6 @@ results_meta = collections.OrderedDict((
         'presets': collections.OrderedDict((
             ('CC Rate Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CC Rate', 'y_agg':'None', 'range':'Boxplot', 'explode':'season', 'explode_group':'tech', 'series':'scenario', 'sync_axes':'No', 'circle_size':r'3', 'bar_width':r'1.75', }),
             ('CC Rate weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CC Rate', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'season', 'explode_group':'tech', 'series':'scenario', 'sync_axes':'No', }),
-        )),
-        }
-    ),
-
-    ('Capacity Factor icrt',
-        {'sources': [
-            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MWh']},
-            {'name': 'cap', 'file': 'cap_icrt.csv', 'columns': ['tech', 'vintage', 'n', 'year','MW']},
-        ],
-        'preprocess': [
-            {'func': pre_cf, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('CF Boxplot',{'chart_type':'Dot', 'x':'year', 'y':'CF', 'y_agg':'None', 'range':'Boxplot', 'explode':'tech', 'explode_group':'scenario', 'y_min':'0','y_max':'1', 'circle_size':r'3', 'bar_width':r'1.75', }),
-            ('CF weighted ave',{'chart_type':'Line', 'x':'year', 'y':'CF', 'y_agg':'Weighted Ave', 'y_weight':'MW', 'explode':'tech', 'series':'scenario', 'y_min':'0','y_max':'1', }),
         )),
         }
     ),
