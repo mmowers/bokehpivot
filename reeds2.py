@@ -474,6 +474,23 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Capacity icrt (GW)',
+        {'file':'cap_icrt.csv',
+        'columns': ['tech', 'vintage', 'region', 'year','Capacity (GW)'],
+        'preprocess': [
+            {'func': map_i_to_n, 'args': {}},
+            {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'n', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
     ('New Annual Capacity BA (GW)',
         {'file':'cap_new_ann.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
@@ -546,12 +563,27 @@ results_meta = collections.OrderedDict((
 
     ('Generation BA (TWh)',
         {'file':'gen_ann.csv',
-        'columns': ['tech', 'region', 'year', 'Generation (TWh)'],
+        'columns': ['tech', 'n', 'year', 'Generation (TWh)'],
         'preprocess': [
-            {'func': map_i_to_n, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
         ],
         'index': ['tech', 'n', 'year'],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Generation (TWh)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'n', 'y':'Generation (TWh)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Generation (TWh)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+    ('Generation icrt (TWh)',
+        {'file':'gen_icrt.csv',
+        'columns': ['tech', 'vintage', 'n', 'year', 'Generation (TWh)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
+        ],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
             ('Stacked Bars',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
