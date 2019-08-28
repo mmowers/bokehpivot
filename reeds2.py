@@ -446,6 +446,11 @@ columns_meta = {
         'map': this_dir_path + '/in/reeds2/cost_cat_map.csv',
         'style': this_dir_path + '/in/reeds2/cost_cat_style.csv',
     },
+    'con_adj':{
+        'type':'string',
+        'map': this_dir_path + '/in/reeds2/con_adj_map.csv',
+        'style': this_dir_path + '/in/reeds2/con_adj_style.csv',
+    },
 }
 
 #---------------------------------------------------------------------------------------------------------
