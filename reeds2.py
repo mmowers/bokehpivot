@@ -160,11 +160,9 @@ def map_i_to_n(df, **kw):
         df = df.groupby(kw['groupsum'], sort=False, as_index=False).sum()
     return df
 
-def remove_n(df, **kw):
+def remove_ba(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
-    df['region'] = df['region'].map(lambda x: x.lstrip('s'))
-    df.rename(columns={'region':'i'}, inplace=True)
-    df['i'] = pd.to_numeric(df['i'])
+    df.rename(columns={'region':'rr'}, inplace=True)
     return df
 
 def pre_val_streams(dfs, **kw):
@@ -410,10 +408,6 @@ columns_meta = {
         'type':'string',
         'join': this_dir_path + '/in/reeds2/hierarchy_rr.csv',
     },
-    'i':{
-        'type':'string',
-        'join': this_dir_path + '/in/hierarchy.csv',
-    },
     'n':{
         'type':'string',
         'join': this_dir_path + '/in/hierarchy.csv',
@@ -552,16 +546,16 @@ results_meta = collections.OrderedDict((
         {'file':'cap.csv',
         'columns': ['tech', 'region', 'year', 'Capacity (GW)'],
         'preprocess': [
-            {'func': remove_n, 'args': {}},
+            {'func': remove_ba, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
         ],
-        'index': ['tech', 'i', 'year'],
+        'index': ['tech', 'rr', 'year'],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
             ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
-            ('RR Map Final by Tech',{'x':'i', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
-            ('RR Map Final Wind',{'x':'i', 'y':'Capacity (GW)', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last', 'tech':['wind-ons', 'wind-ofs']}}),
+            ('RR Map Final by Tech',{'x':'rr', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('RR Map Final Wind',{'x':'rr', 'y':'Capacity (GW)', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last', 'tech':['wind-ons', 'wind-ofs']}}),
         )),
         }
     ),
