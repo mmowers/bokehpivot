@@ -76,9 +76,9 @@ def discount_costs(df_in, **kw):
 def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20):
     refyear = int(core.GL['widgets']['var_pv_year'].value)
     lastyear = int(core.GL['widgets']['var_end_year'].value)
-    if type == "Operation":
+    if type == 'Operation':
         pv_mult = 1 / (1 + dsocial)**(year - refyear)
-    elif type == "Capital":
+    elif type == 'Capital':
         pv_mult = CRF(dinvest, lifetime) / CRF(dinvest, min(lifetime, lastyear + 1 - year)) * 1 / (1 + dsocial)**(year - refyear)
     return pv_mult
 
@@ -289,7 +289,7 @@ def pre_tech_val_streams(dfs, **kw):
         #Calculate additive adjustments between values of real, local block, and distributed block (value factors are multiplicative adjustments)
         #For load_pca df_real_min_loc represents temporal effects, but for res_marg it represents Capacity credit vs capacity factor.
         #res_marg realy should have special treatment because block value streams are based on energy, and some techs may only be providing reserves.
-        #We would find spatial value factor from df_price_ba and df_price_dist, then we divide df_valstream by this spatial value factor to get the "quantity" component.
+        #We would find spatial value factor from df_price_ba and df_price_dist, then we divide df_valstream by this spatial value factor to get the 'quantity' component.
         df_valstream_comb = df_valstream[df_valstream['type'].isin(['load_pca','res_marg'])].copy()
         df_valstream_comb['type'] = 'comb'
         df_valstream_comb = df_valstream_comb.groupby(valstream_cols, sort=False, as_index =False).sum()
@@ -343,7 +343,7 @@ def add_chosen_available(df, dfs):
     df = pd.merge(left=df, right=dfs['levels_potential'], on=['year','tech','new_old','var_set'], how='left', sort=False)
     df.rename(columns={'MW': 'chosen'}, inplace=True)
     df['chosen'] = df['chosen'].fillna(value='no')
-    df.loc[df['chosen'] != 'no', 'chosen'] = "yes"
+    df.loc[df['chosen'] != 'no', 'chosen'] = 'yes'
     #Add available column to indicate if the resource was available to be built.
     df_avail = dfs['available_potential']
     df_avail['available'] = 'yes'
@@ -489,9 +489,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Retirements (GW)',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'Retireqnallyears',
-        'columns': ["tech", "n", "year", "Capacity (GW)"],
+        'columns': ['tech', 'n', 'year', 'Capacity (GW)'],
         'index': ['tech','n','year'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
@@ -506,8 +506,8 @@ results_meta = collections.OrderedDict((
     ('Wind Capacity (GW)',
         {'file': 'CONVqn.gdx',
         'param': 'Windiallc',
-        'columns': ["windtype", "i", "year", "class", "Capacity (GW)"],
-        'index': ["windtype", "i", "year", "class"],
+        'columns': ['windtype', 'i', 'year', 'class', 'Capacity (GW)'],
+        'index': ['windtype', 'i', 'year', 'class'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column': 'Capacity (GW)'}},
         ],
@@ -650,9 +650,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Water Withdrawals (Bil Gals)',
-        {'file': "water_output.gdx",
+        {'file': 'water_output.gdx',
         'param': 'WaterWqctnallyears',
-        'columns': ["tech", "cool_tech", "n", "year", "value"],
+        'columns': ['tech', 'cool_tech', 'n', 'year', 'value'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': 0.001, 'column': 'value'}},
             {'func': add_huc_reg, 'args': {}},
@@ -665,9 +665,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Water Consumption (Bil Gals)',
-        {'file': "water_output.gdx",
+        {'file': 'water_output.gdx',
         'param': 'WaterCqctnallyears',
-        'columns': ["tech", "cool_tech", "n", "year", "value"],
+        'columns': ['tech', 'cool_tech', 'n', 'year', 'value'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': 0.001, 'column': 'value'}},
             {'func': add_huc_reg, 'args': {}},
@@ -956,9 +956,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('JEDI Outputs',
-        {'file': "JEDI_out.gdx",
+        {'file': 'JEDI_out.gdx',
         'param': 'JEDI',
-        'columns': ["jedi_scenario", "jedi_tech", "state_plus_dc", "category", "metric", "directness", "year", "value"],
+        'columns': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'category', 'metric', 'directness', 'year', 'value'],
         'index': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'category', 'metric', 'directness', 'year'],
         'preprocess': [
             {'func': scale_column_filtered, 'args': {'by_column': 'metric', 'by_vals': ['jobs'], 'change_column': 'value', 'scale_factor': .000001}},
@@ -985,8 +985,8 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('JEDI Outputs csv',
-        {'file': "JEDI_out.csv",
-        'columns': ["jedi_scenario", "jedi_tech", "state_plus_dc", "category", "metric", "directness", "year", "value"],
+        {'file': 'JEDI_out.csv',
+        'columns': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'category', 'metric', 'directness', 'year', 'value'],
         'index': ['jedi_scenario', 'jedi_tech', 'state_plus_dc', 'category', 'metric', 'directness', 'year'],
         'preprocess': [
             {'func': scale_column_filtered, 'args': {'by_column': 'metric', 'by_vals': ['jobs'], 'change_column': 'value', 'scale_factor': .000001}},
@@ -1026,9 +1026,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Marginal Curtailment',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'VRREOut',
-        'columns': ["n","m","year","rtech","type","value"],
+        'columns': ['n','m','year','rtech','type','value'],
         'preprocess': [
             {'func': pre_marginal_curtailment_filter, 'args': {}},
             {'func': sum_over_cols, 'args': {'group_cols': ['n', 'year', 'rtech', 'type'], 'sum_over_cols': ['m']}},
@@ -1040,9 +1040,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('Marginal Curtailment m',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'VRREOut',
-        'columns': ["n","m","year","rtech","type","value"],
+        'columns': ['n','m','year','rtech','type','value'],
         'preprocess': [
             {'func': pre_marginal_curtailment, 'args': {}},
         ],
@@ -1052,9 +1052,9 @@ results_meta = collections.OrderedDict((
         }
     ),
     ('wat_access',
-        {'file': "water_output.gdx",
+        {'file': 'water_output.gdx',
         'param': 'WatAccessallyears',
-        'columns': ["n", "class", "year", "value"],
+        'columns': ['n', 'class', 'year', 'value'],
         }
     ),
     ('<Old> System Cost',
@@ -1070,154 +1070,154 @@ results_meta = collections.OrderedDict((
     ('cap_wind_nrr',
         {'file': 'CONVqn.gdx',
         'param': 'WR2GOallyears',
-        'columns': ["i",  "class",  "windtype", "bin","year", "value"],
+        'columns': ['i',  'class',  'windtype', 'bin','year', 'value'],
         }
     ),
     ('cap_csp_nrr',
         {'file': 'CONVqn.gdx',
         'param': 'CSP2GOallyears',
-        'columns': ["i",  "cspclass", "bin","year", "value"],
+        'columns': ['i',  'cspclass', 'bin','year', 'value'],
         }
     ),
     ('cap_upv_nrr',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'UPVR2GOallyears',
-        'columns': ["n",  "upvclass", "bin","year", "value"],
+        'columns': ['n',  'upvclass', 'bin','year', 'value'],
         }
     ),
     ('cap_dupv_nrr',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'DUPVR2GOallyears',
-        'columns': ["n",  "dupvclass", "bin","year", "value"],
+        'columns': ['n',  'dupvclass', 'bin','year', 'value'],
         }
     ),
     ('op_cap',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'OperCONVqnallyears',
-        'columns': ["tech", "n", "year", "value"],
+        'columns': ['tech', 'n', 'year', 'value'],
         }
     ),
     ('rebuild',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'Rebuildqnallyears',
-        'columns': ["tech", "n", "year", "value"],
+        'columns': ['tech', 'n', 'year', 'value'],
         }
     ),
     ('upgrade',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'Upgradeqnallyears',
-        'columns': ["techold", "technew", "n", "year", "value"],
+        'columns': ['techold', 'technew', 'n', 'year', 'value'],
         }
     ),
     ('hydb',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'HydBin_allyrs',
-        'columns': ["cat", "class", "n", "year", "value"],
+        'columns': ['cat', 'class', 'n', 'year', 'value'],
         }
     ),
     ('pshb',
-        {'file': "CONVqn.gdx",
+        {'file': 'CONVqn.gdx',
         'param': 'PHSBIN_allyrs',
-        'columns': ["class", "n", "year", "value"],
+        'columns': ['class', 'n', 'year', 'value'],
         }
     ),
     ('plan_res',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'PlanRes',
-        'columns': ["tech", "n", "year", "m", "value"],
+        'columns': ['tech', 'n', 'year', 'm', 'value'],
         }
     ),
     ('oper_res',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'OperRes',
-        'columns': ["type", "tech", "n", "m", "year", "value"],
+        'columns': ['type', 'tech', 'n', 'm', 'year', 'value'],
         'presets': collections.OrderedDict((
             ('Stacked Bars all type and timeslice', {'chart_type':'Bar', 'x':'year', 'y':'value', 'series':'tech', 'explode':'scenario', 'bar_width':r'1.5', 'filter': {}}),
         )),
         }
     ),
     ('vrre',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'VRREOut',
-        'columns': ["n","m","year","tech","type","value"],
+        'columns': ['n','m','year','tech','type','value'],
         }
     ),
     ('trans',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'Transmission',
-        'columns': ["n", "n2", "year", "type", "value"],
+        'columns': ['n', 'n2', 'year', 'type', 'value'],
         }
     ),
     ('annual_rep',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'AnnualReport',
-        'columns': ["n", "year", "type", "value"],
+        'columns': ['n', 'year', 'type', 'value'],
         }
     ),
     ('annual_rep',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'AnnualReport',
-        'columns': ["n", "year", "type", "value"],
+        'columns': ['n', 'year', 'type', 'value'],
         }
     ),
     ('fuel_cost',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'fuelcost',
-        'columns': ["year", "country", "type", "value"],
+        'columns': ['year', 'country', 'type', 'value'],
         }
     ),
     ('reg_fuel_cost',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'reg_fuelcost',
-        'columns': ["nerc", "year", "type", "value"],
+        'columns': ['nerc', 'year', 'type', 'value'],
         }
     ),
     ('switches',
-        {'file': "Reporting.gdx",
+        {'file': 'Reporting.gdx',
         'param': 'ReportSwitches',
-        'columns': ["class", "switch", "value", "ignore"],
+        'columns': ['class', 'switch', 'value', 'ignore'],
         }
     ),
     ('st_rps',
-        {'file': "StRPSoutputs.gdx",
+        {'file': 'StRPSoutputs.gdx',
         'param': 'StRPSoutput',
-        'columns': ["tech", "st", "year", "value"],
+        'columns': ['tech', 'st', 'year', 'value'],
         }
     ),
     ('st_rps_mar',
-        {'file': "StRPSoutputs.gdx",
+        {'file': 'StRPSoutputs.gdx',
         'param': 'StRPSmarginalout',
-        'columns': ["st", "year", "const", "value"],
+        'columns': ['st', 'year', 'const', 'value'],
         }
     ),
     ('st_rps_rec',
-        {'file': "StRPSoutputs.gdx",
+        {'file': 'StRPSoutputs.gdx',
         'param': 'RECallyears',
-        'columns': ["n", "st2", "tech", "year", "value"],
+        'columns': ['n', 'st2', 'tech', 'year', 'value'],
         }
     ),
     ('ac_flow',
-        {'file': "Transmission.gdx",
+        {'file': 'Transmission.gdx',
         'param': 'TransFlowAC',
-        'columns': ["n", "n2", "year", "m", "value"],
+        'columns': ['n', 'n2', 'year', 'm', 'value'],
         }
     ),
     ('dc_flow',
-        {'file': "Transmission.gdx",
+        {'file': 'Transmission.gdx',
         'param': 'TransFlowDC',
-        'columns': ["n", "n2", "year", "m", "value"],
+        'columns': ['n', 'n2', 'year', 'm', 'value'],
         }
     ),
     ('cont_flow',
-        {'file': "Transmission.gdx",
+        {'file': 'Transmission.gdx',
         'param': 'ContractFlow',
-        'columns': ["n", "n2", "year", "m", "value"],
+        'columns': ['n', 'n2', 'year', 'm', 'value'],
         }
     ),
     ('obj_fnc',
-        {'file': "z.gdx",
+        {'file': 'z.gdx',
         'param': 'z_allyrs',
-        'columns': ["year", "value"],
+        'columns': ['year', 'value'],
         }
     ),
 ))

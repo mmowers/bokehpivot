@@ -62,9 +62,9 @@ def discount_costs(df, **kw):
 def get_pv_mult(year, type, dinvest=0.054439024, dsocial=0.03, lifetime=20):
     refyear = int(core.GL['widgets']['var_pv_year'].value)
     lastyear = int(core.GL['widgets']['var_end_year'].value)
-    if type == "Operation":
+    if type == 'Operation':
         pv_mult = 1 / (1 + dsocial)**(year - refyear)
-    elif type == "Capital":
+    elif type == 'Capital':
         pv_mult = CRF(dinvest, lifetime) / CRF(dinvest, min(lifetime, lastyear + 1 - year)) * 1 / (1 + dsocial)**(year - refyear)
     return pv_mult
 
