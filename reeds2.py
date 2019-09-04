@@ -162,7 +162,7 @@ def map_i_to_n(df, **kw):
 
 def remove_ba(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
-    df.rename(columns={'region':'rr'}, inplace=True)
+    df.rename(columns={'region':'rs'}, inplace=True)
     return df
 
 def pre_val_streams(dfs, **kw):
@@ -281,17 +281,17 @@ def pre_lcoe(dfs, **kw):
     return df
 
 def pre_curt_new(dfs, **kw):
-    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt_rate'], how='left',on=['tech', 'rr', 'timeslice', 'year'], sort=False)
+    df = pd.merge(left=dfs['gen_uncurt'], right=dfs['curt_rate'], how='left',on=['tech', 'rs', 'timeslice', 'year'], sort=False)
     df['Curt Rate']=df['Curt Rate'].fillna(0)
     if 'annual' in kw:
         df['MWh curt'] = df['Curt Rate'] * df['MWh uncurt']
-        df = sum_over_cols(df, group_cols=['tech', 'rr', 'year'], drop_cols=['timeslice','Curt Rate'])
+        df = sum_over_cols(df, group_cols=['tech', 'rs', 'year'], drop_cols=['timeslice','Curt Rate'])
         df['Curt Rate'] = df['MWh curt'] / df['MWh uncurt']
         df['Curt Rate']=df['Curt Rate'].fillna(0)
     return df
 
 def pre_cc_new(dfs, **kw):
-    df = pd.merge(left=dfs['cap'], right=dfs['cc'], how='left',on=['tech', 'rr', 'season', 'year'], sort=False)
+    df = pd.merge(left=dfs['cap'], right=dfs['cc'], how='left',on=['tech', 'rs', 'season', 'year'], sort=False)
     df['CC Rate']=df['CC Rate'].fillna(0)
     return df
 
@@ -404,9 +404,9 @@ columns_meta = {
     'region':{
         'type':'string',
     },
-    'rr':{
+    'rs':{
         'type':'string',
-        'join': this_dir_path + '/in/reeds2/hierarchy_rr.csv',
+        'join': this_dir_path + '/in/reeds2/hierarchy.csv',
     },
     'n':{
         'type':'string',
@@ -549,13 +549,13 @@ results_meta = collections.OrderedDict((
             {'func': remove_ba, 'args': {}},
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
         ],
-        'index': ['tech', 'rr', 'year'],
+        'index': ['tech', 'rs', 'year'],
         'presets': collections.OrderedDict((
             ('Stacked Area',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
             ('Stacked Bars',{'x':'year', 'y':'Capacity (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
             ('Explode By Tech',{'x':'year', 'y':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
-            ('RR Map Final by Tech',{'x':'rr', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
-            ('RR Map Final Wind',{'x':'rr', 'y':'Capacity (GW)', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last', 'tech':['wind-ons', 'wind-ofs']}}),
+            ('RS Map Final by Tech',{'x':'rs', 'y':'Capacity (GW)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Map', 'filter': {'year':'last'}}),
+            ('RS Map Final Wind',{'x':'rs', 'y':'Capacity (GW)', 'explode':'scenario', 'chart_type':'Map', 'filter': {'year':'last', 'tech':['wind-ons', 'wind-ofs']}}),
         )),
         }
     ),
@@ -1138,8 +1138,8 @@ results_meta = collections.OrderedDict((
 
     ('New Tech Curtailment Frac (Caused)',
         {'sources': [
-            {'name': 'gen_uncurt', 'file': 'gen_new_uncurt.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'MWh uncurt']},
-            {'name': 'curt_rate', 'file': 'curt_new.csv', 'columns': ['tech', 'rr', 'timeslice', 'year', 'Curt Rate']},
+            {'name': 'gen_uncurt', 'file': 'gen_new_uncurt.csv', 'columns': ['tech', 'rs', 'timeslice', 'year', 'MWh uncurt']},
+            {'name': 'curt_rate', 'file': 'curt_new.csv', 'columns': ['tech', 'rs', 'timeslice', 'year', 'Curt Rate']},
         ],
         'preprocess': [
             {'func': pre_curt_new, 'args': {'annual':True}},
@@ -1153,8 +1153,8 @@ results_meta = collections.OrderedDict((
 
     ('New Tech Capacity Credit',
         {'sources': [
-            {'name': 'cap', 'file': 'cap_new_cc.csv', 'columns': ['tech', 'rr', 'season', 'year', 'MW']},
-            {'name': 'cc', 'file': 'cc_new.csv', 'columns': ['tech', 'rr', 'season', 'year', 'CC Rate']},
+            {'name': 'cap', 'file': 'cap_new_cc.csv', 'columns': ['tech', 'rs', 'season', 'year', 'MW']},
+            {'name': 'cc', 'file': 'cc_new.csv', 'columns': ['tech', 'rs', 'season', 'year', 'CC Rate']},
         ],
         'preprocess': [
             {'func': pre_cc_new, 'args': {}},
@@ -1261,7 +1261,7 @@ results_meta = collections.OrderedDict((
 
     ('Capacity Iteration (GW)',
         {'file':'cap_iter.csv',
-        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Capacity (GW)'],
+        'columns': ['tech', 'vintage', 'rs', 'year', 'iter', 'Capacity (GW)'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
         ],
@@ -1277,7 +1277,7 @@ results_meta = collections.OrderedDict((
 
     ('Generation Iteration (TWh)',
         {'file':'gen_iter.csv',
-        'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'Gen (TWh)'],
+        'columns': ['tech', 'vintage', 'rs', 'year', 'iter', 'Gen (TWh)'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Gen (TWh)'}},
         ],
@@ -1293,7 +1293,7 @@ results_meta = collections.OrderedDict((
 
     ('Firm Capacity Iteration (GW)',
         {'file':'cap_firm_iter.csv',
-        'columns': ['tech', 'vintage', 'rr', 'season', 'year', 'iter', 'Capacity (GW)'],
+        'columns': ['tech', 'vintage', 'rs', 'season', 'year', 'iter', 'Capacity (GW)'],
         'preprocess': [
             {'func': scale_column, 'args': {'scale_factor': .001, 'column':'Capacity (GW)'}},
         ],
@@ -1306,8 +1306,8 @@ results_meta = collections.OrderedDict((
 
     ('Capacity Credit Iteration (GW)',
         {'sources': [
-            {'name': 'cap_firm', 'file': 'cap_firm_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'season', 'year', 'iter', 'GW']},
-            {'name': 'cap', 'file': 'cap_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'GW']},
+            {'name': 'cap_firm', 'file': 'cap_firm_iter.csv', 'columns': ['tech', 'vintage', 'rs', 'season', 'year', 'iter', 'GW']},
+            {'name': 'cap', 'file': 'cap_iter.csv', 'columns': ['tech', 'vintage', 'rs', 'year', 'iter', 'GW']},
         ],
         'preprocess': [
             {'func': pre_cc_iter, 'args': {}},
@@ -1322,8 +1322,8 @@ results_meta = collections.OrderedDict((
 
     ('Curtailment Iteration (TWh)',
         {'sources': [
-            {'name': 'curt', 'file': 'curt_tot_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'TWh']},
-            {'name': 'gen_uncurt', 'file': 'gen_iter.csv', 'columns': ['tech', 'vintage', 'rr', 'year', 'iter', 'TWh']},
+            {'name': 'curt', 'file': 'curt_tot_iter.csv', 'columns': ['tech', 'vintage', 'rs', 'year', 'iter', 'TWh']},
+            {'name': 'gen_uncurt', 'file': 'gen_iter.csv', 'columns': ['tech', 'vintage', 'rs', 'year', 'iter', 'TWh']},
         ],
         'preprocess': [
             {'func': pre_curt_iter, 'args': {}},

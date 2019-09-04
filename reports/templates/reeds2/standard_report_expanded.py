@@ -22,7 +22,7 @@ static_presets = [
     {'name': 'National Annual Capacity Price ($/kW-yr)', 'result': 'Requirement Prices and Quantities', 'preset': 'ResMarg Price Lines ($/kW-yr)'},
     {'name': 'System Cost (Bil $)', 'result': 'Sys Cost truncated at final year (Bil $)', 'preset': 'Total Discounted'},
     {'name': 'CO2 Emissions National (MMton)', 'result': 'CO2 Emissions National (MMton)', 'preset': 'Scenario Lines Over Time'},
-    {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RR Map Final Wind'},
+    {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RS Map Final Wind'},
     {'name': 'PV Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['upv','dupv','distpv']}}},
     {'name': 'CSP Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['csp']}}},
     {'name': 'Biopower Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['biopower','lfill-gas']}}},

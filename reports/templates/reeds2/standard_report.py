@@ -8,6 +8,6 @@ static_presets = [
     {'name': 'All-in Electricity Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'All-in Price ($/MWh)'},
     {'name': 'System Cost (Bil $)', 'result': 'Sys Cost truncated at final year (Bil $)', 'preset': 'Total Discounted'},
     {'name': 'CO2 Emissions National (MMton)', 'result': 'CO2 Emissions National (MMton)', 'preset': 'Scenario Lines Over Time'},
-    {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RR Map Final Wind'},
+    {'name': 'Final Wind Capacity (GW)', 'result': 'Capacity Resource Region (GW)', 'preset': 'RS Map Final Wind'},
     {'name': 'Final Regional Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Final BA Map ($/MWh)'},
 ]
