@@ -352,7 +352,7 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     #apply joins
     for col in df.columns.values.tolist():
         if 'meta_join_'+col in topwdg and topwdg['meta_join_'+col].value != '':
-            df_join = pd.read_csv(topwdg['meta_join_'+col].value.replace('"',''), dtype=object)
+            df_join = pd.read_csv(topwdg['meta_join_'+col].value.replace('"',''))
             #remove columns to left of col in df_join
             for c in df_join.columns.values.tolist():
                 if c == col:
@@ -368,7 +368,7 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
     #apply mappings
     for col in df.columns.values.tolist():
         if 'meta_map_'+col in topwdg and topwdg['meta_map_'+col].value != '':
-            df_map = pd.read_csv(topwdg['meta_map_'+col].value.replace('"',''), dtype=object)
+            df_map = pd.read_csv(topwdg['meta_map_'+col].value.replace('"',''))
             #now map from raw to display
             map_dict = dict(zip(list(df_map['raw']), list(df_map['display'])))
             df[col] = df[col].replace(map_dict)
@@ -379,7 +379,7 @@ def process_reeds_data(topwdg, custom_sorts, custom_colors, result_dfs):
         custom_sorts.pop(col, None)
         custom_colors.pop(col, None)
         if 'meta_style_'+col in topwdg and topwdg['meta_style_'+col].value != '':
-            df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''), dtype=object)
+            df_style = pd.read_csv(topwdg['meta_style_'+col].value.replace('"',''))
             custom_sorts[col] = df_style['order'].tolist()
             if 'color' in df_style:
                 custom_colors[col] = dict(zip(df_style['order'],df_style['color']))

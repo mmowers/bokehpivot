@@ -164,6 +164,7 @@ def remove_n(df, **kw):
     df = df[~df['region'].astype(str).str.startswith('p')].copy()
     df['region'] = df['region'].map(lambda x: x.lstrip('s'))
     df.rename(columns={'region':'i'}, inplace=True)
+    df['i'] = pd.to_numeric(df['i'])
     return df
 
 def pre_val_streams(dfs, **kw):
