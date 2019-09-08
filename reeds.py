@@ -65,7 +65,7 @@ def inflate_series(ser_in):
 def discount_costs(df_in, **kw):
     df = df_in.copy()
     #inner join the cost_cat_type.csv table to get types of costs (Capital, Operation)
-    cost_cat_type = pd.read_csv(this_dir_path + '/in/cost_cat_type.csv')
+    cost_cat_type = pd.read_csv(this_dir_path + '/in/reeds/cost_cat_type.csv')
     df = pd.merge(left=df, right=cost_cat_type, on='cost_cat', sort=False)
     #make new column that is the pv multiplier
     df['pv_mult'] = df.apply(lambda x: get_pv_mult(int(x['year']), x['type']), axis=1)
@@ -115,7 +115,7 @@ def pre_allin_price(dfs, **kw):
     return df
 
 def pre_capacity_factor(dfs, **kw):
-    df_hours = pd.read_csv(this_dir_path + '/in/hours.csv')
+    df_hours = pd.read_csv(this_dir_path + '/in/reeds/hours.csv')
     df_gen = pd.merge(left=dfs['gen'], right=df_hours, how='left', on=['m'], sort=False)
     df_gen['value'] = df_gen['gen'] * df_gen['hours']
     df_gen.drop(['gen','hours'], axis='columns', inplace=True)
@@ -353,7 +353,7 @@ def add_chosen_available(df, dfs):
     return df
 
 def add_huc_reg(df, **kw):
-    huc_map = pd.read_csv(this_dir_path + '/in/huc_2_ratios.csv', dtype={'huc_2':object})
+    huc_map = pd.read_csv(this_dir_path + '/in/reeds/huc_2_ratios.csv', dtype={'huc_2':object})
     df = pd.merge(left=df, right=huc_map, how='outer', on='n', sort=False)
     df['value'] = df['value'] * df['pca_huc_ratio']
     df = df.drop('pca_huc_ratio', 1)
@@ -369,45 +369,45 @@ def add_huc_reg(df, **kw):
 columns_meta = {
     'tech':{
         'type': 'string',
-        'map': this_dir_path + '/in/tech_map.csv',
-        'style': this_dir_path + '/in/tech_style.csv',
+        'map': this_dir_path + '/in/reeds/tech_map.csv',
+        'style': this_dir_path + '/in/reeds/tech_style.csv',
     },
     'jedi_tech':{
         'type': 'string',
-        'style': this_dir_path + '/in/jedi_tech_style.csv',
+        'style': this_dir_path + '/in/reeds/jedi_tech_style.csv',
     },
     'directness':{
         'type': 'string',
-        'map': this_dir_path + '/in/jedi_directness_map.csv',
-        'style': this_dir_path + '/in/jedi_directness_style.csv',
+        'map': this_dir_path + '/in/reeds/jedi_directness_map.csv',
+        'style': this_dir_path + '/in/reeds/jedi_directness_style.csv',
     },
     'i':{
         'type': 'string',
-        'join': this_dir_path + '/in/hierarchy.csv',
+        'join': this_dir_path + '/in/reeds/hierarchy.csv',
     },
     'n':{
         'type': 'string',
-        'join': this_dir_path + '/in/hierarchy.csv',
+        'join': this_dir_path + '/in/reeds/hierarchy.csv',
     },
     'state_plus_dc':{
         'type': 'string',
-        'join': this_dir_path + '/in/hierarchy_st_plus_dc.csv',
+        'join': this_dir_path + '/in/reeds/hierarchy_st_plus_dc.csv',
     },
     'huc_2':{
         'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
+        'join': this_dir_path + '/in/reeds/huc_join.csv',
     },
     'huc_4':{
         'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
+        'join': this_dir_path + '/in/reeds/huc_join.csv',
     },
     'huc_6':{
         'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
+        'join': this_dir_path + '/in/reeds/huc_join.csv',
     },
     'huc_8':{
         'type': 'string',
-        'join': this_dir_path + '/in/huc_join.csv',
+        'join': this_dir_path + '/in/reeds/huc_join.csv',
     },
     'year':{
         'type': 'number',
@@ -417,26 +417,26 @@ columns_meta = {
     },
     'm':{
         'type': 'string',
-        'map': this_dir_path + '/in/m_map.csv',
-        'style': this_dir_path + '/in/m_style.csv',
+        'map': this_dir_path + '/in/reeds/m_map.csv',
+        'style': this_dir_path + '/in/reeds/m_style.csv',
     },
     'cost_cat':{
         'type': 'string',
-        'map': this_dir_path + '/in/cost_cat_map.csv',
-        'style': this_dir_path + '/in/cost_cat_style.csv',
+        'map': this_dir_path + '/in/reeds/cost_cat_map.csv',
+        'style': this_dir_path + '/in/reeds/cost_cat_style.csv',
     },
     'cost_val_type':{
         'type': 'string',
-        'map': this_dir_path + '/in/cost_val_map.csv',
-        'style': this_dir_path + '/in/cost_val_style.csv',
+        'map': this_dir_path + '/in/reeds/cost_val_map.csv',
+        'style': this_dir_path + '/in/reeds/cost_val_style.csv',
     },
     'tech_val_type':{
-        'map': this_dir_path + '/in/tech_val_type_map.csv',
-        'style': this_dir_path + '/in/tech_val_type_style.csv',
+        'map': this_dir_path + '/in/reeds/tech_val_type_map.csv',
+        'style': this_dir_path + '/in/reeds/tech_val_type_style.csv',
     },
     'val_stream_type':{
-        'map': this_dir_path + '/in/val_stream_type_map.csv',
-        'style': this_dir_path + '/in/val_stream_type_style.csv',
+        'map': this_dir_path + '/in/reeds/val_stream_type_map.csv',
+        'style': this_dir_path + '/in/reeds/val_stream_type_style.csv',
     },
 }
 
