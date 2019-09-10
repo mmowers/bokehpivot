@@ -15,6 +15,7 @@ import pandas as pd
 import collections
 import bokeh.io as bio
 import bokeh.layouts as bl
+import bokeh.models as bm
 import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
@@ -74,7 +75,7 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'ad
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'cum_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_nozeros', 'map_min', 'map_max', 'map_manual',
-    'map_width', 'map_font_size', 'map_boundary_width', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
+    'map_arrows','map_width', 'map_font_size', 'map_boundary_width', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
 #custom_sorts: keys are column names. Values are lists of values in the desired sort order
@@ -480,6 +481,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['map_max'] = bmw.TextInput(title='Maximum (Equal Width Only)', value='', css_classes=['wdgkey-map_max', 'map-drop'])
     wdg['map_manual'] = bmw.TextInput(title='Manual Breakpoints (Manual Only)', value='', css_classes=['wdgkey-map_manual', 'map-drop'])
     wdg['map_manual_desc'] = bmw.Div(text='Comma separated list of values (e.g. -10,0,0.5,6), with one fewer value than # of bins', css_classes=['map-drop', 'description'])
+    wdg['map_arrows'] = bmw.Select(title='Add Arrows', value='No', options=['Yes','No'], css_classes=['wdgkey-map_arrows', 'map-drop'])
     wdg['map_width'] = bmw.TextInput(title='Map Width (px)', value=str(MAP_WIDTH), css_classes=['wdgkey-map_width', 'map-drop'])
     wdg['map_font_size'] = bmw.TextInput(title='Title Font Size', value=str(MAP_FONT_SIZE), css_classes=['wdgkey-map_font_size', 'map-drop'])
     wdg['map_boundary_width'] = bmw.TextInput(title='Boundary Line Width', value=str(MAP_BOUNDARY_WIDTH), css_classes=['wdgkey-map_boundary_width', 'map-drop'])
@@ -1290,6 +1292,11 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
         ))
         lines = fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value))
         hover_tool.renderers = [lines]
+        if wdg['map_arrows'].value == 'Yes':
+            for i,x in enumerate(xs):
+                fig_map.add_layout(bm.Arrow(x_start=xs[i][0], y_start=ys[i][0], x_end=xs[i][1], y_end=ys[i][1], line_alpha=0,
+                    end=bm.OpenHead(size=7,line_color=colors[i], line_width=float(wdg['map_line_width'].value), line_alpha=float(wdg['map_opacity'].value)),
+                ))
     return fig_map
 
 def get_map_bin_index(val, breakpoints):
