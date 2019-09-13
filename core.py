@@ -498,7 +498,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_html'] = bmw.Button(label='HTML of View', button_type='success', css_classes=['download-drop'])
     wdg['download_url'] = bmw.Button(label='URL of View', button_type='success', css_classes=['download-drop'])
     wdg['download_report'] = bmw.Button(label='Python Report of View', button_type='success', css_classes=['download-drop'])
-    wdg['download_reeds_preset'] = bmw.Button(label='ReEDS Preset of View', button_type='success', css_classes=['download-drop'])
+    wdg['download_preset'] = bmw.Button(label='Preset of View', button_type='success', css_classes=['download-drop'])
     wdg['download_source'] = bmw.Button(label='CSV of Full Data Source', button_type='success', css_classes=['download-drop'])
     wdg['legend_dropdown'] = bmw.Div(text='Legend', css_classes=['legend-dropdown'])
     wdg['legend'] = bmw.Div(text='', css_classes=['legend-drop'])
@@ -518,7 +518,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_html'].on_click(download_html)
     wdg['download_url'].on_click(download_url)
     wdg['download_report'].on_click(download_report)
-    wdg['download_reeds_preset'].on_click(download_reeds_preset)
+    wdg['download_preset'].on_click(download_preset)
     wdg['download_source'].on_click(download_source)
     wdg['adv_col'].on_change('value', update_adv_col)
     wdg['adv_col2'].on_change('value', update_adv_col2)
@@ -1601,7 +1601,7 @@ def update_data(attr, old, new):
 def update_data_source(init_load=False, init_config={}):
     '''
     When data source is updated (or on initial load), update the widgets
-    section of the layout based on if the input path is a csv, gdx, or ReEDS result.
+    section of the layout based on if the input path is a csv, gdx, or model result.
 
     Args:
         init_load (boolean): True if this is the initial load of the page
@@ -1624,7 +1624,7 @@ def update_data_source(init_load=False, init_config={}):
     elif data_type == 'GDX':
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
     elif data_type in rb.DATA_TYPE_OPTIONS:
-        rb.update_reeds_data_source(path, init_load, init_config, data_type)
+        rb.update_data_source(path, init_load, init_config, data_type)
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
 
@@ -1732,7 +1732,7 @@ def download_config(dir_path, auto_open, format):
     non_defaults = {}
     if format == 'report':
         config_string = "{'name': 'Section Name', 'config': {"
-    elif format == 'reeds_preset':
+    elif format == 'preset':
         config_string = "('Preset Name', {"
     filter_string = "'filter': {"
     for key in wdg_defaults:
@@ -1748,13 +1748,13 @@ def download_config(dir_path, auto_open, format):
             raw_flag = ''
             if isinstance(wdg[key], bmw.inputs.TextInput):
                 raw_flag = 'r'
-            if key != 'result' or format != 'reeds_preset':
+            if key != 'result' or format != 'preset':
                 config_string += "'" + key + "':" + raw_flag + "'" + str(wdg[key].value) + "', "
 
     if format == 'report':
         config_string += filter_string + '}}},'
         file_name = 'report'
-    elif format == 'reeds_preset':
+    elif format == 'preset':
         config_string += filter_string + '}}),'
         file_name = 'preset'
     if dir_path == '':
@@ -1765,17 +1765,17 @@ def download_config(dir_path, auto_open, format):
         if format == 'report':
             f.write('static_presets = [\n' + config_string + '\n]\n')
             f.write('#This file may be used directly as a custom report in the Build Report section of the interface, or the section above may be added to another custom report.\n')
-        elif format == 'reeds_preset':
+        elif format == 'preset':
             f.write(config_string + '\n')
-            f.write('#Add this to the "presets" section of the appropriate result in reeds.py.\n')
+            f.write('#Add this to the "presets" section of the appropriate result.\n')
     if auto_open:
         sp.Popen(os.path.abspath(path), shell=True)
 
 def download_report(dir_path='', auto_open=True):
     download_config(dir_path, auto_open, 'report')
 
-def download_reeds_preset(dir_path='', auto_open=True):
-    download_config(dir_path, auto_open, 'reeds_preset')
+def download_preset(dir_path='', auto_open=True):
+    download_config(dir_path, auto_open, 'preset')
 
 def download_csv(dir_path='', auto_open=True):
     '''
@@ -1830,7 +1830,7 @@ def download_all():
     download_csv(dir_path, False)
     download_url(dir_path, False)
     download_report(dir_path, False)
-    download_reeds_preset(dir_path, False)
+    download_preset(dir_path, False)
 
 def download_source(dir_path='', auto_open=True):
     '''

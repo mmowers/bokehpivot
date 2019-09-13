@@ -433,7 +433,7 @@ def build_reeds_presets_wdg(preset_options):
     wdg['presets'].on_change('value', update_reeds_presets)
     return wdg
 
-def update_reeds_data_source(path, init_load, init_config, data_type):
+def update_data_source(path, init_load, init_config, data_type):
     '''
     Respond to updates of data_source_wdg which are identified as ReEDS paths
 
