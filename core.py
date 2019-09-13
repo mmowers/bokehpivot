@@ -53,7 +53,7 @@ COLORS_QUAD = ['#3182bd','#e6550d','#31a354','#756bb1','#636363',
                '#c6dbef','#fdd0a2','#c7e9c0','#dadaeb','#d9d9d9']*1000
 MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/palettes.html for options
 C_NORM = "#31AADE"
-CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Map']
+CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Area Map', 'Line Map']
 STACKEDTYPES = ['Bar', 'Area']
 AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave', 'Weighted Ave Ratio']
 ADV_BASES = ['Consecutive', 'Total']
@@ -1090,28 +1090,29 @@ def create_maps(df, wdg, cols):
     if y_axis.dtype == object:
         print('***Error, your y-axis is a string.')
         return (maps, breakpoints) #empty list
-    if os.path.isfile(this_dir_path + '/in/gis_' + x_axis.name + '.csv'):
-        #This means we are doing an area map
+    if wdg['chart_type'].value == 'Area Map':
+        if not os.path.isfile(this_dir_path + '/in/gis_' + x_axis.name + '.csv'):
+            print('***Error. X-axis is not a supported region type for area maps.')
+            return (maps, breakpoints) #empty list
         map_type = 'area'
         reg_name = x_axis.name
         full_rgs = x_axis.unique().tolist()
         centroids = None
-    else:
-        #Check if this is a line map
-        reg_name = x_axis.name.split('-')[0]
-        if os.path.isfile(this_dir_path + '/in/gis_' + reg_name + '.csv') and os.path.isfile(this_dir_path + '/in/gis_centroid_' + reg_name + '.csv'):
-            map_type = 'line'
-            centroids = pd.read_csv(this_dir_path + '/in/gis_centroid_' + reg_name + '.csv', sep=',', dtype={'id': object})
-            #Add x and y columns to centroids and find x and y ranges
-            centroids['x'] = centroids['long']*53
-            centroids['y'] = centroids['lat']*69
-            centroids = centroids[['id','x','y']]
-            full_joint = x_axis.unique().tolist()
-            full_rgs = [i.split('-')[0] for i in full_joint] + [i.split('-')[1] for i in full_joint]
-            full_rgs = list(set(full_rgs))
-        else:
-            print('***Error. X-axis is not a supported map region.')
+    elif wdg['chart_type'].value == 'Line Map':
+        reg_arr = x_axis.name.split('-')
+        if not (len(reg_arr) == 2 and reg_arr[0] == reg_arr[1] and os.path.isfile(this_dir_path + '/in/gis_' + reg_arr[0] + '.csv') and os.path.isfile(this_dir_path + '/in/gis_centroid_' + reg_arr[0] + '.csv')):
+            print('***Error. X-axis is not supported for line maps.')
             return (maps, breakpoints) #empty list
+        reg_name = reg_arr[0]
+        map_type = 'line'
+        centroids = pd.read_csv(this_dir_path + '/in/gis_centroid_' + reg_name + '.csv', sep=',', dtype={'id': object})
+        #Add x and y columns to centroids and find x and y ranges
+        centroids['x'] = centroids['long']*53
+        centroids['y'] = centroids['lat']*69
+        centroids = centroids[['id','x','y']]
+        full_joint = x_axis.unique().tolist()
+        full_rgs = [i.split('-')[0] for i in full_joint] + [i.split('-')[1] for i in full_joint]
+        full_rgs = list(set(full_rgs))
     #find x and y ranges based on the mins and maxes of the regional boundaries for only regions that
     #are in the data
     filepath = this_dir_path + '/in/gis_' + reg_name + '.csv'
@@ -1691,7 +1692,7 @@ def update_plots():
         return
     GL['df_plots'] = set_df_plots(GL['df_source'], GL['columns'], GL['widgets'], GL['custom_sorts'])
     if GL['widgets']['render_plots'].value == 'Yes':
-        if GL['widgets']['chart_type'].value == 'Map':
+        if GL['widgets']['chart_type'].value in ['Line Map','Area Map']:
             figs, breakpoints = create_maps(GL['df_plots'], GL['widgets'], GL['columns'])
             legend_text = build_map_legend(GL['widgets'], breakpoints)
         else:
