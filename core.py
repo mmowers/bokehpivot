@@ -620,6 +620,14 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     df_plots = do_op(df_plots, wdg, cols, '')
     df_plots = do_op(df_plots, wdg, cols, '2')
 
+    #For arrow maps, flip the x axis when there are negatives so that all values are positive in the correct direction.
+    if wdg['chart_type'].value == 'Line Map' and wdg['map_arrows'].value == 'Yes':
+        df_plots[['temp_from','temp_to']] = df_plots[wdg['x'].value].str.split('-',expand=True)
+        idx_neg = df_plots[wdg['y'].value] < 0
+        df_plots.loc[idx_neg, wdg['x'].value] = df_plots.loc[idx_neg, 'temp_to'] + '-' + df_plots.loc[idx_neg, 'temp_from']
+        df_plots[wdg['y'].value] = df_plots[wdg['y'].value].abs()
+        df_plots.drop(['temp_from','temp_to'], axis='columns',inplace=True)
+
     #Scale Axes
     if wdg['x_scale'].value != '' and wdg['x'].value in cols['continuous']:
         df_plots[wdg['x'].value] = df_plots[wdg['x'].value] * float(wdg['x_scale'].value)
@@ -1277,6 +1285,8 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
     fig_map.patches('x', 'y', source=source, fill_color='color', fill_alpha=float(wdg['map_opacity'].value), line_color="black", line_width=float(wdg['map_boundary_width'].value))
 
     if map_type == 'line':
+        #For line and arrow maps, note that data should be preprocessed so that reverse entries for x axis do not exist.
+        #For example, if 'r4-r7' exists, then 'r7-r4' should not.
         df[['from','to']] = df.iloc[:,0].str.split('-',expand=True)
         df = df.merge(centroids, how='left', left_on='from', right_on='id', sort=False)
         df.rename(columns={'x':'from_x','y':'from_y'}, inplace=True)
@@ -1295,6 +1305,8 @@ def create_map(map_type, df, ranges, region_boundaries, centroids, wdg, colors_f
         lines = fig_map.multi_line('x', 'y', source=source, color='color', alpha=float(wdg['map_opacity'].value), line_width=float(wdg['map_line_width'].value))
         hover_tool.renderers = [lines]
         if wdg['map_arrows'].value == 'Yes':
+            #For arrow maps, negative values in the data are converted into positives in the
+            #opposite direction (in set_df_plots()), so negative values should no longer exist.
             for i,x in enumerate(xs):
                 fig_map.add_layout(bm.Arrow(x_start=xs[i][0], y_start=ys[i][0], x_end=xs[i][1], y_end=ys[i][1], line_alpha=0,
                     end=bm.OpenHead(size=float(wdg['map_arrow_size'].value),line_color=colors[i], line_width=float(wdg['map_line_width'].value), line_alpha=float(wdg['map_opacity'].value)),
