@@ -19,6 +19,8 @@ if sys.version_info[0] == 2:
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
+DATA_TYPE_OPTIONS = ['ReEDS 2.0', 'ReEDS 1.0', 'RPM']
+DEFAULT_DATA_TYPE = 'ReEDS 2.0'
 DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2018
 DEFAULT_DISCOUNT_RATE = .07

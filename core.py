@@ -30,8 +30,8 @@ import jinja2 as ji
 import reeds_bokeh as rb
 
 #Defaults to configure:
-DEFAULT_DATA_TYPE = 'ReEDS 2.0'
-DATA_TYPE_OPTIONS = ['ReEDS 2.0', 'ReEDS 1.0', 'RPM', 'CSV']
+DATA_TYPE_OPTIONS = rb.DATA_TYPE_OPTIONS + ['CSV']
+DEFAULT_DATA_TYPE = rb.DEFAULT_DATA_TYPE
 PLOT_WIDTH = 300
 PLOT_HEIGHT = 300
 PLOT_FONT_SIZE = 10
@@ -1623,7 +1623,7 @@ def update_data_source(init_load=False, init_config={}):
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
     elif data_type == 'GDX':
         GL['widgets'].update(get_wdg_gdx(path, GL['widgets']))
-    elif data_type in ['ReEDS 1.0', 'ReEDS 2.0', 'RPM']:
+    elif data_type in rb.DATA_TYPE_OPTIONS:
         rb.update_reeds_data_source(path, init_load, init_config, data_type)
     GL['controls'].children = list(GL['widgets'].values())
     GL['plots'].children = []
