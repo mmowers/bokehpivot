@@ -2,6 +2,10 @@
 ReEDS functions and globals for bokehpivot integration
 '''
 from __future__ import division
+
+DATA_TYPE_OPTIONS = ['ReEDS 2.0', 'ReEDS 1.0', 'RPM']
+DEFAULT_DATA_TYPE = 'ReEDS 2.0'
+
 import os
 import copy
 import pandas as pd
@@ -19,8 +23,6 @@ if sys.version_info[0] == 2:
 
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
-DATA_TYPE_OPTIONS = ['ReEDS 2.0', 'ReEDS 1.0', 'RPM']
-DEFAULT_DATA_TYPE = 'ReEDS 2.0'
 DEFAULT_DOLLAR_YEAR = 2018
 DEFAULT_PV_YEAR = 2018
 DEFAULT_DISCOUNT_RATE = .07
