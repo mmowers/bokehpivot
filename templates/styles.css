@@ -53,29 +53,10 @@ body {
     left: 0px !important;
     display: inline-block !important;
 }
-.chart-drop,
-.reeds-vars-drop,
-.meta-drop,
-.report-drop,
-.x-drop,
-.y-drop,
-.series-drop,
-.explode-drop,
-.adv-drop,
-.filter,
-.filters-update,
-.adjust-drop,
-.map-drop,
-.wdgkey-scenario_filter,
-.update-drop,
-.download-drop{
-    display: none;
-}
 .filter-head{
     font-weight: bold;
     cursor: pointer;
     color: purple;
-    display: none;
 }
 .chart-dropdown,
 .data-dropdown,
