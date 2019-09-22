@@ -202,8 +202,8 @@ def get_wdg_reeds(path, init_load, wdg_config, wdg_defaults, custom_sorts, custo
     if scenarios:
         labels = [a['name'] for a in scenarios]
         topwdg['scenario_filter_dropdown'] = bmw.Div(text='Filter Scenarios', css_classes=['scenario-filter-dropdown'])
-        topwdg['scenario_filter_sel_all'] = bmw.Button(label='Select All', button_type='success', css_classes=['scenario-filter-drop'], visible=False)
-        topwdg['scenario_filter_sel_none'] = bmw.Button(label='Select None', button_type='success', css_classes=['scenario-filter-drop'], visible=False)
+        topwdg['scenario_filter_sel_all'] = bmw.Button(label='Select All', button_type='success', css_classes=['scenario-filter-drop','select-all-none'], visible=False)
+        topwdg['scenario_filter_sel_none'] = bmw.Button(label='Select None', button_type='success', css_classes=['scenario-filter-drop','select-all-none'], visible=False)
         topwdg['scenario_filter'] = bmw.CheckboxGroup(labels=labels, active=list(range(len(labels))), css_classes=['scenario-filter-drop'], visible=False)
         #Add code to build report
         options = [o for o in os.listdir(this_dir_path+'/reports/templates'+GLRD['report_subdir']) if o.endswith(".py")]

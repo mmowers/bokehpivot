@@ -440,8 +440,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     for j, col in enumerate(cols['filterable']):
         val_list = [str(i) for i in sorted(df_source[col].unique().tolist())]
         wdg['heading_filter_'+str(j)] = bmw.Div(text=col, css_classes=['filter-head'], visible=False)
-        wdg['filter_sel_all_'+str(j)] = bmw.Button(label='Select All', button_type='success', css_classes=['filter-drop'], visible=False)
-        wdg['filter_sel_none_'+str(j)] = bmw.Button(label='Select None', button_type='success', css_classes=['filter-drop'], visible=False)
+        wdg['filter_sel_all_'+str(j)] = bmw.Button(label='Select All', button_type='success', css_classes=['filter-drop','select-all-none'], visible=False)
+        wdg['filter_sel_none_'+str(j)] = bmw.Button(label='Select None', button_type='success', css_classes=['filter-drop','select-all-none'], visible=False)
         wdg['filter_'+str(j)] = bmw.CheckboxGroup(labels=val_list, active=list(range(len(val_list))), css_classes=['wdgkey-filter_'+str(j), 'filter-drop'], visible=False)
         select_all_callback = bmc.CustomJS(args=dict(cb_wdg_fil=wdg['filter_'+str(j)]), code="""
             cb_wdg_fil.active = Array.from(Array(cb_wdg_fil.labels.length).keys())

@@ -108,3 +108,7 @@ body {
 .config-display-key{
     font-weight: bold;
 }
+.bk.select-all-none{
+    display: inline-block;
+    margin-right:5px;
+}
