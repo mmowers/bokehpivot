@@ -13,12 +13,14 @@ import getpass
 import numpy as np
 import pandas as pd
 import collections
+import bokeh as bk
 import bokeh.io as bio
 import bokeh.layouts as bl
 import bokeh.models as bm
 import bokeh.models.widgets as bmw
 import bokeh.models.sources as bms
 import bokeh.models.tools as bmt
+import bokeh.models.callbacks as bmc
 import bokeh.plotting as bp
 import bokeh.palettes as bpa
 import bokeh.resources as br
@@ -406,6 +408,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     '''
     #Add widgets
     print('***Build main widgets...')
+
     wdg = collections.OrderedDict()
     wdg['chart_type_dropdown'] = bmw.Div(text='Chart', css_classes=['chart-dropdown'])
     wdg['chart_type'] = bmw.Select(title='Chart Type', value='Dot', options=CHARTTYPES, css_classes=['wdgkey-chart_type', 'chart-drop'], visible=False)
@@ -437,7 +440,19 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     for j, col in enumerate(cols['filterable']):
         val_list = [str(i) for i in sorted(df_source[col].unique().tolist())]
         wdg['heading_filter_'+str(j)] = bmw.Div(text=col, css_classes=['filter-head'], visible=False)
-        wdg['filter_'+str(j)] = bmw.CheckboxGroup(labels=val_list, active=list(range(len(val_list))), css_classes=['wdgkey-filter_'+str(j), 'filter'], visible=False)
+        wdg['filter_sel_all_'+str(j)] = bmw.Button(label='Select All', button_type='success', css_classes=['filter-drop'], visible=False)
+        wdg['filter_sel_none_'+str(j)] = bmw.Button(label='Select None', button_type='success', css_classes=['filter-drop'], visible=False)
+        wdg['filter_'+str(j)] = bmw.CheckboxGroup(labels=val_list, active=list(range(len(val_list))), css_classes=['wdgkey-filter_'+str(j), 'filter-drop'], visible=False)
+        select_all_callback = bmc.CustomJS(args=dict(cb_wdg_fil=wdg['filter_'+str(j)]), code="""
+            cb_wdg_fil.active = Array.from(Array(cb_wdg_fil.labels.length).keys())
+            cb_wdg_fil.change.emit();
+        """)
+        select_none_callback = bmc.CustomJS(args=dict(cb_wdg_fil=wdg['filter_'+str(j)]), code="""
+            cb_wdg_fil.active = []
+            cb_wdg_fil.change.emit();
+        """)
+        wdg['filter_sel_all_'+str(j)].js_on_event(bk.events.ButtonClick, select_all_callback)
+        wdg['filter_sel_none_'+str(j)].js_on_event(bk.events.ButtonClick, select_none_callback)
     wdg['adjustments'] = bmw.Div(text='Plot Adjustments', css_classes=['adjust-dropdown'])
     wdg['plot_width'] = bmw.TextInput(title='Plot Width (px)', value=str(PLOT_WIDTH), css_classes=['wdgkey-plot_width', 'adjust-drop'], visible=False)
     wdg['plot_height'] = bmw.TextInput(title='Plot Height (px)', value=str(PLOT_HEIGHT), css_classes=['wdgkey-plot_height', 'adjust-drop'], visible=False)
