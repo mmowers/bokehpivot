@@ -14,7 +14,7 @@ import pandas as pd
 import collections
 import core
 
-rb_globs = {'output_subdir': '\\inout\\', 'test_file': 'Dispatch_allyrs.gdx', 'report_subdir':'/rpm'}
+rb_globs = {'output_subdir': '/inout/', 'test_file': 'Dispatch_allyrs.gdx', 'report_subdir':'/rpm'}
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 CRF_reeds = 0.077
