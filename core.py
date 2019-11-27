@@ -169,6 +169,8 @@ def static_report(data_type, data_source, static_presets, report_path, report_fo
         elif vwc['type'] == 'value':
             GL['widgets'][vwc['name']].value = vwc['val']
     time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    if os.path.exists(output_dir):
+        os.rename(output_dir, output_dir + '-archive-'+time)
     output_dir = output_dir + '/'
     os.makedirs(output_dir)
     #copy report file to output_dir
