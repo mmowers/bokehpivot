@@ -1829,27 +1829,31 @@ def download_html(dir_path='', auto_open=True):
     with the current timestamp.
     '''
     print('***Downloading View...')
-    if dir_path == '':
-        html_path = user_out_path + '/view-'+ datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")+'.html'
-    else:
-        html_path = dir_path + '/view.html'
-    static_plots = []
-    legend = bmw.Div(text=GL['widgets']['legend'].text)
-    display_config = bmw.Div(text=GL['widgets']['display_config'].text)
-    plots = GL['plots'].children
-    GL['plots'].children = []
-    static_plots.append(bl.row(plots + [legend] + [display_config]))
-    with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
-        template_string=template_file.read()
-    template = ji.Template(template_string)
-    resources = br.Resources()
-    html = be.file_html(static_plots, resources=resources, template=template)
-    with open(html_path, 'w') as f:
-        f.write(html)
-    if auto_open:
-        sp.Popen(os.path.abspath(html_path), shell=True)
-    GL['plots'].children = plots
+    try:
+        if dir_path == '':
+            html_path = user_out_path + '/view-'+ datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")+'.html'
+        else:
+            html_path = dir_path + '/view.html'
+        static_plots = []
+        legend = bmw.Div(text=GL['widgets']['legend'].text)
+        display_config = bmw.Div(text=GL['widgets']['display_config'].text)
+        plots = GL['plots'].children
+        GL['plots'].children = []
+        static_plots.append(bl.row(plots + [legend] + [display_config]))
+        with open(this_dir_path + '/templates/static/index.html', 'r') as template_file:
+            template_string=template_file.read()
+        template = ji.Template(template_string)
+        resources = br.Resources()
+        html = be.file_html(static_plots, resources=resources, template=template)
+        with open(html_path, 'w') as f:
+            f.write(html)
+        if auto_open:
+            sp.Popen(os.path.abspath(html_path), shell=True)
+        GL['plots'].children = plots
+    except Exception as e:
+        print('***Warning: ' + str(e))
     print('***Done downloading View to ' + html_path)
+    update_plots()
 
 def download_all():
     '''
@@ -1857,11 +1861,11 @@ def download_all():
     '''
     dir_path = user_out_path + '/view-'+ datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
     os.makedirs(dir_path, False)
-    download_html(dir_path, False)
     download_csv(dir_path, False)
     download_url(dir_path, False)
     download_report(dir_path, False)
     download_preset(dir_path, False)
+    download_html(dir_path, False)
 
 def download_source(dir_path='', auto_open=True):
     '''
