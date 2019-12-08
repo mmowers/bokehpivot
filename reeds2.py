@@ -213,11 +213,13 @@ def pre_val_streams(dfs, **kw):
 
     #apply inflation
     dfs['vs']['$'] = inflate_series(dfs['vs']['$'])
+
     #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV,
     #although i suppose certain equations, e.g. eq_cap_new_retmo also include previous year's CAP).
     df = pd.merge(left=dfs['vs'], right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df['Bulk $'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfcap']
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
+    
     #Preprocess gen: convert from annual MWh to bulk MWh present value as of data year
     df_gen = dfs['gen'].groupby(index_cols, sort=False, as_index =False).sum()
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
@@ -235,16 +237,19 @@ def pre_val_streams(dfs, **kw):
     df_cap['var_name'] = 'kW'
     df_cap['con_name'] = 'kW'
     df = pd.concat([df, df_gen, df_cap],sort=False,ignore_index=True)
+    
     #Add discounted $ using interface year
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
 
+    #Add new columns 
     df['tech, vintage'] = df['tech'] + ', ' + df['vintage']
     df['var, con'] = df['var_name'] + ', ' + df['con_name']
     #Make adjusted con_name column where all _obj are replaced with var_name, _obj
     df['con_adj'] = df['con_name']
     df.loc[df['con_name'] == '_obj', 'con_adj'] = df.loc[df['con_name'] == '_obj', 'var, con']
+    
     if 'LCOE' in kw:
         df = df[index_cols+['Bulk $ Dis','con_name']]
         df_cost = df[df['con_name'].isin(coststreams)].copy()
