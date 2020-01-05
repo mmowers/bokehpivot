@@ -21,6 +21,8 @@ df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 costs_orig_inv = ['Capital no ITC']
 costs_pol_inv = ['Capital','PTC','Emissions Tax']
 coststreams = ['_obj','eq_bioused','eq_gasused']
+valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement']
+# valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_national_gen','eq_annual_cap','eq_curt_gen_balance','eq_curtailment','eq_emit_accounting','eq_mingen_lb','eq_mingen_ub','eq_rps_ofswind']
 cc_techs = ['hydro','wind-ons','wind-ofs','csp','upv','dupv','pumped-hydro','battery']
 
 #1. Preprocess functions for results_meta
@@ -219,7 +221,18 @@ def pre_val_streams(dfs, **kw):
     df = pd.merge(left=dfs['vs'], right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
     df['Bulk $'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfcap']
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
-    
+
+    #Add total value and total cost
+    df_val = df[df['con_name'].isin(valuestreams)].copy()
+    df_val = sum_over_cols(df_val, group_cols=index_cols, drop_cols=['var_name','con_name'])
+    df_val['var_name'] = 'val_tot'
+    df_val['con_name'] = 'val_tot'
+    df_cost = df[df['con_name'].isin(coststreams)].copy()
+    df_cost = sum_over_cols(df_cost, group_cols=index_cols, drop_cols=['var_name','con_name'])
+    df_cost['var_name'] = 'cost_tot'
+    df_cost['con_name'] = 'cost_tot'
+    df = pd.concat([df, df_val, df_cost],sort=False,ignore_index=True)
+
     #Preprocess gen: convert from annual MWh to bulk MWh present value as of data year
     df_gen = dfs['gen'].groupby(index_cols, sort=False, as_index =False).sum()
     df_gen = pd.merge(left=df_gen, right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
@@ -229,6 +242,56 @@ def pre_val_streams(dfs, **kw):
     df_gen['var_name'] = 'MWh'
     df_gen['con_name'] = 'MWh'
     df_gen.drop(['pvfcap', 'pvfonm'], axis='columns',inplace=True)
+    df = pd.concat([df, df_gen],sort=False,ignore_index=True)
+
+    if 'value_factors' in kw:
+        #should i use uncurtailed generation, curtailment value streams?
+
+        #get MWh annual load in each region to use as the benchmark MWh
+        df_bm_load = dfs['q'][dfs['q']['type']=='load'].copy()
+        df_bm_load = sum_over_cols(df_bm_load, group_cols=['rb', 'year'], drop_cols=['timeslice','type', 'subtype'])
+        df_bm_load.rename(columns={'q': 'Bulk $'}, inplace=True) #So we can concatenate. Note that these are annual MWh, not bulk MWh
+        df_bm_load['con_name'] = 'MWh'
+        #we will need to add tech and vintage columns too below
+
+        #get requirement prices and quantities and build benchmark value streams
+        dfs['p']['p'] = inflate_series(dfs['p']['p'])
+        df_bm = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['type', 'subtype', 'rb', 'timeslice', 'year'], sort=False)
+        df_bm['p'].fillna(0, inplace=True)
+        df_bm['Bulk $'] = df_bm['p'] * df_bm['q'] #This is actually annual $, but the benchmark is only useful normalized.
+        #Add con_name:
+        types = ['load','res_marg','oper_res','state_rps']
+        df_bm = df_bm[df_bm['type'].isin(types)].copy()
+        df_con_type = pd.DataFrame({'type':types,'con_name':valuestreams})
+        df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
+
+        #local all-in (weighted) benchmark
+        df_bm_allin = sum_over_cols(df_bm, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','type', 'subtype','p','q'])
+        df_bm_allin = pd.concat([df_bm_allin, df_bm_load],sort=False,ignore_index=True)
+        df_bm_allin['tech'] = 'local-allin-benchmark'
+
+        #Add hours
+        # df_hours = pd.read_csv(this_dir_path + '/in/reeds2/hours.csv')
+        # df_bm = pd.merge(left=df_bm, right=df_hours, how='left', on=['timeslice'], sort=False)
+        # #df_bm: type, subtype, rb, timeslice, year, p, q, $, con_name, hours
+        # #df: tech, vintage, rb, year, var_name, con_name, Bulk $
+        # #Add flat local benchmark $, assuming the same q
+        # df_bm['']
+
+        #concatenate benchmarks and add total value and other columns
+        df_bm_out = pd.concat([df_bm_allin],sort=False,ignore_index=True)
+        df_bm_out['vintage'] = 'N/A'
+        df_bm_valtot = df_bm_out[df_bm_out['con_name'].isin(valuestreams)].copy()
+        df_bm_valtot = sum_over_cols(df_bm_valtot, group_cols=index_cols, drop_cols=['con_name'])
+        df_bm_valtot['con_name'] = 'val_tot'
+        df_bm_out = pd.concat([df_bm_out,df_bm_valtot],sort=False,ignore_index=True)
+
+        #reduce value streams and combine with benchmarks
+        df = df[df['con_name'].isin(valuestreams+['val_tot','MWh'])].copy()
+        df = sum_over_cols(df, group_cols=index_cols+['con_name'], drop_cols=['var_name'])
+        df = pd.concat([df, df_bm_out],sort=False,ignore_index=True)
+        return df
+
     #Preprocess capacity: map i to n, convert from MW to kW, reformat columns to concatenate
     df_cap = map_rs_to_rb(dfs['cap'])
     df_cap =  df_cap.groupby(index_cols, sort=False, as_index =False).sum()
@@ -236,20 +299,20 @@ def pre_val_streams(dfs, **kw):
     df_cap.rename(columns={'MW': 'Bulk $'}, inplace=True) #So we can concatenate
     df_cap['var_name'] = 'kW'
     df_cap['con_name'] = 'kW'
-    df = pd.concat([df, df_gen, df_cap],sort=False,ignore_index=True)
+    df = pd.concat([df, df_cap],sort=False,ignore_index=True)
     
     #Add discounted $ using interface year
     d = float(core.GL['widgets']['var_discount_rate'].value)
     y0 = int(core.GL['widgets']['var_pv_year'].value)
     df['Bulk $ Dis'] = df['Bulk $'] / (1 + d)**(df['year'] - y0) #This discounts $, MWh, and kW, important for NVOE, NVOC, LCOE, etc.
 
-    #Add new columns 
+    #Add new columns
     df['tech, vintage'] = df['tech'] + ', ' + df['vintage']
     df['var, con'] = df['var_name'] + ', ' + df['con_name']
     #Make adjusted con_name column where all _obj are replaced with var_name, _obj
     df['con_adj'] = df['con_name']
     df.loc[df['con_name'] == '_obj', 'con_adj'] = df.loc[df['con_name'] == '_obj', 'var, con']
-    
+
     if 'LCOE' in kw:
         df = df[index_cols+['Bulk $ Dis','con_name']]
         df_cost = df[df['con_name'].isin(coststreams)].copy()
@@ -261,6 +324,7 @@ def pre_val_streams(dfs, **kw):
         df = pd.merge(left=df_cost, right=df_energy, how='left', on=index_cols, sort=False)
         df['LCOE'] = df['Bulk $ Dis'] / df['MWh Dis']
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
     return df
 
 def pre_reduced_cost(df, **kw):
@@ -985,6 +1049,25 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Value Factors Sequential Existing Techs',
+        {'sources': [
+            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
+            {'name': 'cap', 'file': 'cap_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
+            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'p']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
+        ],
+        'preprocess': [
+            {'func': pre_val_streams, 'args': {'remove_inv':True, 'value_factors':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'Bulk $', 'series':'tech', 'explode':'con_name', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'adv_op2':'Ratio', 'adv_col2':'tech', 'adv_col_base2':'local-allin-benchmark', 'sync_axes':'No', 'filter': {}}),
+        )),
+        }
+    ),
     ('Value Streams Intertemporal',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
