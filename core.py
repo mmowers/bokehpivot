@@ -72,7 +72,7 @@ RANGE_GLYPH_MAP = {'Line': 'Area', 'Dot': 'Bar'}
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
-WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'plot_title', 'plot_title_size',
+WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
@@ -437,6 +437,9 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['adv_op2'] = bmw.Select(title='Second Operation', value='None', options=['None', 'Difference', 'Ratio'], css_classes=['wdgkey-adv_op', 'adv-drop'], visible=False)
     wdg['adv_col2'] = bmw.Select(title='Operate Across', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-adv_col', 'adv-drop'], visible=False)
     wdg['adv_col_base2'] = bmw.Select(title='Base', value='None', options=['None'], css_classes=['wdgkey-adv_col_base', 'adv-drop'], visible=False)
+    wdg['adv_op3'] = bmw.Select(title='Third Operation', value='None', options=['None', 'Difference', 'Ratio'], css_classes=['wdgkey-adv_op', 'adv-drop'], visible=False)
+    wdg['adv_col3'] = bmw.Select(title='Operate Across', value='None', options=['None'] + cols['all'], css_classes=['wdgkey-adv_col', 'adv-drop'], visible=False)
+    wdg['adv_col_base3'] = bmw.Select(title='Base', value='None', options=['None'], css_classes=['wdgkey-adv_col_base', 'adv-drop'], visible=False)
     wdg['filters'] = bmw.Div(text='Filters', css_classes=['filters-dropdown'])
     wdg['filters_update'] = bmw.Button(label='Update Filters', button_type='success', css_classes=['filters-update'], visible=False)
     for j, col in enumerate(cols['filterable']):
@@ -540,6 +543,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['download_source'].on_click(download_source)
     wdg['adv_col'].on_change('value', update_adv_col)
     wdg['adv_col2'].on_change('value', update_adv_col2)
+    wdg['adv_col3'].on_change('value', update_adv_col3)
     for name in WDG_COL:
         wdg[name].on_change('value', update_wdg_col)
     for name in WDG_NON_COL:
@@ -637,6 +641,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
     #Do Advanced Operations
     df_plots = do_op(df_plots, wdg, cols, '')
     df_plots = do_op(df_plots, wdg, cols, '2')
+    df_plots = do_op(df_plots, wdg, cols, '3')
 
     #For arrow maps, flip the x axis when there are negatives so that all values are positive in the correct direction.
     if wdg['chart_type'].value == 'Line Map' and wdg['map_arrows'].value == 'Yes':
@@ -1682,6 +1687,9 @@ def update_adv_col(attr, old, new):
 
 def update_adv_col2(attr, old, new):
     update_adv_col_common('2')
+
+def update_adv_col3(attr, old, new):
+    update_adv_col_common('3')
 
 def update_adv_col_common(sfx):
     '''
