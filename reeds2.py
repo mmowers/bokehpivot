@@ -266,9 +266,15 @@ def pre_val_streams(dfs, **kw):
         df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
 
         #local all-in (weighted) benchmark
-        df_bm_allin = sum_over_cols(df_bm, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','type', 'subtype','p','q'])
-        df_bm_allin = pd.concat([df_bm_allin, df_bm_load],sort=False,ignore_index=True)
-        df_bm_allin['tech'] = 'local-allin-benchmark'
+        df_bm_allin_loc = sum_over_cols(df_bm, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','type', 'subtype','p','q'])
+        df_bm_allin_loc = pd.concat([df_bm_allin_loc, df_bm_load],sort=False,ignore_index=True)
+        df_bm_allin_loc['tech'] = 'local-allin-benchmark'
+
+        #system all-in (weighted) benchmark. Total $ and MWh in entire system are attributed to each BA, so we have duplicated data...
+        df_bm_allin_sys = sum_over_cols(df_bm_allin_loc, group_cols=['con_name', 'year'], drop_cols=['rb','tech'])
+        df_bm_allin_loc_idx = df_bm_allin_loc.drop(['Bulk $'], axis='columns')
+        df_bm_allin_sys = pd.merge(left=df_bm_allin_loc_idx, right=df_bm_allin_sys, how='left', on=['con_name', 'year'], sort=False)
+        df_bm_allin_sys['tech'] = 'system-allin-benchmark'
 
         #Add hours
         # df_hours = pd.read_csv(this_dir_path + '/in/reeds2/hours.csv')
@@ -279,7 +285,7 @@ def pre_val_streams(dfs, **kw):
         # df_bm['']
 
         #concatenate benchmarks and add total value and other columns
-        df_bm_out = pd.concat([df_bm_allin],sort=False,ignore_index=True)
+        df_bm_out = pd.concat([df_bm_allin_loc, df_bm_allin_sys],sort=False,ignore_index=True)
         df_bm_out['vintage'] = 'N/A'
         df_bm_valtot = df_bm_out[df_bm_out['con_name'].isin(valuestreams)].copy()
         df_bm_valtot = sum_over_cols(df_bm_valtot, group_cols=index_cols, drop_cols=['con_name'])
