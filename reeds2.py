@@ -247,45 +247,68 @@ def pre_val_streams(dfs, **kw):
     if 'value_factors' in kw:
         #should i use uncurtailed generation, curtailment value streams?
 
-        #get MWh annual load in each region to use as the benchmark MWh
-        df_bm_load = dfs['q'][dfs['q']['type']=='load'].copy()
-        df_bm_load = sum_over_cols(df_bm_load, group_cols=['rb', 'year'], drop_cols=['timeslice','type', 'subtype'])
-        df_bm_load.rename(columns={'q': 'Bulk $'}, inplace=True) #So we can concatenate. Note that these are annual MWh, not bulk MWh
+        #Use MWh annual load in each region as the benchmark MWh. Is the scale too different from actual techs?
+        df_load = dfs['q'][dfs['q']['type']=='load'].copy()
+        df_load = sum_over_cols(df_load, group_cols=['rb', 'year'], drop_cols=['timeslice','type', 'subtype'])
+        df_bm_load = df_load.rename(columns={'q': 'Bulk $'}) #So we can concatenate. Note that these are annual MWh, not bulk MWh
         df_bm_load['con_name'] = 'MWh'
-        #we will need to add tech and vintage columns too below
 
         #get requirement prices and quantities and build benchmark value streams
         dfs['p']['p'] = inflate_series(dfs['p']['p'])
         df_bm = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['type', 'subtype', 'rb', 'timeslice', 'year'], sort=False)
         df_bm['p'].fillna(0, inplace=True)
-        df_bm['Bulk $'] = df_bm['p'] * df_bm['q'] #This is actually annual $, but the benchmark is only useful normalized.
         #Add con_name:
         types = ['load','res_marg','oper_res','state_rps']
         df_bm = df_bm[df_bm['type'].isin(types)].copy()
         df_con_type = pd.DataFrame({'type':types,'con_name':valuestreams})
         df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
+        #drop type and subtype because we're using con_name from here on
+        df_bm.drop(['type','subtype'], axis='columns', inplace=True)
 
+        #All-in benchmarks. These assume the benchmark tech provides all value streams at requirement levels.
         #local all-in (weighted) benchmark
-        df_bm_allin_loc = sum_over_cols(df_bm, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','type', 'subtype','p','q'])
+        df_bm_allin_loc = df_bm.copy()
+        df_bm_allin_loc['Bulk $'] = df_bm_allin_loc['p'] * df_bm_allin_loc['q'] #This is actually annual $, but the benchmark is only useful normalized.
+        df_bm_allin_loc = sum_over_cols(df_bm_allin_loc, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','p','q'])
         df_bm_allin_loc = pd.concat([df_bm_allin_loc, df_bm_load],sort=False,ignore_index=True)
-        df_bm_allin_loc['tech'] = 'local-allin-benchmark'
+        df_bm_allin_loc['tech'] = 'benchmark-allin-local'
 
         #system all-in (weighted) benchmark. Total $ and MWh in entire system are attributed to each BA, so we have duplicated data...
         df_bm_allin_sys = sum_over_cols(df_bm_allin_loc, group_cols=['con_name', 'year'], drop_cols=['rb','tech'])
         df_bm_allin_loc_idx = df_bm_allin_loc.drop(['Bulk $'], axis='columns')
         df_bm_allin_sys = pd.merge(left=df_bm_allin_loc_idx, right=df_bm_allin_sys, how='left', on=['con_name', 'year'], sort=False)
-        df_bm_allin_sys['tech'] = 'system-allin-benchmark'
+        df_bm_allin_sys['tech'] = 'benchmark-allin-sys'
 
+        #Flat-block benchmarks. These assume the tech provides energy + reserve margin only.
+        flatblock_cons = ['eq_supply_demand_balance','eq_reserve_margin']
+        df_bm_flat_loc = df_bm[df_bm['con_name'].isin(flatblock_cons)].copy()
         #Add hours
-        # df_hours = pd.read_csv(this_dir_path + '/in/reeds2/hours.csv')
-        # df_bm = pd.merge(left=df_bm, right=df_hours, how='left', on=['timeslice'], sort=False)
-        # #df_bm: type, subtype, rb, timeslice, year, p, q, $, con_name, hours
-        # #df: tech, vintage, rb, year, var_name, con_name, Bulk $
-        # #Add flat local benchmark $, assuming the same q
-        # df_bm['']
+        df_hours = pd.read_csv(this_dir_path + '/in/reeds2/hours.csv')
+        df_bm_flat_loc = pd.merge(left=df_bm_flat_loc, right=df_hours, how='left', on=['timeslice'], sort=False)
+        #First we calculate p as annual $ for 1 kW flat-block tech,
+        #so we need to multiply eq_supply_demand_balance price ($/MWh) by hours divided by 1000 (eq_reserve_margin price is fine as is) and sum across timeslices
+        load_cond = df_bm_flat_loc['con_name'] == 'eq_supply_demand_balance'
+        df_bm_flat_loc.loc[load_cond, 'p'] = df_bm_flat_loc.loc[load_cond, 'p'] * df_bm_flat_loc.loc[load_cond, 'hours'] / 1000
+        df_bm_flat_loc = sum_over_cols(df_bm_flat_loc, group_cols=['con_name', 'rb', 'year'], drop_cols=['timeslice','q','hours'])
+        #Now we calculate kW for the actual flat-block size at each ba, based on the load in each ba
+        df_bm_kW = df_load.copy()
+        df_bm_kW['q'] = df_bm_kW['q'] * 1000 / 8760 #This converts 'q' from annual MWh to kW of a flat block tech
+        #Now calculate $ for flat-block tech
+        df_bm_flat_loc = pd.merge(left=df_bm_flat_loc, right=df_bm_kW, how='left', on=['rb', 'year'], sort=False)
+        df_bm_flat_loc['Bulk $'] = df_bm_flat_loc['p'] * df_bm_flat_loc['q'] #Again, this is actually annual $, not bulk $
+        df_bm_flat_loc.drop(['p','q'], axis='columns', inplace=True)
+        #Now concatenate with load
+        df_bm_flat_loc = pd.concat([df_bm_flat_loc, df_bm_load],sort=False,ignore_index=True)
+        df_bm_flat_loc['tech'] = 'benchmark-flat-local'
+
+        #system flat benchmark. Total $ and MWh in entire system are attributed to each BA, so we have duplicated data...
+        df_bm_flat_sys = sum_over_cols(df_bm_flat_loc, group_cols=['con_name', 'year'], drop_cols=['rb','tech'])
+        df_bm_flat_loc_idx = df_bm_flat_loc.drop(['Bulk $'], axis='columns')
+        df_bm_flat_sys = pd.merge(left=df_bm_flat_loc_idx, right=df_bm_flat_sys, how='left', on=['con_name', 'year'], sort=False)
+        df_bm_flat_sys['tech'] = 'benchmark-flat-sys'
 
         #concatenate benchmarks and add total value and other columns
-        df_bm_out = pd.concat([df_bm_allin_loc, df_bm_allin_sys],sort=False,ignore_index=True)
+        df_bm_out = pd.concat([df_bm_allin_loc, df_bm_allin_sys, df_bm_flat_loc, df_bm_flat_sys],sort=False,ignore_index=True)
         df_bm_out['vintage'] = 'N/A'
         df_bm_valtot = df_bm_out[df_bm_out['con_name'].isin(valuestreams)].copy()
         df_bm_valtot = sum_over_cols(df_bm_valtot, group_cols=index_cols, drop_cols=['con_name'])
@@ -1070,7 +1093,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {'remove_inv':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'Bulk $', 'series':'tech', 'explode':'con_name', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'adv_op2':'Ratio', 'adv_col2':'tech', 'adv_col_base2':'local-allin-benchmark', 'sync_axes':'No', 'filter': {}}),
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'Bulk $', 'series':'tech', 'explode':'con_name', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'adv_op2':'Ratio', 'adv_col2':'tech', 'adv_col_base2':'benchmark-allin-local', 'sync_axes':'No', 'filter': {}}),
         )),
         }
     ),
