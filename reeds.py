@@ -616,9 +616,9 @@ results_meta = collections.OrderedDict((
             {'func': pre_elec_price, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('National',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'type', 'chart_type':'Line'}),
-            ('National Scenario',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'type', 'explode': 'scenario', 'chart_type':'Line'}),
-            ('Census',{'x':'year','y':'Price ($/MWh)', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'censusregions', 'explode_group': 'type', 'chart_type':'Line'}),
+            ('National',{'x':'year','y':'Price ($/MWh)', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'load', 'series':'scenario', 'explode': 'type', 'chart_type':'Line'}),
+            ('National Scenario',{'x':'year','y':'Price ($/MWh)', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'load', 'series':'type', 'explode': 'scenario', 'chart_type':'Line'}),
+            ('Census',{'x':'year','y':'Price ($/MWh)', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'load', 'series':'scenario', 'explode': 'censusregions', 'explode_group': 'type', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -631,8 +631,8 @@ results_meta = collections.OrderedDict((
             {'func': pre_elec_price_components, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Stacked Components',{'x':'year','y':'value', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'elec_comp_type', 'explode': 'scenario', 'chart_type':'Bar'}),
-            ('Scenario Compare',{'x':'year','y':'value', 'y_agg':'Weighted Ave', 'y_weight':'load', 'series':'scenario', 'explode': 'elec_comp_type', 'chart_type':'Line'}),
+            ('Stacked Components',{'x':'year','y':'value', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'load', 'series':'elec_comp_type', 'explode': 'scenario', 'chart_type':'Bar'}),
+            ('Scenario Compare',{'x':'year','y':'value', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'load', 'series':'scenario', 'explode': 'elec_comp_type', 'chart_type':'Line'}),
         )),
         }
     ),
@@ -1021,7 +1021,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_marginal_capacity_value, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Marginal Capacity Value',{'chart_type':'Line', 'x':'year', 'y':'Capacity Value', 'y_agg':'Weighted Ave', 'y_weight':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'filter': {}}),
+            ('Marginal Capacity Value',{'chart_type':'Line', 'x':'year', 'y':'Capacity Value', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'Capacity (GW)', 'series':'scenario', 'explode':'tech', 'filter': {}}),
         )),
         }
     ),
@@ -1035,7 +1035,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_marginal_curtailment, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Marginal Curtailment by tech', {'chart_type':'Line', 'x':'year', 'y':'surpmar', 'y_agg':'Weighted Ave', 'y_weight':'gen', 'series':'scenario', 'explode':'rtech', 'filter': {}}),
+            ('Marginal Curtailment by tech', {'chart_type':'Line', 'x':'year', 'y':'surpmar', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'gen', 'series':'scenario', 'explode':'rtech', 'filter': {}}),
         )),
         }
     ),
@@ -1047,7 +1047,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_marginal_curtailment, 'args': {}},
         ],
         'presets': collections.OrderedDict((
-            ('Marginal Curtailment by tech', {'chart_type':'Line', 'x':'year', 'y':'surpmar', 'y_agg':'Weighted Ave', 'y_weight':'gen', 'series':'scenario', 'explode':'rtech', 'filter': {}}),
+            ('Marginal Curtailment by tech', {'chart_type':'Line', 'x':'year', 'y':'surpmar', 'y_agg':'sum(a*b)/sum(b)', 'y_b':'gen', 'series':'scenario', 'explode':'rtech', 'filter': {}}),
         )),
         }
     ),

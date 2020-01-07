@@ -57,7 +57,7 @@ MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/pal
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Area Map', 'Line Map']
 STACKEDTYPES = ['Bar', 'Area']
-AGGREGATIONS = ['None', 'Sum', 'Ave', 'Weighted Ave', 'Weighted Ave Ratio']
+AGGREGATIONS = ['None', 'sum(a)', 'ave(a)', 'sum(a*b)/sum(b)', '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]']
 ADV_BASES = ['Consecutive', 'Total']
 MAP_FONT_SIZE = 10
 MAP_NUM_BINS = 9
@@ -72,7 +72,7 @@ RANGE_GLYPH_MAP = {'Line': 'Area', 'Dot': 'Bar'}
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
-WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_weight', 'y_weight_denom', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
+WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_b', 'y_c', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
@@ -419,10 +419,10 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['x'] = bmw.Select(title='X-Axis (required)', value='None', options=['None'] + cols['x-axis'], css_classes=['wdgkey-x', 'x-drop'], visible=False)
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'], visible=False)
     wdg['y_dropdown'] = bmw.Div(text='Y-Axis (required)', css_classes=['y-dropdown'])
-    wdg['y'] = bmw.Select(title='Y-Axis (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'], visible=False)
-    wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='Sum', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'], visible=False)
-    wdg['y_weight'] = bmw.Select(title='Weighting Factor', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_weight', 'y-drop'], visible=False)
-    wdg['y_weight_denom'] = bmw.Select(title='Denominator Weighting Factor', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_weight_denom', 'y-drop'], visible=False)
+    wdg['y'] = bmw.Select(title='a (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'], visible=False)
+    wdg['y_b'] = bmw.Select(title='b (optional)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_b', 'y-drop'], visible=False)
+    wdg['y_c'] = bmw.Select(title='c (optional)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_c', 'y-drop'], visible=False)
+    wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='sum(a)', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'], visible=False)
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'], visible=False)
@@ -624,11 +624,11 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         if wdg['explode_group'].value != 'None': groupby_cols = [wdg['explode_group'].value] + groupby_cols
         df_grouped = df_plots.groupby(groupby_cols, sort=False)
         kwargs = {}
-        if wdg['y_agg'].value == 'Weighted Ave' and wdg['y_weight'].value in cols['continuous']:
-            kwargs['y_weight'] = wdg['y_weight'].value
-        elif wdg['y_agg'].value == 'Weighted Ave Ratio' and wdg['y_weight'].value in cols['continuous'] and wdg['y_weight_denom'].value in cols['continuous']:
-            kwargs['y_weight_numer'] = wdg['y_weight'].value
-            kwargs['y_weight_denom'] = wdg['y_weight_denom'].value
+        if wdg['y_agg'].value == 'sum(a*b)/sum(b)' and wdg['y_b'].value in cols['continuous']:
+            kwargs['y_b'] = wdg['y_b'].value
+        elif wdg['y_agg'].value == '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]' and wdg['y_b'].value in cols['continuous'] and wdg['y_c'].value in cols['continuous']:
+            kwargs['y_b'] = wdg['y_b'].value
+            kwargs['y_c'] = wdg['y_c'].value
         df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['range'].value, kwargs).reset_index()
         #The index of each group's dataframe is added as another column it seems. So we need to remove it:
         df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
@@ -1533,42 +1533,41 @@ def display_config(wdg, wdg_defaults):
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
-def apply_aggregation(group, agg_method, y_col, wdg_range, kw):
+def apply_aggregation(group, agg_method, y_a, wdg_range, kw):
     """
     Helper function for pandas dataframe groupby object with apply function.
 
     Args:
-        agg_method (string): The aggregation method to apply
-        group (pandas dataframe): This has columns required for weighted average
-        y_col (string): Name of the column for which an aggregation is calculated
-        chart_type (string): The type of chart to be built. If this is a Range chart, then we need to add the range_min and range_max data.
+        group (pandas dataframe): This has the data required for aggregations.
+        agg_method (string): The aggregation method to apply.
+        y_a (string): Name of the primary (a) column for which an aggregation is calculated.
+        wdg_range (string): If within-series ranges are to be added, this will be 'Within Series'.
         kw (dict): Keyword arguments
-            y_weight (string): Name of column that will be used as weighting factor for Weighted Ave
-            y_weight_numer (string): Name of column that will be used as weighting factor for numerator of Weighted Ave Ratio
-            y_weight_denom (string): Name of column that will be used as weighting factor for denominator of Weighted Ave Ratio
+            y_b (string): Name of column used for b factor in aggregation method.
+            y_c (string): Name of column used for c factor in aggregation method.
     Returns:
-        weighted average (float): The weighted average using the two specified columns
+        (dataframe): The returned aggregation result, including series min and max if within-series range is to be added.
     """
-    d = group[y_col]
+    a = group[y_a]
     agg_result = None
     try:
-        if agg_method == 'Sum':
-            agg_result = d.sum()
-        elif agg_method == 'Ave':
-            agg_result = d.mean()
-        elif agg_method == 'Weighted Ave' and 'y_weight' in kw:
-            w = group[kw['y_weight']]
-            agg_result = (d * w).sum() / w.sum()
-        elif agg_method == 'Weighted Ave Ratio' and 'y_weight_numer' in kw and 'y_weight_denom' in kw:
-            wn = group[kw['y_weight_numer']]
-            wd = group[kw['y_weight_denom']]
-            agg_result = ((d * wn).sum() / wn.sum())/((d * wd).sum() / wd.sum())
+        if agg_method == 'sum(a)':
+            agg_result = a.sum()
+        elif agg_method == 'ave(a)':
+            agg_result = a.mean()
+        elif agg_method == 'sum(a*b)/sum(b)' and 'y_b' in kw:
+            b = group[kw['y_b']]
+            agg_result = (a * b).sum() / b.sum()
+        elif agg_method == '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]' and 'y_b' in kw and 'y_c' in kw:
+            b = group[kw['y_b']]
+            c = group[kw['y_c']]
+            agg_result = ((a * b).sum() / b.sum())/((a * c).sum() / c.sum())
     except ZeroDivisionError:
-        return pd.DataFrame({y_col: [None]})
+        return pd.DataFrame({y_a: [None]})
     if wdg_range == 'Within Series':
-        return pd.DataFrame({y_col: [agg_result], 'range_min': [d.min()], 'range_max': [d.max()]})
+        return pd.DataFrame({y_a: [agg_result], 'range_min': [a.min()], 'range_max': [a.max()]})
     else:
-        return pd.DataFrame({y_col: [agg_result]})
+        return pd.DataFrame({y_a: [agg_result]})
 
 def op_with_base(group, op, col, col_base, y_val):
     """
