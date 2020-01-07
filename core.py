@@ -57,7 +57,7 @@ MAP_PALETTE = 'Blues' #See https://bokeh.pydata.org/en/latest/docs/reference/pal
 C_NORM = "#31AADE"
 CHARTTYPES = ['Dot', 'Line', 'Bar', 'Area', 'Area Map', 'Line Map']
 STACKEDTYPES = ['Bar', 'Area']
-AGGREGATIONS = ['None', 'sum(a)', 'ave(a)', 'sum(a*b)/sum(b)', '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]']
+AGGREGATIONS = ['None', 'sum(a)', 'ave(a)', 'sum(a)/sum(b)', 'sum(a*b)/sum(b)', '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]']
 ADV_BASES = ['Consecutive', 'Total']
 MAP_FONT_SIZE = 10
 MAP_NUM_BINS = 9
@@ -72,7 +72,7 @@ RANGE_GLYPH_MAP = {'Line': 'Area', 'Dot': 'Bar'}
 WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
-WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'y_b', 'y_c', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
+WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
     'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
@@ -420,8 +420,8 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['x_group'] = bmw.Select(title='Group X-Axis By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-x_group', 'x-drop'], visible=False)
     wdg['y_dropdown'] = bmw.Div(text='Y-Axis (required)', css_classes=['y-dropdown'])
     wdg['y'] = bmw.Select(title='a (required)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y', 'y-drop'], visible=False)
-    wdg['y_b'] = bmw.Select(title='b (optional)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_b', 'y-drop'], visible=False)
-    wdg['y_c'] = bmw.Select(title='c (optional)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_c', 'y-drop'], visible=False)
+    wdg['y_b'] = bmw.Select(title='b (optional, no update)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_b', 'y-drop'], visible=False)
+    wdg['y_c'] = bmw.Select(title='c (optional, no update)', value='None', options=['None'] + cols['y-axis'], css_classes=['wdgkey-y_c', 'y-drop'], visible=False)
     wdg['y_agg'] = bmw.Select(title='Y-Axis Aggregation', value='sum(a)', options=AGGREGATIONS, css_classes=['wdgkey-y_agg', 'y-drop'], visible=False)
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
@@ -623,13 +623,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         if wdg['explode'].value != 'None': groupby_cols = [wdg['explode'].value] + groupby_cols
         if wdg['explode_group'].value != 'None': groupby_cols = [wdg['explode_group'].value] + groupby_cols
         df_grouped = df_plots.groupby(groupby_cols, sort=False)
-        kwargs = {}
-        if wdg['y_agg'].value == 'sum(a*b)/sum(b)' and wdg['y_b'].value in cols['continuous']:
-            kwargs['y_b'] = wdg['y_b'].value
-        elif wdg['y_agg'].value == '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]' and wdg['y_b'].value in cols['continuous'] and wdg['y_c'].value in cols['continuous']:
-            kwargs['y_b'] = wdg['y_b'].value
-            kwargs['y_c'] = wdg['y_c'].value
-        df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['range'].value, kwargs).reset_index()
+        df_plots = df_grouped.apply(apply_aggregation, wdg['y_agg'].value, wdg['y'].value, wdg['y_b'].value, wdg['y_c'].value, wdg['range'].value).reset_index()
         #The index of each group's dataframe is added as another column it seems. So we need to remove it:
         df_plots.drop(df_plots.columns[len(groupby_cols)], axis=1, inplace=True)
 
@@ -1533,7 +1527,7 @@ def display_config(wdg, wdg_defaults):
                 output += '<div class="config-display-item"><span class="config-display-key">' + label + ': </span>' + item_string + '</div>'
     return output
 
-def apply_aggregation(group, agg_method, y_a, wdg_range, kw):
+def apply_aggregation(group, agg_method, y_a, y_b, y_c, wdg_range):
     """
     Helper function for pandas dataframe groupby object with apply function.
 
@@ -1541,10 +1535,9 @@ def apply_aggregation(group, agg_method, y_a, wdg_range, kw):
         group (pandas dataframe): This has the data required for aggregations.
         agg_method (string): The aggregation method to apply.
         y_a (string): Name of the primary (a) column for which an aggregation is calculated.
+        y_b (string): Name of column used for b factor in aggregation method.
+        y_c (string): Name of column used for c factor in aggregation method.
         wdg_range (string): If within-series ranges are to be added, this will be 'Within Series'.
-        kw (dict): Keyword arguments
-            y_b (string): Name of column used for b factor in aggregation method.
-            y_c (string): Name of column used for c factor in aggregation method.
     Returns:
         (dataframe): The returned aggregation result, including series min and max if within-series range is to be added.
     """
@@ -1555,12 +1548,15 @@ def apply_aggregation(group, agg_method, y_a, wdg_range, kw):
             agg_result = a.sum()
         elif agg_method == 'ave(a)':
             agg_result = a.mean()
-        elif agg_method == 'sum(a*b)/sum(b)' and 'y_b' in kw:
-            b = group[kw['y_b']]
+        elif agg_method == 'sum(a)/sum(b)':
+            b = group[y_b]
+            agg_result = a.sum() / b.sum()
+        elif agg_method == 'sum(a*b)/sum(b)':
+            b = group[y_b]
             agg_result = (a * b).sum() / b.sum()
-        elif agg_method == '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]' and 'y_b' in kw and 'y_c' in kw:
-            b = group[kw['y_b']]
-            c = group[kw['y_c']]
+        elif agg_method == '[sum(a*b)/sum(b)]/[sum(a*c)/sum(c)]':
+            b = group[y_b]
+            c = group[y_c]
             agg_result = ((a * b).sum() / b.sum())/((a * c).sum() / c.sum())
     except ZeroDivisionError:
         return pd.DataFrame({y_a: [None]})
