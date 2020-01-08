@@ -21,7 +21,7 @@ df_deflator = pd.read_csv(this_dir_path + '/in/inflation.csv', index_col=0)
 costs_orig_inv = ['Capital no ITC']
 costs_pol_inv = ['Capital','PTC','Emissions Tax']
 coststreams = ['_obj','eq_bioused','eq_gasused']
-valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement']
+vf_valstreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_curt_gen_balance','eq_curtailment']
 # valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_national_gen','eq_annual_cap','eq_curt_gen_balance','eq_curtailment','eq_emit_accounting','eq_mingen_lb','eq_mingen_ub','eq_rps_ofswind']
 cc_techs = ['hydro','wind-ons','wind-ofs','csp','upv','dupv','pumped-hydro','battery']
 
@@ -225,42 +225,51 @@ def pre_val_streams(dfs, **kw):
         df_gen = sum_over_cols(dfs['gen'], group_cols=['tech','rb','year'], val_cols=['MWh'])
         df = sum_over_cols(dfs['vs'], group_cols=['tech','rb','year','con_name'], val_cols=['$'])
         #Reduce value streams to only the ones we care about
-        df = df[df['con_name'].isin(valuestreams)].copy()
+        df = df[df['con_name'].isin(vf_valstreams)].copy()
         #convert value streams from bulk $ as of discount year to annual as of model year
         df = pd.merge(left=df, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
         df['$'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfonm']
         df.drop(['pvfonm'], axis='columns',inplace=True)
-        #merge value streams and generation
-        df = pd.merge(left=df, right=df_gen, how='left', on=['tech','rb','year'], sort=False)
 
         #get requirement prices and quantities and build benchmark value streams
         dfs['p']['p'] = inflate_series(dfs['p']['p'])
         df_bm = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['type', 'subtype', 'rb', 'timeslice', 'year'], sort=False)
         df_bm['p'].fillna(0, inplace=True)
         #Add con_name:
-        types = ['load','res_marg','oper_res','state_rps']
+        types = ['load','res_marg','oper_res','state_rps','curt_realize','curt_cause'] #the curt ones don't exist, they are just placeholders for the mapping.
         df_bm = df_bm[df_bm['type'].isin(types)].copy()
-        df_con_type = pd.DataFrame({'type':types,'con_name':valuestreams})
+        df_con_type = pd.DataFrame({'type':types,'con_name':vf_valstreams})
         df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
         #drop type and subtype because we're using con_name from here on
         df_bm.drop(['type','subtype'], axis='columns', inplace=True)
         #columns of df_bm at this point are rb,year,con_name,p,q
 
-        #All-in benchmarks. These assume the benchmark tech provides all value streams at requirement levels.
-        #First get MWh annual load
+        #All-in benchmarks. These assume the benchmark tech provides all value streams at requirement levels,
+        #and prices are calculated by dividing value by load.
+        df_bm_allin = df_bm.copy()
+        df_bm_allin['$'] = df_bm_allin['p'] * df_bm_allin['q']
+        df_bm_allin = sum_over_cols(df_bm_allin, group_cols=['con_name', 'rb', 'year'], val_cols=['$'])
         df_load = dfs['q'][dfs['q']['type']=='load'].copy()
         df_load = sum_over_cols(df_load, group_cols=['rb', 'year'], val_cols=['q'])
+        df_bm_allin = pd.merge(left=df_bm_allin, right=df_load, how='left', on=['rb', 'year'], sort=False)
 
         #local all-in (weighted) benchmark
-        df_bm_allin_loc = df_bm.copy()
-        df_bm_allin_loc['$'] = df_bm_allin_loc['p'] * df_bm_allin_loc['q']
-        df_bm_allin_loc = sum_over_cols(df_bm_allin_loc, group_cols=['con_name', 'rb', 'year'], val_cols=['$'])
-        df_bm_allin_loc = pd.merge(left=df_bm_allin_loc, right=df_load, how='left', on=['rb', 'year'], sort=False)
-        df_bm_allin_loc['p'] = df_bm_allin_loc['$'] / df_bm_allin_loc['q']
+        df_bm_allin_loc = df_bm_allin.copy()
+        df_bm_allin_loc['$ all-in loc'] = df_bm_allin_loc['$'] / df_bm_allin_loc['q']
         df_bm_allin_loc.drop(['$','q'], axis='columns', inplace=True)
         df = pd.merge(left=df, right=df_bm_allin_loc, how='outer', on=['rb','year','con_name'], sort=False)
-        df['$ all-in loc'] = df['p'] * df['MWh']
-        df.drop(['p'], axis='columns', inplace=True)
+
+        #system-wide all-in (weighted) benchmark
+        df_bm_allin_sys = sum_over_cols(df_bm_allin, group_cols=['year','con_name'], val_cols=['$','q'])
+        df_bm_allin_sys['$ all-in sys'] = df_bm_allin_sys['$'] / df_bm_allin_sys['q']
+        df_bm_allin_sys.drop(['$','q'], axis='columns', inplace=True)
+        df = pd.merge(left=df, right=df_bm_allin_sys, how='outer', on=['year','con_name'], sort=False)
+
+        #Merge with generation so we can calculate $
+        df = pd.merge(left=df, right=df_gen, how='left', on=['tech','rb','year'], sort=False)
+        #Now convert all prices to values
+        vf_cols = ['$ all-in loc','$ all-in sys']
+        df[vf_cols] = df[vf_cols].multiply(df['MWh'], axis="index")
 
         return df
 
@@ -1063,7 +1072,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {'remove_inv':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'Bulk $', 'series':'tech', 'explode':'con_name', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'adv_op2':'Ratio', 'adv_col2':'tech', 'adv_col_base2':'benchmark-allin-local', 'sync_axes':'No', 'filter': {}}),
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
         )),
         }
     ),
