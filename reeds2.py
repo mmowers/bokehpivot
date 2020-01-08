@@ -221,7 +221,6 @@ def pre_val_streams(dfs, **kw):
     dfs['vs']['$'] = inflate_series(dfs['vs']['$'])
 
     if 'value_factors' in kw:
-        import pdb; pdb.set_trace()
         #sum over vintage in both generation and value streams:
         df_gen = sum_over_cols(dfs['gen'], group_cols=['tech','rb','year'], val_cols=['MWh'])
         df = sum_over_cols(dfs['vs'], group_cols=['tech','rb','year','con_name'], val_cols=['$'])
