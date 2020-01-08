@@ -226,6 +226,10 @@ def pre_val_streams(dfs, **kw):
         df = sum_over_cols(dfs['vs'], group_cols=['tech','rb','year','con_name'], val_cols=['$'])
         #Reduce value streams to only the ones we care about
         df = df[df['con_name'].isin(vf_valstreams)].copy()
+        #Include all con_name options for each tech,rb,year combo and fill na with zero
+        df = df.pivot_table(index=['tech','rb','year'], columns='con_name', values='$').reset_index()
+        df = pd.melt(df, id_vars=['tech','rb','year'], value_vars=vf_valstreams, var_name='con_name', value_name= '$')
+        df['$'].fillna(0, inplace=True)
         #convert value streams from bulk $ as of discount year to annual as of model year
         df = pd.merge(left=df, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
         df['$'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfonm']
@@ -257,20 +261,19 @@ def pre_val_streams(dfs, **kw):
         df_bm_allin_loc = df_bm_allin.copy()
         df_bm_allin_loc['$ all-in loc'] = df_bm_allin_loc['$'] / df_bm_allin_loc['q']
         df_bm_allin_loc.drop(['$','q'], axis='columns', inplace=True)
-        df = pd.merge(left=df, right=df_bm_allin_loc, how='outer', on=['rb','year','con_name'], sort=False)
+        df = pd.merge(left=df, right=df_bm_allin_loc, how='left', on=['rb','year','con_name'], sort=False)
 
         #system-wide all-in (weighted) benchmark
         df_bm_allin_sys = sum_over_cols(df_bm_allin, group_cols=['year','con_name'], val_cols=['$','q'])
         df_bm_allin_sys['$ all-in sys'] = df_bm_allin_sys['$'] / df_bm_allin_sys['q']
         df_bm_allin_sys.drop(['$','q'], axis='columns', inplace=True)
-        df = pd.merge(left=df, right=df_bm_allin_sys, how='outer', on=['year','con_name'], sort=False)
+        df = pd.merge(left=df, right=df_bm_allin_sys, how='left', on=['year','con_name'], sort=False)
 
         #Merge with generation so we can calculate $
         df = pd.merge(left=df, right=df_gen, how='left', on=['tech','rb','year'], sort=False)
         #Now convert all prices to values
         vf_cols = ['$ all-in loc','$ all-in sys']
         df[vf_cols] = df[vf_cols].multiply(df['MWh'], axis="index")
-
         return df
 
     #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV,
@@ -1062,6 +1065,7 @@ results_meta = collections.OrderedDict((
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
+            {'name': 'gen_uncurt', 'file': 'gen_icrt_uncurt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
             {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
             {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
             {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
@@ -1069,7 +1073,7 @@ results_meta = collections.OrderedDict((
             {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
         ],
         'preprocess': [
-            {'func': pre_val_streams, 'args': {'remove_inv':True, 'value_factors':True}},
+            {'func': pre_val_streams, 'args': {'remove_inv':True, 'uncurt':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
             ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
