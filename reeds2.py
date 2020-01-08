@@ -246,22 +246,24 @@ def pre_val_streams(dfs, **kw):
         df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
         #drop type and subtype because we're using con_name from here on
         df_bm.drop(['type','subtype'], axis='columns', inplace=True)
-        #columns of df_bm at this point are rb,year,con_name,p,q
+        #columns of df_bm at this point are rb,timeslice,year,con_name,p,q
+
+        #Calculate annual load for use in benchmarks
+        df_load = dfs['q'][dfs['q']['type']=='load'].copy()
+        df_load = sum_over_cols(df_load, group_cols=['rb', 'year'], val_cols=['q'])
 
         #All-in benchmarks. These assume the benchmark tech provides all value streams at requirement levels,
         #and prices are calculated by dividing value by load.
         df_bm_allin = df_bm.copy()
         df_bm_allin['$'] = df_bm_allin['p'] * df_bm_allin['q']
         df_bm_allin = sum_over_cols(df_bm_allin, group_cols=['con_name', 'rb', 'year'], val_cols=['$'])
-        df_load = dfs['q'][dfs['q']['type']=='load'].copy()
-        df_load = sum_over_cols(df_load, group_cols=['rb', 'year'], val_cols=['q'])
         df_bm_allin = pd.merge(left=df_bm_allin, right=df_load, how='left', on=['rb', 'year'], sort=False)
 
-        #local all-in (weighted) benchmark
+        #local all-in (weighted) benchmark. First calculate prices as $ of requirement divided by MWh energy
         df_bm_allin_loc = df_bm_allin.copy()
         df_bm_allin_loc['$ all-in loc'] = df_bm_allin_loc['$'] / df_bm_allin_loc['q']
         df_bm_allin_loc.drop(['$','q'], axis='columns', inplace=True)
-        df = pd.merge(left=df, right=df_bm_allin_loc, how='left', on=['rb','year','con_name'], sort=False)
+        df = pd.merge(left=df, right=df_bm_allin_loc, how='left', on=['year','rb','con_name'], sort=False)
 
         #system-wide all-in (weighted) benchmark
         df_bm_allin_sys = sum_over_cols(df_bm_allin, group_cols=['year','con_name'], val_cols=['$','q'])
@@ -269,11 +271,36 @@ def pre_val_streams(dfs, **kw):
         df_bm_allin_sys.drop(['$','q'], axis='columns', inplace=True)
         df = pd.merge(left=df, right=df_bm_allin_sys, how='left', on=['year','con_name'], sort=False)
 
-        #Merge with generation so we can calculate $
+        #Flat-block benchmarks. These assume the tech provides energy + reserve margin only.
+        flatblock_cons = ['eq_supply_demand_balance','eq_reserve_margin']
+        df_bm_flat_loc = df_bm[df_bm['con_name'].isin(flatblock_cons)].copy()
+        #Add hours
+        df_hours = pd.read_csv(this_dir_path + '/in/reeds2/hours.csv')
+        df_bm_flat_loc = pd.merge(left=df_bm_flat_loc, right=df_hours, how='left', on=['timeslice'], sort=False)
+        #First we calculate p as annual $ for 1 kW flat-block tech,
+        #so we need to multiply eq_supply_demand_balance price ($/MWh) by hours divided by 1000 (eq_reserve_margin price is fine as is) and sum across timeslices
+        load_cond = df_bm_flat_loc['con_name'] == 'eq_supply_demand_balance'
+        df_bm_flat_loc.loc[load_cond, 'p'] = df_bm_flat_loc.loc[load_cond, 'p'] * df_bm_flat_loc.loc[load_cond, 'hours'] / 1000
+        df_bm_flat_loc = sum_over_cols(df_bm_flat_loc, group_cols=['year','rb','con_name'], val_cols=['p'])
+        #Convert to $/MWh from $/kW: 1 kW flat block produces 8.76 MWh annual energy.
+        df_bm_flat_loc['$ flat loc'] = df_bm_flat_loc['p'] / 8.76
+        df_bm_flat_loc.drop(['p'], axis='columns', inplace=True)
+        df = pd.merge(left=df, right=df_bm_flat_loc, how='left', on=['year','rb','con_name'], sort=False)
+
+        #system flat benchmark. We weight the local prices by annual load
+        df_bm_flat_sys = pd.merge(left=df_bm_flat_loc, right=df_load, how='left', on=['rb', 'year'], sort=False)
+        df_bm_flat_sys['$'] = df_bm_flat_sys['$ flat loc'] * df_bm_flat_sys['q']
+        df_bm_flat_sys = sum_over_cols(df_bm_flat_sys, group_cols=['con_name', 'year'], val_cols=['$','q'])
+        df_bm_flat_sys['$ flat sys'] = df_bm_flat_sys['$'] / df_bm_flat_sys['q']
+        df_bm_flat_sys.drop(['$','q'], axis='columns', inplace=True)
+        df = pd.merge(left=df, right=df_bm_flat_sys, how='left', on=['year','con_name'], sort=False)
+
+        #Merge with generation so we can calculate $ associated with all benchmarks
         df = pd.merge(left=df, right=df_gen, how='left', on=['tech','rb','year'], sort=False)
         #Now convert all prices to values
-        vf_cols = ['$ all-in loc','$ all-in sys']
+        vf_cols = ['$ all-in loc','$ all-in sys','$ flat loc','$ flat sys']
         df[vf_cols] = df[vf_cols].multiply(df['MWh'], axis="index")
+        df = df.fillna(0)
         return df
 
     #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV,
@@ -1076,7 +1103,12 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {'remove_inv':True, 'uncurt':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
+            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
             ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
         )),
         }
     ),
