@@ -36,7 +36,11 @@ def scale_column_filtered(df, **kw):
     return df
 
 def sum_over_cols(df, **kw):
-    df = df.drop(kw['drop_cols'], axis='columns')
+    if 'val_cols' in kw:
+        drop_cols = [c for c in df.columns if c not in kw['group_cols']+kw['val_cols']]
+    elif 'drop_cols' in kw:
+        drop_cols = kw['drop_cols']
+    df = df.drop(drop_cols, axis='columns')
     df =  df.groupby(kw['group_cols'], sort=False, as_index =False).sum()
     return df
 
