@@ -228,7 +228,7 @@ def pre_val_streams(dfs, **kw):
         df = df[df['con_name'].isin(vf_valstreams)].copy()
         #Include all con_name options for each tech,rb,year combo and fill na with zero
         df = df.pivot_table(index=['tech','rb','year'], columns='con_name', values='$').reset_index()
-        df = pd.melt(df, id_vars=['tech','rb','year'], value_vars=vf_valstreams, var_name='con_name', value_name= '$')
+        df = pd.melt(df, id_vars=['tech','rb','year'], var_name='con_name', value_name= '$')
         df['$'].fillna(0, inplace=True)
         #convert value streams from bulk $ as of discount year to annual as of model year
         df = pd.merge(left=df, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
@@ -1088,6 +1088,52 @@ results_meta = collections.OrderedDict((
         }
     ),
 
+    ('Value Streams Intertemporal',
+        {'sources': [
+            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
+            {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
+        ],
+        'preprocess': [
+            {'func': pre_val_streams, 'args': {}},
+        ],
+        'presets': collections.OrderedDict((
+            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+            ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
+            ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
+        )),
+        }
+    ),
+
+    ('Value Factors Sequential New Techs',
+        {'sources': [
+            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
+            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
+            {'name': 'gen_uncurt', 'file': 'gen_icrt_uncurt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
+            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
+            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
+            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
+            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'p']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
+        ],
+        'preprocess': [
+            {'func': pre_val_streams, 'args': {'investment_only':True, 'uncurt':True, 'value_factors':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+        )),
+        }
+    ),
+
     ('Value Factors Sequential Existing Techs',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
@@ -1109,26 +1155,6 @@ results_meta = collections.OrderedDict((
             ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
             ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
             ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-        )),
-        }
-    ),
-    ('Value Streams Intertemporal',
-        {'sources': [
-            {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
-            {'name': 'cap', 'file': 'cap_new_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
-            {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
-            {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
-            {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
-            {'name': 'cost_scale', 'file': 'cost_scale.csv', 'columns': ['cs']},
-        ],
-        'preprocess': [
-            {'func': pre_val_streams, 'args': {}},
-        ],
-        'presets': collections.OrderedDict((
-            ('NVOE', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
-            ('NVOC', {'x':'tech, vintage','y':'Bulk $ Dis','series':'con_adj', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'con_adj', 'adv_col_base':'kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
-            ('NVOE var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'MWh, MWh', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['kW']}}}),
-            ('NVOC var-con', {'x':'tech, vintage','y':'Bulk $ Dis','series':'var, con', 'explode': 'scenario', 'adv_op':'Ratio', 'adv_col':'var, con', 'adv_col_base':'kW, kW', 'chart_type':'Bar', 'plot_width':'600', 'plot_height':'600', 'filter': {'con_name':{'exclude':['MWh']}}}),
         )),
         }
     ),
