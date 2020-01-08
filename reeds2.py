@@ -220,6 +220,51 @@ def pre_val_streams(dfs, **kw):
     #apply inflation
     dfs['vs']['$'] = inflate_series(dfs['vs']['$'])
 
+    if 'value_factors' in kw:
+        import pdb; pdb.set_trace()
+        #sum over vintage in both generation and value streams:
+        df_gen = sum_over_cols(dfs['gen'], group_cols=['tech','rb','year'], val_cols=['MWh'])
+        df = sum_over_cols(dfs['vs'], group_cols=['tech','rb','year','con_name'], val_cols=['$'])
+        #Reduce value streams to only the ones we care about
+        df = df[df['con_name'].isin(valuestreams)].copy()
+        #convert value streams from bulk $ as of discount year to annual as of model year
+        df = pd.merge(left=df, right=dfs['pvf_onm'], how='left', on=['year'], sort=False)
+        df['$'] = df['$'] / dfs['cost_scale'].iloc[0,0] / df['pvfonm']
+        df.drop(['pvfonm'], axis='columns',inplace=True)
+        #merge value streams and generation
+        df = pd.merge(left=df, right=df_gen, how='left', on=['tech','rb','year'], sort=False)
+
+        #get requirement prices and quantities and build benchmark value streams
+        dfs['p']['p'] = inflate_series(dfs['p']['p'])
+        df_bm = pd.merge(left=dfs['q'], right=dfs['p'], how='left', on=['type', 'subtype', 'rb', 'timeslice', 'year'], sort=False)
+        df_bm['p'].fillna(0, inplace=True)
+        #Add con_name:
+        types = ['load','res_marg','oper_res','state_rps']
+        df_bm = df_bm[df_bm['type'].isin(types)].copy()
+        df_con_type = pd.DataFrame({'type':types,'con_name':valuestreams})
+        df_bm = pd.merge(left=df_bm, right=df_con_type, how='left', on=['type'], sort=False)
+        #drop type and subtype because we're using con_name from here on
+        df_bm.drop(['type','subtype'], axis='columns', inplace=True)
+        #columns of df_bm at this point are rb,year,con_name,p,q
+
+        #All-in benchmarks. These assume the benchmark tech provides all value streams at requirement levels.
+        #First get MWh annual load
+        df_load = dfs['q'][dfs['q']['type']=='load'].copy()
+        df_load = sum_over_cols(df_load, group_cols=['rb', 'year'], val_cols=['q'])
+
+        #local all-in (weighted) benchmark
+        df_bm_allin_loc = df_bm.copy()
+        df_bm_allin_loc['$'] = df_bm_allin_loc['p'] * df_bm_allin_loc['q']
+        df_bm_allin_loc = sum_over_cols(df_bm_allin_loc, group_cols=['con_name', 'rb', 'year'], val_cols=['$'])
+        df_bm_allin_loc = pd.merge(left=df_bm_allin_loc, right=df_load, how='left', on=['rb', 'year'], sort=False)
+        df_bm_allin_loc['p'] = df_bm_allin_loc['$'] / df_bm_allin_loc['q']
+        df_bm_allin_loc.drop(['$','q'], axis='columns', inplace=True)
+        df = pd.merge(left=df, right=df_bm_allin_loc, how='outer', on=['rb','year','con_name'], sort=False)
+        df['$ all-in loc'] = df['p'] * df['MWh']
+        df.drop(['p'], axis='columns', inplace=True)
+
+        return df
+
     #Use pvf_capital to convert to present value as of data year (model year for CAP and GEN but investment year for INV,
     #although i suppose certain equations, e.g. eq_cap_new_retmo also include previous year's CAP).
     df = pd.merge(left=dfs['vs'], right=dfs['pvf_cap'], how='left', on=['year'], sort=False)
@@ -248,7 +293,7 @@ def pre_val_streams(dfs, **kw):
     df_gen.drop(['pvfcap', 'pvfonm'], axis='columns',inplace=True)
     df = pd.concat([df, df_gen],sort=False,ignore_index=True)
 
-    if 'value_factors' in kw:
+    if 'value_factors_old' in kw:
         #should i use uncurtailed generation, curtailment value streams?
 
         #Use MWh annual load in each region as the benchmark MWh. Is the scale too different from actual techs?
@@ -1085,7 +1130,6 @@ results_meta = collections.OrderedDict((
     ('Value Factors Sequential Existing Techs',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
-            {'name': 'cap', 'file': 'cap_icrt.csv', 'columns': ['tech', 'vintage', 'region', 'year', 'MW']},
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
             {'name': 'pvf_cap', 'file': 'pvf_capital.csv', 'columns': ['year', 'pvfcap']},
             {'name': 'pvf_onm', 'file': 'pvf_onm.csv', 'columns': ['year', 'pvfonm']},
