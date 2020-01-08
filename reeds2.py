@@ -227,15 +227,15 @@ def pre_val_streams(dfs, **kw):
     df.drop(['pvfcap', '$'], axis='columns',inplace=True)
 
     #Add total value and total cost
-    df_val = df[df['con_name'].isin(valuestreams)].copy()
-    df_val = sum_over_cols(df_val, group_cols=index_cols, drop_cols=['var_name','con_name'])
-    df_val['var_name'] = 'val_tot'
-    df_val['con_name'] = 'val_tot'
-    df_cost = df[df['con_name'].isin(coststreams)].copy()
-    df_cost = sum_over_cols(df_cost, group_cols=index_cols, drop_cols=['var_name','con_name'])
-    df_cost['var_name'] = 'cost_tot'
-    df_cost['con_name'] = 'cost_tot'
-    df = pd.concat([df, df_val, df_cost],sort=False,ignore_index=True)
+    # df_val = df[df['con_name'].isin(valuestreams)].copy()
+    # df_val = sum_over_cols(df_val, group_cols=index_cols, drop_cols=['var_name','con_name'])
+    # df_val['var_name'] = 'val_tot'
+    # df_val['con_name'] = 'val_tot'
+    # df_cost = df[df['con_name'].isin(coststreams)].copy()
+    # df_cost = sum_over_cols(df_cost, group_cols=index_cols, drop_cols=['var_name','con_name'])
+    # df_cost['var_name'] = 'cost_tot'
+    # df_cost['con_name'] = 'cost_tot'
+    # df = pd.concat([df, df_val, df_cost],sort=False,ignore_index=True)
 
     #Preprocess gen: convert from annual MWh to bulk MWh present value as of data year
     df_gen = dfs['gen'].groupby(index_cols, sort=False, as_index =False).sum()
