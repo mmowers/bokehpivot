@@ -23,6 +23,7 @@ costs_pol_inv = ['Capital','PTC','Emissions Tax']
 coststreams = ['_obj','eq_bioused','eq_gasused']
 vf_valstreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_curt_gen_balance','eq_curtailment']
 # valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_national_gen','eq_annual_cap','eq_curt_gen_balance','eq_curtailment','eq_emit_accounting','eq_mingen_lb','eq_mingen_ub','eq_rps_ofswind']
+energy_valstreams = ['eq_supply_demand_balance','eq_curt_gen_balance','eq_curtailment']
 cc_techs = ['hydro','wind-ons','wind-ofs','csp','upv','dupv','pumped-hydro','battery']
 
 #1. Preprocess functions for results_meta
@@ -300,6 +301,12 @@ def pre_val_streams(dfs, **kw):
         #Now convert all prices to values
         vf_cols = ['$ all-in loc','$ all-in sys','$ flat loc','$ flat sys']
         df[vf_cols] = df[vf_cols].multiply(df['MWh'], axis="index")
+        df.drop(['MWh'], axis='columns',inplace=True)
+        df_gen['con_name'] = 'MWh'
+        df_gen.rename(columns={'MWh': '$'}, inplace=True) #So we can concatenate
+        for vf_col in vf_cols:
+            df_gen[vf_col] = df_gen['$'] #Duplicating MWh across all the value columns
+        df = pd.concat([df, df_gen],sort=False,ignore_index=True)
         df = df.fillna(0)
         return df
 
@@ -1108,7 +1115,6 @@ results_meta = collections.OrderedDict((
         )),
         }
     ),
-
     ('Value Factors Sequential New Techs',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
@@ -1124,17 +1130,40 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {'investment_only':True, 'uncurt':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('LVOE', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'sync_axes':'No', 'filter': {}}),
+            ('Total price flat benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ flat sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {}}),
+            ('Total price all-in weighted benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ all-in sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {}}),
+            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+
+            ('Energy LVOE', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams+['MWh']}}),
+            ('Energy price flat benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ flat sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {'con_name':energy_valstreams+['MWh']}}),
+            ('Energy price with all-in weighted benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ all-in sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {'con_name':energy_valstreams+['MWh']}}),
+            ('Energy total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+            ('Energy total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+            ('Energy local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+            ('Energy local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+            ('Energy spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+            ('Energy spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':energy_valstreams}}),
+
+            ('ResMarg LVOE', {'chart_type':'Bar', 'x':'year', 'y':'$', 'series':'con_name', 'explode':'scenario', 'explode_group':'tech', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin','MWh']}}),
+            ('ResMarg price flat benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ flat sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {'con_name':['eq_reserve_margin','MWh']}}),
+            ('ResMarg price all-in weighted benchmark ($/MWh)', {'chart_type':'Bar', 'x':'year', 'y':'$ all-in sys', 'series':'con_name', 'explode':'scenario', 'adv_op':'Ratio', 'adv_col':'con_name', 'adv_col_base':'MWh', 'filter': {'con_name':['eq_reserve_margin','MWh']}}),
+            ('ResMarg total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
+            ('ResMarg total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
+            ('ResMarg local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
+            ('ResMarg local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
+            ('ResMarg spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
+            ('ResMarg spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':['eq_reserve_margin']}}),
         )),
         }
     ),
 
-    ('Value Factors Sequential Existing Techs',
+    ('Value Factors Sequential Existing Techs (curtailment caused missing)',
         {'sources': [
             {'name': 'vs', 'file': 'valuestreams_chosen.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'var_name', 'con_name', '$']},
             {'name': 'gen', 'file': 'gen_icrt.csv', 'columns': ['tech', 'vintage', 'rb', 'year', 'MWh']},
@@ -1149,12 +1178,12 @@ results_meta = collections.OrderedDict((
             {'func': pre_val_streams, 'args': {'remove_inv':True, 'uncurt':True, 'value_factors':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
-            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {}}),
+            ('Total value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Total value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Local value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ flat loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Local value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$','y_b':'$ all-in loc','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Spatial value factor with flat benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ flat loc','y_b':'$ flat sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
+            ('Spatial value factor with all-in weighted benchmark', {'chart_type':'Line', 'x':'year', 'y':'$ all-in loc','y_b':'$ all-in sys','y_agg':'sum(a)/sum(b)', 'series':'scenario', 'explode':'tech', 'sync_axes':'No', 'filter': {'con_name':vf_valstreams}}),
         )),
         }
     ),
