@@ -32,6 +32,8 @@ import jinja2 as ji
 import reeds_bokeh as rb
 
 #Defaults to configure:
+DEFAULT_CUSTOM_SORTS = {} #Keys are column names and values are lists of values in the desired sort order
+DEFAULT_CUSTOM_COLORS = {} #Keys are column names and values are dicts that map column values to colors (hex strings)
 DATA_TYPE_OPTIONS = rb.DATA_TYPE_OPTIONS + ['CSV']
 DEFAULT_DATA_TYPE = rb.DEFAULT_DATA_TYPE
 PLOT_WIDTH = 300
@@ -80,11 +82,11 @@ WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'adv_op', 'adv_col_base', 'adv_op
     'map_arrows','map_arrow_size','map_arrow_loc','map_width', 'map_font_size', 'map_boundary_width', 'map_line_width', 'map_opacity', 'map_palette', 'map_palette_2', 'map_palette_break']
 
 #initialize globals dict for variables that are modified within update functions.
-#custom_sorts: keys are column names. Values are lists of values in the desired sort order
+#custom_sorts (dict): Keys are column names and values are lists of values in the desired sort order
 #custom_colors (dict): Keys are column names and values are dicts that map column values to colors (hex strings)
 GL = {'df_source':None, 'df_plots':None, 'columns':None, 'data_source_wdg':None, 'variant_wdg':{},
-      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': {},
-      'custom_colors': {}}
+      'widgets':None, 'wdg_defaults': collections.OrderedDict(), 'controls': None, 'plots':None, 'custom_sorts': DEFAULT_CUSTOM_SORTS,
+      'custom_colors': DEFAULT_CUSTOM_COLORS}
 
 #os globals
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -1688,8 +1690,8 @@ def update_data_source(init_load=False, init_config={}):
         Nothing: All plots are cleared, and widgets are set to accept further configuration.
     '''
     GL['widgets'] = GL['data_source_wdg'].copy()
-    GL['custom_sorts'] = {}
-    GL['custom_colors'] = {}
+    GL['custom_sorts'] = DEFAULT_CUSTOM_SORTS
+    GL['custom_colors'] = DEFAULT_CUSTOM_COLORS
     reset_wdg_defaults()
     data_type = GL['data_source_wdg']['data_type'].value
     path = GL['data_source_wdg']['data'].value
