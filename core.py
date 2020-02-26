@@ -283,7 +283,7 @@ def preset_wdg(preset):
     #Now set x to none to prevent chart rerender
     wdg['x'].value = 'None'
     #gather widgets to reset
-    wdg_resets = [i for i in wdg_defaults if i not in list(wdg_variant.keys())+['x', 'data', 'render_plots', 'auto_update']]
+    wdg_resets = [i for i in wdg_defaults if i not in list(wdg_variant.keys())+['x', 'data', 'data_type', 'render_plots', 'auto_update']]
     #reset widgets if they are not default
     for key in wdg_resets:
         if isinstance(wdg[key], bmw.groups.Group) and wdg[key].active != wdg_defaults[key]:
@@ -380,6 +380,51 @@ def get_df_csv(data_source):
     df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
     print('***Done fetching csv.')
     return (df_source, cols)
+
+def get_wdg_csv():
+    '''
+    Create report widgets for csv file.
+
+    Returns:
+        topwdg (ordered dict): Dictionary of bokeh.model.widgets.
+    '''
+    topwdg = collections.OrderedDict()
+    topwdg['report_dropdown'] = bmw.Div(text='Build Report', css_classes=['report-dropdown'])
+    topwdg['report_custom'] = bmw.TextInput(title='Enter path to report file', value='', css_classes=['report-drop'], visible=False)
+    topwdg['report_debug'] = bmw.Select(title='Debug Mode', value='No', options=['Yes','No'], css_classes=['report-drop'], visible=False)
+    topwdg['report_build'] = bmw.Button(label='Build Report', button_type='success', css_classes=['report-drop'], visible=False)
+    topwdg['report_build_separate'] = bmw.Button(label='Build Separate Reports', button_type='success', css_classes=['report-drop'], visible=False)
+    topwdg['report_build'].on_click(build_report)
+    topwdg['report_build_separate'].on_click(build_report_separate)
+    return topwdg
+
+def build_report(html_num='one'):
+    '''
+    Build the chosen report.
+    Args:
+        html_num (string): 'multiple' if we are building separate html reports for each section, and 'one' for one html report with all sections.
+    '''
+    data_type = '"CSV"'
+    report_path = GL['widgets']['report_custom'].value
+    report_path = report_path.replace('"', '')
+    report_path = '"' + report_path + '"'
+    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    output_dir = '"' + user_out_path + '/report-' + time + '"'
+    data_source = '"' + GL['widgets']['data'].value.replace('"', '') + '"'
+    if html_num == 'one':
+        auto_open = '"yes"'
+    else:
+        auto_open = '"no"'
+    start_str = 'start python'
+    if GL['widgets']['report_debug'].value == 'Yes':
+        start_str = 'start cmd /K python -m pdb '
+    sp.call(start_str + ' "' + this_dir_path + '/reports/interface_report.py" ' + data_type + ' ' + data_source + ' ' + report_path + ' "' + html_num + '" ' + output_dir + ' ' + auto_open, shell=True)
+
+def build_report_separate():
+    '''
+    Build the report with separate html files for each section of the report.
+    '''
+    build_report(html_num='multiple')
 
 def get_wdg_gdx(data_source):
     '''
@@ -1652,6 +1697,7 @@ def update_data_source(init_load=False, init_config={}):
     if path == '':
         pass
     elif data_type == 'CSV':
+        GL['widgets'].update(get_wdg_csv())
         GL['df_source'], GL['columns'] = get_df_csv(path)
         GL['widgets'].update(build_widgets(GL['df_source'], GL['columns'], init_load, init_config, wdg_defaults=GL['wdg_defaults']))
     elif data_type == 'GDX':
