@@ -24,7 +24,7 @@ coststreams = ['_obj','eq_bioused','eq_gasused']
 vf_valstreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_curt_gen_balance','eq_curtailment']
 # valuestreams = ['eq_supply_demand_balance','eq_reserve_margin','eq_opres_requirement','eq_rec_requirement','eq_national_gen','eq_annual_cap','eq_curt_gen_balance','eq_curtailment','eq_emit_accounting','eq_mingen_lb','eq_mingen_ub','eq_rps_ofswind']
 energy_valstreams = ['eq_supply_demand_balance','eq_curt_gen_balance','eq_curtailment']
-cc_techs = ['hydro','wind-ons','wind-ofs','csp','upv','dupv','pumped-hydro','battery']
+cc_techs = ['hydro','wind-ons','wind-ofs','csp','upv','dupv','pumped-hydro','battery', 'battery_2', 'battery_4', 'battery_6', 'battery_8', 'battery_10']
 
 #1. Preprocess functions for results_meta
 def scale_column(df, **kw):
@@ -92,8 +92,17 @@ def pre_systemcost(dfs, **kw):
         #For capital costs, multiply by CRF to annualize, and sum over previous 20 years.
         #This requires 20 years before 2010 to sum properly, and we need to shift capital dataframe down
         #so that capital payments start in the year after the investment was made
-        CRF = d*(1+d)**20/((1+d)**20 - 1)
-        df[cap_type_ls] = df[cap_type_ls].shift().fillna(0)*CRF
+        if 'crf_from_user' in kw and kw['crf_from_user'] == True:
+            crf = pd.DataFrame({'year':full_yrs, 'crf':d*(1+d)**20/((1+d)**20 - 1)}).set_index('year')
+        #otherwise use the crf from model run
+        else:
+            crf = dfs['crf']
+            crf = crf.set_index('year').reindex(full_yrs)
+            crf = crf.interpolate(method ='linear')
+            crf['crf'] = crf['crf'].fillna(method='bfill')
+        df = pd.merge(left=df, right=crf, how='left',on=['year'], sort=False)
+        df[cap_type_ls] = df[cap_type_ls].shift().fillna(0)
+        df[cap_type_ls] = df[cap_type_ls].multiply(df["crf"], axis="index")
         df[cap_type_ls] = df[cap_type_ls].rolling(20).sum()
         #Remove years before 2010
         full_yrs = list(range(df.index.min() + 19, df.index.max() + 1))
@@ -109,6 +118,216 @@ def pre_systemcost(dfs, **kw):
     #Add Dicounted Cost column (including for annualized)
     df['Discounted Cost (Bil $)'] = df['Cost (Bil $)'] / (1 + d)**(df['year'] - y0)
     return df
+
+def pre_avgprice(dfs, **kw):
+    df = dfs['sc']
+    #apply inflation and adjust to billion dollars
+    df['Cost (Bil $)'] = inflate_series(df['Cost (Bil $)']) * 1e-9
+
+    #Gather lists of capital and operation labels
+    cost_cats_df = df['cost_cat'].unique().tolist()
+    df_cost_type = pd.read_csv(this_dir_path + '/in/reeds2/cost_cat_type.csv')
+    #Make sure all cost categories in df are in df_cost_type and throw error if not!!
+    if not set(cost_cats_df).issubset(df_cost_type['cost_cat'].values.tolist()):
+        print('WARNING: Not all cost categories have been mapped!!!')
+    cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
+    op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
+
+    #Depending on whether 'National' or 'BA'-level average price if specified
+    if 'National' in kw and kw['National'] == True:
+        #Turn each cost category into a column
+        df = df.pivot_table(index=['year'], columns='cost_cat', values='Cost (Bil $)')
+        #Add rows for all years (including 20 years after end year) and fill
+        full_yrs = list(range(df.index.min() - 19, df.index.max() + 21))
+        df = df.reindex(full_yrs)
+        #For capital costs, multiply by CRF to annualize, and sum over previous 20 years.
+        #This requires 20 years before 2010 to sum properly, and we need to shift capital dataframe down
+        #so that capital payments start in the year after the investment was made
+        crf = dfs['crf']
+        crf = crf.set_index('year').reindex(full_yrs)
+        crf = crf.interpolate(method ='linear')
+        crf['crf'] = crf['crf'].fillna(method='bfill')
+        df = pd.merge(left=df, right=crf, how='left',on=['year'], sort=False)
+        df[cap_type_ls] = df[cap_type_ls].shift().fillna(0)
+        df[cap_type_ls] = df[cap_type_ls].multiply(df["crf"], axis="index")
+        df[cap_type_ls] = df[cap_type_ls].rolling(20).sum()
+        #Remove years before 2010
+        full_yrs = list(range(df.index.min() + 19, df.index.max() + 1))
+        df = df.reindex(full_yrs)
+
+        #Add capacity payment for existing (pre-2010) generators (in billion $)
+        df_existingpayment = dfs['existcap']
+        df_existingpayment = df_existingpayment.set_index('year')
+        df_existingpayment = df_existingpayment.reindex(full_yrs)
+        df_existingpayment = df_existingpayment.fillna(0)
+        df['inv_investment_capacity_costs'] = df['inv_investment_capacity_costs']+df_existingpayment['existingcap']
+        #For operation costs, simply fill missing years with model year values.
+        df[op_type_ls] = df[op_type_ls].fillna(method='ffill')
+        #The final year should only include capital payments because operation payments last for 20 yrs starting
+        #in the model year, whereas capital payments last for 20 yrs starting in the year after the model year.
+        df.loc[df.index.max(), op_type_ls] = 0
+        df = df.fillna(0)
+        df = pd.melt(df.reset_index(), id_vars=['year'], value_vars=cap_type_ls + op_type_ls, var_name='cost_cat', value_name= 'Cost (Bil $)')
+
+        #Read in load
+        df_load = dfs['q']
+        df_load_nat = df_load[df_load['type'] == 'load'].groupby('year')['q'].sum()
+        df_load_nat = df_load_nat.to_frame()
+        df_load_nat = df_load_nat.reindex(full_yrs)
+        df_load_nat = df_load_nat.interpolate(method ='linear')
+
+        df_natavgprice = pd.merge(left=df, right=df_load_nat, how='left',on=['year'], sort=False)
+        df_natavgprice['Average price ($/MWh)'] = df_natavgprice['Cost (Bil $)'] * 1e9 / df_natavgprice['q']
+
+        return df_natavgprice
+
+    if 'BA' in kw and kw['BA'] == True:
+
+        df_rrs_map = pd.read_csv(this_dir_path + '/in/reeds2/region_map.csv')
+        df_rrs_map.columns = ['region','regionnew']
+
+        df_hours_map = pd.read_csv(this_dir_path + '/in/reeds2/m_map.csv')
+        df_hours_width = pd.read_csv(this_dir_path + '/in/reeds2/m_bar_width.csv')
+        df_hours_map = pd.merge(left=df_hours_map, right=df_hours_width, how='left',on=['display'],sort=False)
+        df_hours_map.dropna(inplace=True)
+        df_hours_map = df_hours_map.drop(columns = ['display'])
+        df_hours_map.columns = ["timeslice","hours"]
+
+        #-------Capital and operational costs--------
+        #Aggregate costs to BA-level
+        df = pd.merge(left=df, right=df_rrs_map, how='left',on=['region'], sort=False)
+        df['regionnew'] = df['regionnew'].fillna(df['region'])
+        df = df.groupby(['cost_cat','regionnew','year',])['Cost (Bil $)'].sum().reset_index()
+        df.columns = ['cost_cat','region', 'year', 'Cost (Bil $)']
+
+        region_ls = df['region'].unique().tolist()
+
+        #Turn each cost category into a column
+        df = df.pivot_table(index=['year'], columns=['region','cost_cat'], values='Cost (Bil $)')
+        #Add rows for all years (including 20 years after end year) and fill
+        full_yrs = list(range(df.index.min() - 19, df.index.max() + 21))
+        df = df.reindex(full_yrs)
+        #For capital costs, multiply by CRF to annualize, and sum over previous 20 years.
+        #This requires 20 years before 2010 to sum properly, and we need to shift capital dataframe down
+        #so that capital payments start in the year after the investment was made
+        crf = dfs['crf']
+        crf = crf.set_index('year').reindex(full_yrs)
+        crf = crf.interpolate(method ='linear')
+        crf['crf'] = crf['crf'].fillna(method='bfill')
+        df = pd.merge(left=df, right=crf, how='left',on=['year'], sort=False)
+        colname_ls = pd.MultiIndex.from_product([region_ls, cap_type_ls],names=['region', 'cost_cat'])
+        colname_ls = [c for c in colname_ls if c in df.columns.tolist()]
+        df[colname_ls] = df[colname_ls].shift().fillna(0)
+        df[colname_ls] = df[colname_ls].multiply(df["crf"], axis="index")
+        df[colname_ls] = df[colname_ls].rolling(20).sum()
+        df = df.drop(columns = ['crf'])
+        #Remove years before 2010
+        full_yrs = list(range(df.index.min() + 19, df.index.max() + 1))
+        df = df.reindex(full_yrs)
+
+        #For operation costs, simply fill missing years with model year values.
+        colname_ls = pd.MultiIndex.from_product([region_ls, op_type_ls],names=['region', 'cost_cat'])
+        colname_ls = [c for c in colname_ls if c in df.columns.tolist()]
+        df[colname_ls] = df[colname_ls].fillna(method='ffill')
+        #The final year should only include capital payments because operation payments last for 20 yrs starting
+        #in the model year, whereas capital payments last for 20 yrs starting in the year after the model year.
+        df.loc[df.index.max(), colname_ls] = 0
+        df = df.fillna(0)
+
+        df = df.T
+        df.index = pd.MultiIndex.from_tuples(df.index.values, names=('region','cost_cat'))
+        df = df.reset_index()
+        df = pd.melt(df, id_vars=['region','cost_cat'], value_vars=df.columns.tolist()[2:], var_name='year', value_name= 'Cost (Bil $)')
+        df = df.pivot_table(index=['year','region'], columns=['cost_cat'], values='Cost (Bil $)')
+        df = df.reset_index(level='region')
+
+        #Add capacity payment for existing (pre-2010) generators (in billion $)
+        df_existingpayment = pd.read_csv('D:/ReEDS_YSun/ReEDS-2.0/runs/v20191230_ref_seq_ng0/outputs/cappayments_ba.csv')
+        df_existingpayment.columns = ['region', 'year','existingcap']
+        df = pd.merge(left=df, right=df_existingpayment, how='left',on=['year','region'], sort=False)
+        df = df.fillna(0)
+        df['inv_investment_capacity_costs'] = df['inv_investment_capacity_costs']+df['existingcap']
+        df = df.drop(columns = 'existingcap')
+        df = pd.melt(df.reset_index(), id_vars=['year','region'], value_vars=df.columns.tolist()[2:], var_name='cost_cat', value_name= 'Cost (Bil $)')
+
+        #-------Capacity trading--------
+        df_captrade = dfs['captrade']
+        df_captrade = df_captrade.groupby(['rb_out', 'rb_in', 'season', 'year'])['Amount (MW)'].sum().reset_index()
+
+        df_capprice = dfs['p']
+        df_capprice = df_capprice.loc[df_capprice['type'] == 'res_marg'].reset_index()
+        df_capprice = df_capprice[df_capprice.columns[3:]]
+        df_capprice.columns = ['rb_out','season','year', 'p']
+
+        df_captrade = pd.merge(left=df_captrade, right=df_capprice, how='left',on=['rb_out','season','year'], sort=False)
+        df_captrade = df_captrade.dropna()
+        df_captrade['cost_rb_out'] = df_captrade['p'] * df_captrade['Amount (MW)']  *1e3 / 1e9  #in billion dollars
+
+        df_capimportcost = df_captrade.groupby(['rb_in','year',])['cost_rb_out'].sum().reset_index()
+        df_capexportcost = df_captrade.groupby(['rb_out','year',])['cost_rb_out'].sum().reset_index()
+        df_capexportcost['cost_rb_out'] = -df_capexportcost['cost_rb_out']
+
+        df_capimportcost['cost_cat'] = 'cap_trade_import_cost'
+        df_capimportcost.columns = ['region','year','Cost (Bil $)','cost_cat']
+        df_capimportcost = df_capimportcost[['year','region','cost_cat','Cost (Bil $)']]
+        df_capexportcost['cost_cat'] = 'cap_trade_export_cost'
+        df_capexportcost.columns = ['region','year','Cost (Bil $)','cost_cat']
+        df_capexportcost = df_capexportcost[['year','region','cost_cat','Cost (Bil $)']]
+        df_captradecost = pd.concat([df_capimportcost,df_capexportcost], sort=False)
+
+        #-------Energy trading--------
+        df_gen = dfs['gen']
+        df_gen = df_gen.groupby(['r', 'timeslice', 'year'])['Generation (GW)'].sum().reset_index()
+
+        df_energyprice = dfs['p']
+        df_energyprice = df_energyprice.loc[df_energyprice['type'] == 'load'].reset_index()
+        df_energyprice = df_energyprice[df_energyprice.columns[3:]]
+        df_energyprice.columns = ['r', 'timeslice', 'year', 'p']
+
+        df_powfrac_up = dfs['powerfrac_upstream']
+        df_powfrac_down = dfs['powerfrac_downstream']
+        df_powfrac_up = df_powfrac_up.loc[df_powfrac_up['r'] != df_powfrac_up['rr'] ].reset_index()
+        df_powfrac_down = df_powfrac_down.loc[df_powfrac_down['r'] != df_powfrac_down['rr'] ].reset_index()
+
+        df_energyimport = pd.merge(left=df_powfrac_up, right=df_gen, how='left',on=['r','timeslice','year'], sort=False)
+        df_energyimport = pd.merge(left=df_energyimport, right=df_energyprice, how='left',left_on=['rr','timeslice','year'], right_on=['r','timeslice','year'], sort=False)
+        df_energyimport = df_energyimport.drop(columns = 'r_y')
+        df_energyimport.columns = ['index', 'r', 'rr', 'timeslice', 'year', 'frac', 'Generation (GW)','p']
+        df_energyimport = pd.merge(left=df_energyimport, right=df_hours_map, how='left',on=['timeslice'], sort=False)
+        df_energyimport['importcost (Bil $)'] = df_energyimport['frac'] *df_energyimport['Generation (GW)'] * df_energyimport['p'] * df_energyimport['hours'] / 1e9
+        df_energyimportcost = df_energyimport.groupby(['r', 'year'])['importcost (Bil $)'].sum().reset_index()
+
+        df_energyexport = df_powfrac_down.groupby(['rr', 'timeslice', 'year'])['frac'].sum().reset_index()
+        df_energyexport.columns = ['r', 'timeslice', 'year','frac']
+        df_energyexport= pd.merge(left=df_energyexport, right=df_gen, how='left',on=['r','timeslice','year'], sort=False)
+        df_energyexport = pd.merge(left=df_energyexport, right=df_energyprice, how='left',on=['r','timeslice','year'], sort=False)
+        df_energyexport = pd.merge(left=df_energyexport, right=df_hours_map, how='left',on=['timeslice'], sort=False)
+
+        df_energyexport['exportcost (Bil $)'] = df_energyexport['frac'] *df_energyexport['Generation (GW)'] * df_energyexport['p'] * df_energyexport['hours'] / 1e9
+        df_energyexportcost = df_energyexport.groupby(['r', 'year'])['exportcost (Bil $)'].sum().reset_index()
+        df_energyexportcost['exportcost (Bil $)'] = -df_energyexportcost['exportcost (Bil $)']
+
+        df_energyimportcost['cost_cat'] = 'energy_trade_import_cost'
+        df_energyimportcost.columns = ['region','year','Cost (Bil $)','cost_cat']
+        df_energyimportcost = df_energyimportcost[['year','region','cost_cat','Cost (Bil $)']]
+        df_energyexportcost['cost_cat'] = 'energy_trade_export_cost'
+        df_energyexportcost.columns = ['region','year','Cost (Bil $)','cost_cat']
+        df_energyexportcost = df_energyexportcost[['year','region','cost_cat','Cost (Bil $)']]
+        df_energytradecost = pd.concat([df_energyimportcost,df_energyexportcost], sort=False)
+
+        #-------Combine with load to calculate average cost--------
+        df = pd.concat([df,df_captradecost,df_energytradecost], sort=False)
+
+        df_load = dfs['q']
+        df_load_ba = df_load[df_load['type'] == 'load'].groupby(['year','rb'])['q'].sum().reset_index()
+        df_load_ba.columns = ['year','region','load (MWh)']
+
+        df_baavgprice = pd.merge(left=df, right=df_load_ba, how='left',on=['year','region'], sort=False)
+        df_baavgprice = df_baavgprice.dropna()
+        df_baavgprice['Average price ($/MWh)'] = df_baavgprice['Cost (Bil $)'] * 1e9 / df_baavgprice['load (MWh)']
+        df_baavgprice.rename(columns={'region':'rb'}, inplace=True)
+
+        return df_baavgprice
 
 def pre_abatement_cost(dfs, **kw):
     if 'objective' in kw and kw['objective'] == True:
@@ -506,6 +725,8 @@ def add_joint_locations_col(df, **kw):
 #2. Columns metadata. These are columns that are referenced in the Results section below.
 #This is where joins, maps, and styles are applied for the columns.
 #For 'style', colors are in hex, but descriptions are given (see http://www.color-hex.com/color-names.html).
+#raw and display tech mappings for appending in tech_map.csv for coolingwatertech are given in:
+#(https://github.nrel.gov/ReEDS/NEMS_Unit_Database_Water_Sources/blob/master/coolingtech/append2tech_map.csv)
 columns_meta = {
     'tech':{
         'type':'string',
@@ -704,6 +925,39 @@ results_meta = collections.OrderedDict((
             ('Explode By Tech',{'x':'year', 'y':'Generation (TWh)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
             ('PCA Map Final by Tech',{'x':'rb', 'y':'Generation (TWh)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
             ('State Map Final by Tech',{'x':'st', 'y':'Generation (TWh)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+
+    ('Water Withdrawal ivrt (Bgal)',
+        {'file':'water_withdrawal_ivrt.csv',
+        'columns': ['tech', 'vintage', 'rb', 'year', 'Water Withdrawal (Bgal)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column':'Water Withdrawal (Bgal)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Water Withdrawal (Bgal)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Water Withdrawal (Bgal)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Water Withdrawal (Bgal)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'rb', 'y':'Water Withdrawal (Bgal)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Water Withdrawal (Bgal)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
+        )),
+        }
+    ),
+
+    ('Water Consumption ivrt (Bgal)',
+        {'file':'water_consumption_ivrt.csv',
+        'columns': ['tech', 'vintage', 'rb', 'year', 'Water Consumption (Bgal)'],
+        'preprocess': [
+            {'func': scale_column, 'args': {'scale_factor': 1e-9, 'column':'Water Consumption (Bgal)'}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Stacked Area',{'x':'year', 'y':'Water Consumption (Bgal)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+            ('Stacked Bars',{'x':'year', 'y':'Water Consumption (Bgal)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1.75'}),
+            ('Explode By Tech',{'x':'year', 'y':'Water Consumption (Bgal)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+            ('PCA Map Final by Tech',{'x':'rb', 'y':'Water Consumption (Bgal)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
+            ('State Map Final by Tech',{'x':'st', 'y':'Water Consumption (Bgal)', 'explode':'scenario', 'explode_group':'tech', 'chart_type':'Area Map', 'filter': {'year':'last'}}),
         )),
         }
     ),
@@ -919,6 +1173,8 @@ results_meta = collections.OrderedDict((
     ('Sys Cost Annualized (Bil $)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
+
         ],
         'index': ['cost_cat', 'year'],
         'preprocess': [
@@ -935,6 +1191,43 @@ results_meta = collections.OrderedDict((
             ('Total Undiscounted No Pol',{'x':'scenario','y':'Cost (Bil $)','series':'cost_cat','chart_type':'Bar', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
             ('Undiscounted by Year',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
             ('Undiscounted by Year No Pol',{'x':'year','y':'Cost (Bil $)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_pol_inv}}}),
+        )),
+        }
+    ),
+
+    ('National Average Electricity Price ($/MWh)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
+            {'name': 'existcap', 'file': '../inputs_case/cappayments.csv', 'columns': ['year', 'existingcap']},
+            {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
+        ],
+        'preprocess': [
+            {'func': pre_avgprice, 'args': {'National':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Average Electricity Price by Year ($/MWh)',{'x':'year','y':'Average price ($/MWh)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+        )),
+        }
+    ),
+
+    ('BA-level Average Electricity Price ($/MWh)',
+        {'sources': [
+            {'name': 'sc', 'file': 'systemcost_ba.csv', 'columns': ['cost_cat','region', 'year', 'Cost (Bil $)']},
+            {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
+            {'name': 'p', 'file': 'reqt_price.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'p']},
+            {'name': 'gen', 'file': 'gen_h.csv', 'columns': ['tech', 'r', 'timeslice', 'year', 'Generation (GW)']},
+            {'name': 'existcap', 'file': '../inputs_case/cappayments_ba.csv', 'columns': ['region', 'year','existingcap']},
+            {'name': 'captrade', 'file': 'captrade.csv', 'columns': ['rb_out', 'rb_in', 'type', 'season', 'year', 'Amount (MW)']},
+            {'name': 'powerfrac_downstream', 'file': 'powerfrac_downstream.csv', 'columns': ['rr', 'r', 'timeslice', 'year', 'frac']},
+            {'name': 'powerfrac_upstream', 'file': 'powerfrac_upstream.csv', 'columns': ['r', 'rr', 'timeslice', 'year', 'frac']},
+            {'name': 'crf', 'file': '../inputs_case/crf.csv', 'header': None, 'columns': ['year', 'crf']},
+        ],
+        'preprocess': [
+            {'func': pre_avgprice, 'args': {'BA':True}},
+        ],
+        'presets': collections.OrderedDict((
+            ('Average BA-level Electricity Price by Year ($/MWh)',{'x':'year','y':'Average price ($/MWh)','series':'cost_cat','explode':'rb','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
