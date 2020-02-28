@@ -31,5 +31,5 @@ static_presets = [
     {'name': 'Geothermal Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['geothermal']}}},
     {'name': 'Hydro and Canadian Import Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['hydro','Canada']}}},
     {'name': 'Pumped-hydro Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['pumped-hydro']}}},
-    {'name': 'Battery Storage Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['battery']}}},
+    {'name': 'Battery Storage Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['battery', 'battery_2', 'battery_4', 'battery_6', 'battery_8', 'battery_10']}}},
 ]

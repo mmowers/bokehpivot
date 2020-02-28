@@ -15,6 +15,7 @@ static_presets = [
     {'name': 'All-in Electricity Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'All-in Price ($/MWh)'},
     {'name': 'National Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Lines ($/MWh)'},
     {'name': 'National Energy Price by timeslice ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price by Timeslice Final ($/MWh)'},
+    {'name': 'National Average Electricity Price ($/MWh)', 'result': 'National Average Electricity Price ($/MWh)', 'preset': 'Average Electricity Price by Year ($/MWh)'},
     {'name': 'National OpRes Price ($/MW-h)', 'result': 'Requirement Prices and Quantities', 'preset': 'OpRes Price Lines ($/MW-h)'},
     {'name': 'National OpRes Price by timeslice ($/MW-h)', 'result': 'Requirement Prices and Quantities', 'preset': 'OpRes Price by Timeslice Final ($/MW-h)'},
     {'name': 'Final Regional Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Final BA Map ($/MWh)'},
@@ -29,5 +30,5 @@ static_presets = [
     {'name': 'Geothermal Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['geothermal']}}},
     {'name': 'Hydro and Canadian Import Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['hydro','Canada']}}},
     {'name': 'Pumped-hydro Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['pumped-hydro']}}},
-    {'name': 'Battery Storage Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['battery']}}},
+    {'name': 'Battery Storage Capacity (GW)', 'result': 'Capacity BA (GW)', 'preset': 'PCA Map Final by Tech','config':{'explode_group':'None','filter':{'tech':['battery', 'battery_2', 'battery_4', 'battery_6', 'battery_8', 'battery_10']}}},
 ]
