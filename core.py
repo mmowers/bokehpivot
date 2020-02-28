@@ -356,20 +356,35 @@ def build_data_source_wdg(data_type=DEFAULT_DATA_TYPE, data_source=''):
 
 def get_df_csv(data_source):
     '''
-    Read a csv into a pandas dataframe, and determine which columns of the dataframe
+    Read csv(s) into a pandas dataframe, and determine which columns of the dataframe
     are discrete (strings), continuous (numbers), able to be filtered (aka filterable),
     and able to be used as a series (aka seriesable). NA values are filled based on the type of column,
     and the dataframe and columns are returned.
 
     Args:
-        data_source (string): Path to csv file.
+        data_source (string): Path to csv file or directory containing csv files with the same column structure
 
     Returns:
-        df_source (pandas dataframe): A dataframe of the csv source, with filled NA values.
+        df_source (pandas dataframe): A dataframe of the source, with filled NA values.
         cols (dict): Keys are categories of columns of df_source, and values are a list of columns of that category.
     '''
-    print('***Fetching csv...')
-    df_source = pd.read_csv(data_source, low_memory=False)
+
+    if os.path.isdir(data_source):
+    #if this is a directory, get all csv within it, assuming they are structured the same way, and add a column for filename
+        print('***Fetching csvs...')
+        dfs = []
+        for file in os.listdir(data_source):
+            if file.endswith(".csv"):
+                filepath = os.path.join(data_source,file)
+                df = pd.read_csv(filepath, low_memory=False)
+                filename = os.path.splitext(file)[0]
+                df['filename'] = filename
+                dfs.append(df)
+        df_source = pd.concat(dfs,sort=False,ignore_index=True)
+    else:
+    #This is a csv file, or pd.read_csv will show error if it isn't
+        print('***Fetching csv...')
+        df_source = pd.read_csv(data_source, low_memory=False)
     cols = {}
     cols['all'] = df_source.columns.values.tolist()
     cols['discrete'] = [x for x in cols['all'] if df_source[x].dtype == object]
@@ -380,7 +395,7 @@ def get_df_csv(data_source):
     cols['seriesable'] = cols['filterable']
     df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
     df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
-    print('***Done fetching csv.')
+    print('***Done fetching csv(s).')
     return (df_source, cols)
 
 def get_wdg_csv():
