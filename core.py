@@ -391,22 +391,6 @@ def get_df_csv(data_source):
         date_ser = pd.to_datetime(df_source['day'])
         df_source['days ago'] = (datetime.datetime.now() - date_ser).dt.days
         df_source['days from start'] = (date_ser - date_ser.min()).dt.days
-        df_top = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed')].copy()
-        df_top = df_top[['country','number']].copy()
-        df_top = df_top.groupby(['country'], sort=False, as_index=False).sum()
-        df_top = df_top.sort_values(by=['number'], ascending=False)
-        top_countries = df_top.head(10)['country'].tolist()
-        df_source['top countries'] = df_source['country']
-        df_source.loc[~df_source['country'].isin(top_countries), 'top countries'] = 'Other'
-        GL['custom_sorts']['top countries'] = top_countries + ['Other']
-        df_top_st = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed') & (df_source['country'] == 'US') & (df_source['st'].isin(state_code_map.values()))].copy()
-        df_top_st = df_top_st[['st','number']].copy()
-        df_top_st = df_top_st.groupby(['st'], sort=False, as_index=False).sum()
-        df_top_st = df_top_st.sort_values(by=['number'], ascending=False)
-        top_st = df_top_st.head(15)['st'].tolist()
-        df_source['us top st'] = df_source['st']
-        df_source.loc[(df_source['country'] == 'US') & (~df_source['st'].isin(top_st)), 'us top st'] = 'Other'
-        GL['custom_sorts']['us top st'] = top_st + ['Other']
         cols = {}
         cols['all'] = df_source.columns.values.tolist()
         cols['discrete'] = ['country', 'st', 'type', 'day']
