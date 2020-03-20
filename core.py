@@ -370,6 +370,56 @@ def get_df_csv(data_source):
     '''
 
     print('***Fetching csv(s)...')
+    if data_source == 'COVID-19':
+        #From https://github.com/CSSEGISandData/COVID-19
+        df_confirmed = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv')
+        df_confirmed['type'] = 'Confirmed'
+        df_deaths = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv')
+        df_deaths['type'] = 'Deaths'
+        df_recovered = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv')
+        df_recovered['type'] = 'Recovered'
+        df_source = pd.concat([df_confirmed, df_deaths, df_recovered], sort=False, ignore_index=True)
+        df_source.drop(['Lat','Long'], axis='columns',inplace=True)
+        df_source.rename(columns={'Province/State': 'st', 'Country/Region': 'country'}, inplace=True)
+        df_state_code = pd.read_csv(this_dir_path + '/in/state_code.csv')
+        state_code_map = dict(zip(df_state_code['State'], df_state_code['Code']))
+        # df_source['st'] = df_source['reg'].map(state_code_map).fillna('None')
+        #remove rows that have US as country and st contains a comma, indicating a county of state
+        df_source = df_source[(df_source['country'] != 'US') | (~df_source['st'].str.contains(',', na=True))].copy()
+        df_source['st'] = df_source['st'].replace(state_code_map)
+        df_source = pd.melt(df_source, id_vars=['country', 'st', 'type'], var_name='day', value_name= 'number')
+        date_ser = pd.to_datetime(df_source['day'])
+        df_source['days ago'] = (datetime.datetime.now() - date_ser).dt.days
+        df_source['days from start'] = (date_ser - date_ser.min()).dt.days
+        df_top = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed')].copy()
+        df_top = df_top[['country','number']].copy()
+        df_top = df_top.groupby(['country'], sort=False, as_index=False).sum()
+        df_top = df_top.sort_values(by=['number'], ascending=False)
+        top_countries = df_top.head(10)['country'].tolist()
+        df_source['top countries'] = df_source['country']
+        df_source.loc[~df_source['country'].isin(top_countries), 'top countries'] = 'Other'
+        GL['custom_sorts']['top countries'] = top_countries + ['Other']
+        df_top_st = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed') & (df_source['country'] == 'US') & (df_source['st'].isin(state_code_map.values()))].copy()
+        df_top_st = df_top_st[['st','number']].copy()
+        df_top_st = df_top_st.groupby(['st'], sort=False, as_index=False).sum()
+        df_top_st = df_top_st.sort_values(by=['number'], ascending=False)
+        top_st = df_top_st.head(15)['st'].tolist()
+        df_source['us top st'] = df_source['st']
+        df_source.loc[(df_source['country'] == 'US') & (~df_source['st'].isin(top_st)), 'us top st'] = 'Other'
+        GL['custom_sorts']['us top st'] = top_st + ['Other']
+        cols = {}
+        cols['all'] = df_source.columns.values.tolist()
+        cols['discrete'] = ['country', 'st', 'type', 'day']
+        cols['continuous'] = ['number', 'days from start', 'days ago']
+        cols['x-axis'] = ['country', 'st', 'type', 'day', 'days from start', 'days ago']
+        cols['y-axis'] = ['number']
+        cols['filterable'] = ['country', 'st', 'type', 'day', 'days from start', 'days ago']
+        cols['seriesable'] = ['country', 'st', 'type']
+        df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
+        df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
+        print('***Done fetching csv(s).')
+        return (df_source, cols)
+
     dfs = []
     sources = data_source.split('|')
     for src in sources:
