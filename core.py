@@ -75,7 +75,7 @@ WDG_COL = ['x', 'y', 'x_group', 'series', 'explode', 'explode_group']
 
 #List of widgets that don't use columns as selector and share general widget update function
 WDG_NON_COL = ['chart_type', 'range', 'y_agg', 'adv_op', 'adv_col_base', 'adv_op2', 'adv_col_base2', 'adv_op3', 'adv_col_base3', 'plot_title', 'plot_title_size',
-    'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title',
+    'plot_width', 'plot_height', 'opacity', 'sync_axes', 'x_min', 'x_max', 'x_scale', 'x_title', 'series_limit',
     'x_title_size', 'x_major_label_size', 'x_major_label_orientation',
     'y_min', 'y_max', 'y_scale', 'y_title', 'y_title_size', 'y_major_label_size',
     'circle_size', 'bar_width', 'cum_sort', 'line_width', 'range_show_glyphs', 'net_levels', 'bokeh_tools', 'map_bin', 'map_num', 'map_nozeros', 'map_min', 'map_max', 'map_manual',
@@ -544,6 +544,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'], visible=False)
+    wdg['series_limit'] = bmw.TextInput(title='Number of series to show', value='', css_classes=['wdgkey-series', 'series-drop'], visible=False)
     wdg['explode_dropdown'] = bmw.Div(text='Explode', css_classes=['explode-dropdown'])
     wdg['explode'] = bmw.Select(title='Explode By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-explode', 'explode-drop'], visible=False)
     wdg['explode_group'] = bmw.Select(title='Group Exploded Charts By', value='None', options=['None'] + cols['seriesable'],
@@ -732,6 +733,15 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
 
     if df_plots.empty:
         return df_plots
+
+    #Limit number of series if indicated
+    if wdg['series_limit'].value.isdigit():
+        df_top = df_plots[[wdg['series'].value, wdg['y'].value]].copy()
+        df_top[wdg['y'].value] = df_top[wdg['y'].value].abs()
+        df_top = df_top.groupby([wdg['series'].value], sort=False, as_index=False).sum()
+        df_top = df_top.sort_values(by=[wdg['y'].value], ascending=False)
+        top_series = df_top.head(int(wdg['series_limit'].value))[wdg['series'].value].tolist()
+        df_plots.loc[~df_plots[wdg['series'].value].isin(top_series), wdg['series'].value] = 'Other'
 
     #Apply Aggregation
     if wdg['y'].value in cols['continuous'] and wdg['y_agg'].value != 'None':
