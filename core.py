@@ -528,7 +528,7 @@ def build_widgets(df_source, cols, init_load=False, init_config={}, wdg_defaults
     wdg['series_dropdown'] = bmw.Div(text='Series', css_classes=['series-dropdown'])
     wdg['series'] = bmw.Select(title='Separate Series By', value='None', options=['None'] + cols['seriesable'],
         css_classes=['wdgkey-series', 'series-drop'], visible=False)
-    wdg['series_limit'] = bmw.TextInput(title='Number of series to show', value='', css_classes=['wdgkey-series', 'series-drop'], visible=False)
+    wdg['series_limit'] = bmw.TextInput(title='Number of series to show', value='All', css_classes=['wdgkey-series', 'series-drop'], visible=False)
     wdg['explode_dropdown'] = bmw.Div(text='Explode', css_classes=['explode-dropdown'])
     wdg['explode'] = bmw.Select(title='Explode By', value='None', options=['None'] + cols['seriesable'], css_classes=['wdgkey-explode', 'explode-drop'], visible=False)
     wdg['explode_group'] = bmw.Select(title='Group Exploded Charts By', value='None', options=['None'] + cols['seriesable'],
@@ -719,7 +719,7 @@ def set_df_plots(df_source, cols, wdg, custom_sorts={}):
         return df_plots
 
     #Limit number of series if indicated
-    if wdg['series_limit'].value.isdigit():
+    if wdg['series'].value != 'None' and wdg['series_limit'].value.isdigit():
         df_top = df_plots[[wdg['series'].value, wdg['y'].value]].copy()
         df_top[wdg['y'].value] = df_top[wdg['y'].value].abs()
         df_top = df_top.groupby([wdg['series'].value], sort=False, as_index=False).sum()
