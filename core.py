@@ -391,6 +391,16 @@ def get_df_csv(data_source):
         date_ser = pd.to_datetime(df_source['day'])
         df_source['days ago'] = (datetime.datetime.now() - date_ser).dt.days
         df_source['days from start'] = (date_ser - date_ser.min()).dt.days
+        df_latest_confirmed_country = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed')].copy()
+        df_latest_confirmed_country = df_latest_confirmed_country.groupby(['country'], sort=False, as_index=False)['number'].sum()
+        df_country_sorted = df_latest_confirmed_country.sort_values(by=['number'], ascending=False)
+        GL['custom_sorts']['country'] = df_country_sorted['country'].tolist() + ['Other']
+        df_latest_confirmed_st = df_source[(df_source['days ago'] == df_source['days ago'].min()) & (df_source['type']=='Confirmed') & (df_source['country'] == 'US') & (df_source['st'].isin(state_code_map.values()))].copy()
+        df_latest_confirmed_st = df_latest_confirmed_st.groupby(['st'], sort=False, as_index=False)['number'].sum()
+        df_st_sorted = df_latest_confirmed_st.sort_values(by=['number'], ascending=False)
+        us_states = df_st_sorted['st'].tolist()
+        other_states = [i for i in df_source['st'].unique().tolist() if i not in us_states]
+        GL['custom_sorts']['st'] = us_states + other_states + ['Other', '{BLANK}']
         cols = {}
         cols['all'] = df_source.columns.values.tolist()
         cols['discrete'] = ['country', 'st', 'type', 'day']
