@@ -133,7 +133,7 @@ def pre_avgprice(dfs, **kw):
     cap_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Capital']['cost_cat'].tolist()]
     op_type_ls = [c for c in cost_cats_df if c in df_cost_type[df_cost_type['type']=='Operation']['cost_cat'].tolist()]
 
-    #Depending on whether 'National' or 'BA'-level average price if specified
+    #Depending on whether 'National' or 'BA'-level average cost if specified
     if 'National' in kw and kw['National'] == True:
         #Turn each cost category into a column
         df = df.pivot_table(index=['year'], columns='cost_cat', values='Cost (Bil $)')
@@ -177,7 +177,7 @@ def pre_avgprice(dfs, **kw):
         df_load_nat = df_load_nat.interpolate(method ='linear')
 
         df_natavgprice = pd.merge(left=df, right=df_load_nat, how='left',on=['year'], sort=False)
-        df_natavgprice['Average price ($/MWh)'] = df_natavgprice['Cost (Bil $)'] * 1e9 / df_natavgprice['q']
+        df_natavgprice['Average cost ($/MWh)'] = df_natavgprice['Cost (Bil $)'] * 1e9 / df_natavgprice['q']
 
         return df_natavgprice
 
@@ -324,7 +324,7 @@ def pre_avgprice(dfs, **kw):
 
         df_baavgprice = pd.merge(left=df, right=df_load_ba, how='left',on=['year','region'], sort=False)
         df_baavgprice = df_baavgprice.dropna()
-        df_baavgprice['Average price ($/MWh)'] = df_baavgprice['Cost (Bil $)'] * 1e9 / df_baavgprice['load (MWh)']
+        df_baavgprice['Average cost ($/MWh)'] = df_baavgprice['Cost (Bil $)'] * 1e9 / df_baavgprice['load (MWh)']
         df_baavgprice.rename(columns={'region':'rb'}, inplace=True)
 
         return df_baavgprice
@@ -1195,7 +1195,7 @@ results_meta = collections.OrderedDict((
         }
     ),
 
-    ('National Average Electricity Price ($/MWh)',
+    ('National Average Electricity Cost ($/MWh)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost.csv', 'columns': ['cost_cat', 'year', 'Cost (Bil $)']},
             {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
@@ -1206,12 +1206,12 @@ results_meta = collections.OrderedDict((
             {'func': pre_avgprice, 'args': {'National':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Average Electricity Price by Year ($/MWh)',{'x':'year','y':'Average price ($/MWh)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Average Electricity Cost by Year ($/MWh)',{'x':'year','y':'Average cost ($/MWh)','series':'cost_cat','explode':'scenario','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
 
-    ('BA-level Average Electricity Price ($/MWh)',
+    ('BA-level Average Electricity Cost ($/MWh)',
         {'sources': [
             {'name': 'sc', 'file': 'systemcost_ba.csv', 'columns': ['cost_cat','region', 'year', 'Cost (Bil $)']},
             {'name': 'q', 'file': 'reqt_quant.csv', 'columns': ['type', 'subtype', 'rb', 'timeslice', 'year', 'q']},
@@ -1227,7 +1227,7 @@ results_meta = collections.OrderedDict((
             {'func': pre_avgprice, 'args': {'BA':True}},
         ],
         'presets': collections.OrderedDict((
-            ('Average BA-level Electricity Price by Year ($/MWh)',{'x':'year','y':'Average price ($/MWh)','series':'cost_cat','explode':'rb','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
+            ('Average BA-level Electricity Cost by Year ($/MWh)',{'x':'year','y':'Average cost ($/MWh)','series':'cost_cat','explode':'rb','chart_type':'Bar', 'bar_width':'1.75', 'filter': {'cost_cat':{'exclude':costs_orig_inv}}}),
         )),
         }
     ),
