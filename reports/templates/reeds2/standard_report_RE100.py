@@ -11,7 +11,7 @@ static_presets = [
     {'name': 'Curtailment Rate', 'result': 'Average VRE Curtailment', 'preset': 'Curt Rate Over Time'},
     {'name': 'Losses (fraction of load)', 'result': 'Losses (TWh)', 'preset': 'Fractional Losses by Type Over Time'},
     {'name': 'Transmission (GW-mi)', 'result': 'Transmission (GW-mi)', 'preset': 'Transmission Capacity'},
-    {'name': 'All-in Electricity Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'All-in Price ($/MWh)'},
+    {'name': 'Bulk System Electricity Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Bulk System Electricity Price ($/MWh)'},
     {'name': 'National Energy Price ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price Lines ($/MWh)'},
     {'name': 'National Energy Price by timeslice ($/MWh)', 'result': 'Requirement Prices and Quantities', 'preset': 'Energy Price by Timeslice Final ($/MWh)'},
     {'name': 'National OpRes Price ($/MW-h)', 'result': 'Requirement Prices and Quantities', 'preset': 'OpRes Price Lines ($/MW-h)'},
