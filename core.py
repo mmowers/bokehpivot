@@ -372,11 +372,11 @@ def get_df_csv(data_source):
     print('***Fetching csv(s)...')
     if data_source == 'COVID-19':
         #From https://github.com/CSSEGISandData/COVID-19
-        df_confirmed = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv')
+        df_confirmed = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv')
         df_confirmed['type'] = 'Confirmed'
-        df_deaths = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv')
+        df_deaths = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
         df_deaths['type'] = 'Deaths'
-        df_recovered = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv')
+        df_recovered = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
         df_recovered['type'] = 'Recovered'
         df_source = pd.concat([df_confirmed, df_deaths, df_recovered], sort=False, ignore_index=True)
         df_source.drop(['Lat','Long'], axis='columns',inplace=True)
@@ -387,8 +387,9 @@ def get_df_csv(data_source):
         #remove rows that have US as country and st contains a comma, indicating a county of state
         df_source = df_source[(df_source['country'] != 'US') | (~df_source['st'].str.contains(',', na=True))].copy()
         df_source['st'] = df_source['st'].replace(state_code_map)
-        df_source = pd.melt(df_source, id_vars=['country', 'st', 'type'], var_name='day', value_name= 'number')
-        date_ser = pd.to_datetime(df_source['day'])
+        df_source = pd.melt(df_source, id_vars=['country', 'st', 'type'], var_name='date', value_name= 'number')
+        date_ser = pd.to_datetime(df_source['date'])
+        df_source['date'] = date_ser.dt.strftime('%Y-%m-%d')
         df_source['days ago'] = (datetime.datetime.now() - date_ser).dt.days
         df_source['days from start'] = (date_ser - date_ser.min()).dt.days
         df_confirmed = df_source[df_source['type']=='Confirmed'].copy()
@@ -403,11 +404,11 @@ def get_df_csv(data_source):
         GL['custom_sorts']['st'] = us_states + other_states + ['Other', '{BLANK}']
         cols = {}
         cols['all'] = df_source.columns.values.tolist()
-        cols['discrete'] = ['country', 'st', 'type', 'day']
+        cols['discrete'] = ['country', 'st', 'type', 'date']
         cols['continuous'] = ['number', 'days from start', 'days ago']
-        cols['x-axis'] = ['country', 'st', 'type', 'day', 'days from start', 'days ago']
+        cols['x-axis'] = ['country', 'st', 'type', 'date', 'days from start', 'days ago']
         cols['y-axis'] = ['number']
-        cols['filterable'] = ['country', 'st', 'type', 'day', 'days from start', 'days ago']
+        cols['filterable'] = ['country', 'st', 'type', 'date', 'days from start', 'days ago']
         cols['seriesable'] = ['country', 'st', 'type']
         df_source[cols['discrete']] = df_source[cols['discrete']].fillna('{BLANK}')
         df_source[cols['continuous']] = df_source[cols['continuous']].fillna(0)
