@@ -381,12 +381,6 @@ def get_df_csv(data_source):
         df_source = pd.concat([df_confirmed, df_deaths, df_recovered], sort=False, ignore_index=True)
         df_source.drop(['Lat','Long'], axis='columns',inplace=True)
         df_source.rename(columns={'Province/State': 'st', 'Country/Region': 'country'}, inplace=True)
-        df_state_code = pd.read_csv(this_dir_path + '/in/state_code.csv')
-        state_code_map = dict(zip(df_state_code['State'], df_state_code['Code']))
-        # df_source['st'] = df_source['reg'].map(state_code_map).fillna('None')
-        #remove rows that have US as country and st contains a comma, indicating a county of state
-        df_source = df_source[(df_source['country'] != 'US') | (~df_source['st'].str.contains(',', na=True))].copy()
-        df_source['st'] = df_source['st'].replace(state_code_map)
         df_source = pd.melt(df_source, id_vars=['country', 'st', 'type'], var_name='date', value_name= 'number')
         date_ser = pd.to_datetime(df_source['date'])
         df_source['date'] = date_ser.dt.strftime('%Y-%m-%d')
@@ -396,12 +390,6 @@ def get_df_csv(data_source):
         df_confirmed_country = df_confirmed.groupby(['country'], sort=False, as_index=False)['number'].sum()
         df_country_sorted = df_confirmed_country.sort_values(by=['number'], ascending=False)
         GL['custom_sorts']['country'] = df_country_sorted['country'].tolist() + ['Other']
-        df_confirmed_st = df_confirmed[(df_confirmed['country'] == 'US') & (df_confirmed['st'].isin(state_code_map.values()))].copy()
-        df_confirmed_st = df_confirmed_st.groupby(['st'], sort=False, as_index=False)['number'].sum()
-        df_st_sorted = df_confirmed_st.sort_values(by=['number'], ascending=False)
-        us_states = df_st_sorted['st'].tolist()
-        other_states = [i for i in df_source['st'].unique().tolist() if i not in us_states]
-        GL['custom_sorts']['st'] = us_states + other_states + ['Other', '{BLANK}']
         cols = {}
         cols['all'] = df_source.columns.values.tolist()
         cols['discrete'] = ['country', 'st', 'type', 'date']
